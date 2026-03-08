@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">English Kingdom</string>
+
+    <!-- Motivational Quotes -->
+    <string-array name="motivational_quotes">
+        <item>"The limits of my language are the limits of my world"</item>
+        <item>"One language sets you in a corridor for life, two languages open every door"</item>
+        <item>"Learning a language is discovering a new world"</item>
+        <item>"Every word you learn is a step forward"</item>
+        <item>"The more languages you know, the more you are human"</item>
+    </string-array>
+
+</resources>

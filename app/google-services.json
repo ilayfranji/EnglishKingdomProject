@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "21148192253",
+    "project_id": "english-kingdom-e4ce3",
+    "storage_bucket": "english-kingdom-e4ce3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:21148192253:android:a21c2e6f5ea429e2c21d94",
+        "android_client_info": {
+          "package_name": "com.ilay.englishkingdom"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbQmZi8DY8sDA8omkL5NM5xscXADrWGBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

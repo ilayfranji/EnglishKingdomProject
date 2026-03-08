@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A237E"
+    tools:context=".Activities.HomeActivity">
+
+    <!-- Top Bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Crown + App Name -->
+        <TextView
+            android:id="@+id/tvAppName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="👑 English Kingdom"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="serif"/>
+
+        <!-- Menu Button -->
+        <TextView
+            android:id="@+id/tvMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="☰"
+            android:textSize="28sp"
+            android:textColor="#FFD700"
+            android:padding="8dp"/>
+
+    </LinearLayout>
+
+    <!-- Welcome Message -->
+    <TextView
+        android:id="@+id/tvWelcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome back, Ilay! 👋"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="What would you like to do today?"
+        android:textSize="14sp"
+        android:textColor="#B0BEC5"
+        app:layout_constraintTop_toBottomOf="@id/tvWelcome"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="4dp"/>
+
+    <!-- Learn Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardLearn"
+        android:layout_width="0dp"
+        android:layout_height="180dp"
+        app:cardCornerRadius="20dp"
+        app:cardBackgroundColor="#283593"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Learn Emoji -->
+            <TextView
+                android:id="@+id/tvLearnEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📚"
+                android:textSize="52sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="24dp"/>
+
+            <!-- Learn Title -->
+            <TextView
+                android:id="@+id/tvLearnTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Learn"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFD700"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tvLearnEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="40dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
+            <!-- Learn Description -->
+            <TextView
+                android:id="@+id/tvLearnDesc"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Explore words, sentences\nand new vocabulary"
+                android:textSize="13sp"
+                android:textColor="#B0BEC5"
+                app:layout_constraintTop_toBottomOf="@id/tvLearnTitle"
+                app:layout_constraintStart_toEndOf="@id/tvLearnEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Practice Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardPractice"
+        android:layout_width="0dp"
+        android:layout_height="180dp"
+        app:cardCornerRadius="20dp"
+        app:cardBackgroundColor="#283593"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/cardLearn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Practice Emoji -->
+            <TextView
+                android:id="@+id/tvPracticeEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎮"
+                android:textSize="52sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="24dp"/>
+
+            <!-- Practice Title -->
+            <TextView
+                android:id="@+id/tvPracticeTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Practice"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFD700"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tvPracticeEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="40dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
+            <!-- Practice Description -->
+            <TextView
+                android:id="@+id/tvPracticeDesc"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Test your knowledge with\nfun mini games"
+                android:textSize="13sp"
+                android:textColor="#B0BEC5"
+                app:layout_constraintTop_toBottomOf="@id/tvPracticeTitle"
+                app:layout_constraintStart_toEndOf="@id/tvPracticeEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Motivational Quote -->
+    <TextView
+        android:id="@+id/tvQuote"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text='"The limits of my language are the limits of my world"'
+        android:textSize="13sp"
+        android:textColor="#7986CB"
+        android:gravity="center"
+        android:fontFamily="serif"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="24dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
