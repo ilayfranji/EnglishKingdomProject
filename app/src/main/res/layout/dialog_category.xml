@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is the layout for the Add/Edit Category popup dialog -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#1A237E">
+
+    <!-- Category Name in English input -->
+    <EditText
+        android:id="@+id/etCategoryName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Category Name in English"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:inputType="textCapSentences"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- Category Name in Hebrew input -->
+    <EditText
+        android:id="@+id/etCategoryNameHebrew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="שם הקטגוריה בעברית"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:inputType="textCapSentences"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- Image preview - shown after admin picks an image -->
+    <!-- visibility="gone" means it is hidden until an image is picked -->
+    <ImageView
+        android:id="@+id/imgPreview"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"/>
+
+    <!-- Add Image button - opens a popup to choose between camera and gallery -->
+    <Button
+        android:id="@+id/btnAddImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📷 Add Image"
+        android:textColor="#1A237E"
+        android:backgroundTint="#FFD700"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+
+</LinearLayout>

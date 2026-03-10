@@ -45,4 +45,10 @@ dependencies {
 
     // Encrypted SharedPreferences
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+
+    // Cloudinary - for image uploading
+    implementation 'com.cloudinary:cloudinary-android:3.0.2'
+
+// Glide - for loading and displaying images from URLs
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- external-cache-path gives access to the external cache folder -->
+    <external-cache-path name="camera_photos" path="."/>
+
+    <!-- external-files-path gives access to the external files folder -->
+    <external-files-path name="camera_files" path="."/>
+
+    <!-- cache-path gives access to the internal cache folder -->
+    <cache-path name="internal_cache" path="."/>
+</paths>

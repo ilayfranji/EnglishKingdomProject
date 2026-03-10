@@ -111,7 +111,13 @@ public class LoginActivity extends AppCompatActivity { // LoginActivity is a scr
         // Set click listener on the Register text
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when register text is clicked
+            public void onClick(View v) {
+                // Clear all fields before going to Register
+                // This ensures fields are empty when user comes back to Login
+                etEmail.setText(""); // Clear email field
+                etPassword.setText(""); // Clear password field
+                etEmail.setError(null); // Clear any error on email field
+                etPassword.setError(null); // Clear any error on password field
                 startActivity(new Intent(LoginActivity.this, RegisterActivity.class)); // Go to RegisterActivity
             }
         });

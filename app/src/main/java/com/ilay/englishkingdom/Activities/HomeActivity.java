@@ -87,7 +87,12 @@ public class HomeActivity extends AppCompatActivity { // HomeActivity is a scree
         cardLearn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { // This runs when the Learn card is clicked
-                // TODO: Go to Learn screen (we will build this later)
+                cardLearn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        startActivity(new Intent(HomeActivity.this, LearnActivity.class)); // Go to LearnActivity
+                    }
+                });
             }
         });
 

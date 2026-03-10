@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- INTERNET permission - allows the app to connect to the internet (needed for Firebase and Cloudinary) -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- READ_EXTERNAL_STORAGE - allows reading files from phone storage on Android 12 and below -->
+    <!-- android:maxSdkVersion="32" means this permission only applies to Android 12 and below -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" /> <!-- READ_MEDIA_IMAGES - the new permission for reading images on Android 13 and above -->
+    <!-- Google replaced READ_EXTERNAL_STORAGE with more specific permissions in Android 13 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <!-- CAMERA permission - allows the app to use the phone camera for taking profile pictures -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- uses-feature tells Android about hardware features our app uses -->
+    <!-- android:required="false" means camera is OPTIONAL - phones without camera can still install our app -->
+    <!-- Without this line, phones without a camera couldn't install our app at all -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
+        android:name=".AppInitializer"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -12,30 +27,54 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EnglishKingdom">
 
-        <!-- Splash Screen - this is the ONLY launcher activity -->
+        <!-- Learn Screen -->
+        <activity
+            android:name=".Activities.LearnActivity"
+            android:exported="false" />
+
+
+        <!-- Splash Screen - this is the ONLY launcher activity, meaning it opens first when the app starts -->
         <activity
             android:name=".Activities.SplashActivity"
             android:exported="true">
+
+
+            <!-- intent-filter tells Android this is the main entry point of the app -->
             <intent-filter>
+
+                <!-- MAIN action means this is the main entry point -->
                 <action android:name="android.intent.action.MAIN" />
+                <!-- LAUNCHER means this activity appears in the app launcher -->
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
-        <!-- Login Screen -->
+        <!-- Login Screen - exported=false means only our app can open this activity -->
         <activity
             android:name=".Activities.LoginActivity"
             android:exported="false" />
 
-        <!-- Register Screen -->
+        <!-- Register Screen - exported=false means only our app can open this activity -->
         <activity
             android:name=".Activities.RegisterActivity"
             android:exported="false" />
 
-        <!-- Home Screen -->
+        <!-- Home Screen - exported=false means only our app can open this activity -->
         <activity
             android:name=".Activities.HomeActivity"
             android:exported="false" />
+
+        <!-- FileProvider - allows our app to share files with the camera app securely -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
 
     </application>
 
