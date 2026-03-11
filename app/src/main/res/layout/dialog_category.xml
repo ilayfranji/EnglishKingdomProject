@@ -34,17 +34,20 @@
         android:padding="12dp"
         android:layout_marginBottom="12dp"/>
 
-    <!-- Image preview - shown after admin picks an image -->
-    <!-- visibility="gone" means it is hidden until an image is picked -->
+    <!-- Image preview - shown after admin selects an image OR when editing existing category -->
+    <!-- visibility="gone" means hidden by default - shown when image is selected -->
+    <!-- adjustViewBounds=true keeps the original image proportions -->
+    <!-- scaleType="fitCenter" shows full image without cropping -->
     <ImageView
         android:id="@+id/imgPreview"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:scaleType="centerCrop"
+        android:layout_height="200dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
         android:layout_marginBottom="8dp"
         android:visibility="gone"/>
 
-    <!-- Add Image button - opens a popup to choose between camera and gallery -->
+    <!-- Add Image button - hidden after image is selected -->
     <Button
         android:id="@+id/btnAddImage"
         android:layout_width="match_parent"
@@ -52,7 +55,6 @@
         android:text="📷 Add Image"
         android:textColor="#1A237E"
         android:backgroundTint="#FFD700"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"/>
 
 </LinearLayout>

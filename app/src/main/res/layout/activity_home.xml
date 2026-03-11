@@ -8,7 +8,7 @@
     android:background="#1A237E"
     tools:context=".Activities.HomeActivity">
 
-    <!-- Top Bar -->
+    <!-- Top Bar - contains the app name and menu button -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"
@@ -50,7 +50,7 @@
         android:id="@+id/tvWelcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome back, Ilay! 👋"
+        android:text="Welcome back! 👋"
         android:textSize="18sp"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
@@ -203,6 +203,8 @@
     </androidx.cardview.widget.CardView>
 
     <!-- Motivational Quote -->
+    <!-- Previously this was constrained to the BOTTOM of the screen which pushed it too low -->
+    <!-- Now it is constrained to the BOTTOM of the Practice card so it appears right below it -->
     <TextView
         android:id="@+id/tvQuote"
         android:layout_width="0dp"
@@ -213,10 +215,10 @@
         android:gravity="center"
         android:fontFamily="serif"
         android:textStyle="italic"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cardPractice"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="24dp"
+        android:layout_marginTop="24dp"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- This is the layout for a single category card in the RecyclerView -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -13,8 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Category Image -->
-        <!-- ImageView displays images - we will load the image from Cloudinary URL using Glide -->
+        <!-- Category Image - shown at the top of the card -->
+        <!-- scaleType="centerCrop" fills the image area while keeping proportions -->
         <ImageView
             android:id="@+id/imgCategory"
             android:layout_width="0dp"
@@ -40,7 +41,21 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Category Name in Hebrew -->
+        <!-- Word Count - below English name so progress bar never covers it -->
+        <!-- Previously this was at the bottom and the progress bar could overlap it -->
+        <TextView
+            android:id="@+id/tvWordCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10 words"
+            android:textSize="12sp"
+            android:textColor="#7986CB"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            app:layout_constraintTop_toBottomOf="@id/tvCategoryName"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <!-- Category Name in Hebrew - below word count -->
         <TextView
             android:id="@+id/tvCategoryNameHebrew"
             android:layout_width="0dp"
@@ -51,27 +66,13 @@
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
             android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/tvCategoryName"
+            app:layout_constraintTop_toBottomOf="@id/tvWordCount"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Word Count -->
-        <TextView
-            android:id="@+id/tvWordCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="10 words"
-            android:textSize="12sp"
-            android:textColor="#7986CB"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintTop_toBottomOf="@id/tvCategoryNameHebrew"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
         <!-- Progress Bar - shows how many words the user has learned -->
-        <!-- ProgressBar is a UI element that shows progress as a horizontal bar -->
+        <!-- style horizontal makes it a flat bar instead of a spinning circle -->
+        <!-- progressTint sets the filled color, backgroundTint sets the empty color -->
         <ProgressBar
             android:id="@+id/progressCategory"
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
@@ -79,11 +80,13 @@
             android:layout_height="6dp"
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
+            android:layout_marginTop="8dp"
             android:layout_marginBottom="12dp"
             android:progress="0"
             android:max="100"
             android:progressTint="#FFD700"
             android:backgroundTint="#1A237E"
+            app:layout_constraintTop_toBottomOf="@id/tvCategoryNameHebrew"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>

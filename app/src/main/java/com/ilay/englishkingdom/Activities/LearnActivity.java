@@ -1,101 +1,128 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.app.AlertDialog;
-import android.content.Intent;
-import android.net.Uri; // Uri represents a file path or URL - used for images
-import android.os.Bundle;
-import android.view.View;
+import android.app.AlertDialog; // Used to create popup dialogs
+import android.net.Uri; // Used to store the path to an image file
+import android.os.Bundle; // Used when creating the activity and saving state
+import android.view.View; // Used to reference UI elements
 import android.widget.Button; // Used for the Add Image button
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.EditText; // Used for text input fields
+import android.widget.ImageView; // Used to display images
+import android.widget.LinearLayout; // Used as a container to wrap the image in dialogs
+import android.widget.TextView; // Used for text views
+import android.widget.Toast; // Used to show short popup messages
 
-import androidx.activity.result.ActivityResultLauncher; // Modern way to handle activity results (camera/gallery)
-import androidx.activity.result.contract.ActivityResultContracts; // Contains contracts for camera and gallery
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.activity.result.ActivityResultLauncher; // Used to launch gallery/camera and get result back
+import androidx.activity.result.contract.ActivityResultContracts; // Provides the contracts for gallery and camera
+import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
+import androidx.recyclerview.widget.GridLayoutManager; // Used to arrange category cards in a grid
+import androidx.recyclerview.widget.RecyclerView; // Used to show the scrollable list of categories
 
-import com.bumptech.glide.Glide;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.ilay.englishkingdom.Adapters.CategoryAdapter;
-import com.ilay.englishkingdom.Models.Category;
-import com.ilay.englishkingdom.R;
+import com.bumptech.glide.Glide; // Used to load images from URLs or URIs into ImageViews
+import com.google.android.material.floatingactionbutton.FloatingActionButton; // The round floating buttons
+import com.google.firebase.auth.FirebaseAuth; // Used to get the current logged in user
+import com.google.firebase.firestore.FirebaseFirestore; // Used to read/write data from our database
+import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single document from Firestore query
+import com.ilay.englishkingdom.Adapters.CategoryAdapter; // Our custom adapter for the category RecyclerView
+import com.ilay.englishkingdom.Models.Category; // Our Category data model class
+import com.ilay.englishkingdom.R; // Used to reference our XML resources
 
-import com.cloudinary.android.MediaManager; // Cloudinary's main class for uploading
-import com.cloudinary.android.callback.ErrorInfo; // Represents an error from Cloudinary
-import com.cloudinary.android.callback.UploadCallback; // Callback for when upload finishes
+import com.cloudinary.android.MediaManager; // Used to upload images to Cloudinary
+import com.cloudinary.android.callback.ErrorInfo; // Used to get error details if upload fails
+import com.cloudinary.android.callback.UploadCallback; // Used to listen for upload progress and result
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList; // Used to create the category list
+import java.util.List; // The List interface for our category list
+import java.util.Map; // Used to read the Cloudinary upload result
 
 public class LearnActivity extends AppCompatActivity implements CategoryAdapter.OnCategoryClickListener {
+    // AppCompatActivity = this is a screen in our app
+    // implements CategoryAdapter.OnCategoryClickListener = this class handles card click and long click events
 
-    // UI elements
-    private RecyclerView recyclerCategories;
-    private FloatingActionButton fabCategory;
-    private FloatingActionButton fabExitEditMode;
-    private TextView tvBack;
-    private TextView tvEditMode;
-    private TextView tvEditBanner;
+    // ==================== UI ELEMENTS ====================
 
-    // Firebase
-    private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
+    private RecyclerView recyclerCategories; // The scrollable grid of category cards
+    private FloatingActionButton fabCategory; // The + FAB button shown in edit mode to add categories
+    private FloatingActionButton fabExitEditMode; // The X FAB button to exit edit mode
+    private TextView tvBack; // The back arrow/text to go back to HomeActivity
+    private TextView tvEditMode; // The pencil button shown to admins to enter edit mode
+    private TextView tvEditBanner; // The red banner shown at the top when in edit mode
 
-    // Adapter and list
-    private CategoryAdapter categoryAdapter;
-    private List<Category> categoryList;
+    // ==================== FIREBASE ====================
 
-    // State flags
-    private boolean isEditMode = false; // Tracks if admin is in edit mode
-    private boolean isAdmin = false; // Tracks if current user is admin
+    private FirebaseFirestore db; // Our connection to the Firestore database
+    private FirebaseAuth mAuth; // Our connection to Firebase Authentication
 
-    // Image handling
-    private Uri selectedImageUri = null; // Stores the URI of the image picked by admin
-    private ImageView currentDialogImagePreview; // Reference to the image preview in the dialog
-    private boolean isUploadingImage = false; // Tracks if an image is currently being uploaded
+    // ==================== ADAPTER AND DATA ====================
 
-    // ActivityResultLauncher for gallery - modern replacement for onActivityResult
-    // This launches the gallery and waits for the user to pick an image
+    private CategoryAdapter categoryAdapter; // The adapter that connects our list to the RecyclerView
+    private List<Category> categoryList; // The list of all categories loaded from Firestore
+
+    // ==================== STATE FLAGS ====================
+
+    private boolean isEditMode = false; // true = admin is in edit mode, false = normal mode
+    private boolean isAdmin = false; // true = current user is an admin
+
+    // ==================== IMAGE HANDLING ====================
+
+    private Uri selectedImageUri = null; // Stores the URI (file path) of the image picked by admin - null means no image selected
+    private ImageView currentDialogImagePreview; // Reference to the ImageView inside the currently open dialog
+    private Button currentDialogAddImageButton; // Reference to the Add Image button inside the currently open dialog
+
+    // ==================== SAVE/RESTORE STATE ====================
+
+    // This is the KEY we use to save and restore selectedImageUri
+    // When the camera app opens, Android might kill LearnActivity to free up memory
+    // We save selectedImageUri in onSaveInstanceState() so we can restore it when the activity comes back
+    // Think of this key like a label on a bag - we put selectedImageUri in the bag before Android takes it
+    private static final String KEY_SELECTED_IMAGE_URI = "selected_image_uri";
+
+    // ==================== ACTIVITY RESULT LAUNCHERS ====================
+
+    // Gallery launcher - opens the gallery app and waits for the user to pick an image
+    // registerForActivityResult sets this up BEFORE onCreate runs - this is required by Android
     private ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(), // Contract for picking content from gallery
-            uri -> { // This runs when the user picks an image
-                if (uri != null) { // If user picked an image (not cancelled)
-                    selectedImageUri = uri; // Save the image URI
-                    if (currentDialogImagePreview != null) { // If the dialog is still open
-                        currentDialogImagePreview.setVisibility(View.VISIBLE); // Show the preview
-                        Glide.with(this).load(uri).into(currentDialogImagePreview); // Load image into preview
-                    }
+            new ActivityResultContracts.GetContent(), // GetContent = open file picker for a specific type
+            uri -> { // This runs AFTER the user picks an image and returns to our app
+                if (uri != null) { // If user actually picked something (didn't cancel)
+                    selectedImageUri = uri; // Save the URI so we can upload it later
+                    showImageConfirmationDialog(uri, true); // true = came from gallery, no Retake button
                 }
             });
 
-    // ActivityResultLauncher for camera - launches the camera and waits for a photo
+    // Camera launcher - opens the camera app and waits for the user to take a photo
     private ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.TakePicture(), // Contract for taking a picture
-            success -> { // This runs when the user takes a photo
-                if (success && selectedImageUri != null) { // If photo was taken successfully
-                    if (currentDialogImagePreview != null) { // If the dialog is still open
-                        currentDialogImagePreview.setVisibility(View.VISIBLE); // Show the preview
-                        Glide.with(this).load(selectedImageUri).into(currentDialogImagePreview); // Load photo into preview
-                    }
+            new ActivityResultContracts.TakePicture(), // TakePicture = open camera and save to a URI we provide
+            success -> { // This runs AFTER the user takes a photo and returns to our app
+                // selectedImageUri is restored from onSaveInstanceState if Android killed the activity
+                // so it will NEVER be null here even if Android killed the activity while camera was open
+                if (success && selectedImageUri != null) { // Photo was taken successfully
+                    showImageConfirmationDialog(selectedImageUri, false); // false = came from camera, show Retake
+                } else if (!success) { // User cancelled the camera without taking a photo
+                    selectedImageUri = null; // Clear the URI since no photo was taken
                 }
             });
+
+    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_learn);
+        super.onCreate(savedInstanceState); // Always call super first - required by Android
+        setContentView(R.layout.activity_learn); // Connect this Java file to activity_learn.xml
 
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
+        // CAMERA CRASH FIX - Restore selectedImageUri if Android killed and recreated the activity
+        // savedInstanceState is the "bag" Android gives back to us after killing and recreating the activity
+        // It is null the very first time the activity opens, but contains our saved data if activity was recreated
+        if (savedInstanceState != null) { // Activity was recreated (e.g. after camera opened)
+            // getParcelable reads the Uri we saved in onSaveInstanceState
+            // Uri is "Parcelable" meaning Android knows how to save and restore it
+            selectedImageUri = savedInstanceState.getParcelable(KEY_SELECTED_IMAGE_URI);
+        }
 
-        // Connect Java variables to XML views
+        // Connect to Firebase
+        db = FirebaseFirestore.getInstance(); // Get the shared Firestore instance
+        mAuth = FirebaseAuth.getInstance(); // Get the shared Auth instance
+
+        // Connect each Java variable to its XML view using the ID we gave in XML
         recyclerCategories = findViewById(R.id.recyclerCategories);
         fabCategory = findViewById(R.id.fabCategory);
         fabExitEditMode = findViewById(R.id.fabExitEditMode);
@@ -103,182 +130,388 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
         tvEditMode = findViewById(R.id.tvEditMode);
         tvEditBanner = findViewById(R.id.tvEditBanner);
 
-        categoryList = new ArrayList<>();
+        categoryList = new ArrayList<>(); // Initialize as empty list - will be filled by loadCategories()
 
-        setupRecyclerView();
-        checkIfAdmin();
-        loadCategories();
+        setupRecyclerView(); // Set up the grid layout and attach the adapter
+        checkIfAdmin(); // Check if current user is admin and show edit button if so
+        loadCategories(); // Start listening to Firestore for categories in real time
 
-        tvBack.setOnClickListener(v -> finish()); // Go back to HomeActivity
-        tvEditMode.setOnClickListener(v -> enterEditMode()); // Enter edit mode
-        fabCategory.setOnClickListener(v -> showAddCategoryDialog()); // Show add dialog
-        fabExitEditMode.setOnClickListener(v -> exitEditMode()); // Exit edit mode
+        // Set click listeners for all buttons
+        tvBack.setOnClickListener(v -> finish()); // finish() closes this activity and goes back
+        tvEditMode.setOnClickListener(v -> enterEditMode()); // Enter edit mode when pencil is clicked
+        fabCategory.setOnClickListener(v -> showAddCategoryDialog()); // Show add dialog when + is clicked
+        fabExitEditMode.setOnClickListener(v -> exitEditMode()); // Exit edit mode when X is clicked
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState); // Always call super first
+
+        // Save selectedImageUri into the Bundle BEFORE Android might kill the activity
+        // This happens automatically when Android needs to free memory (e.g. camera app opens)
+        // outState is the "bag" - putParcelable puts our Uri into it under the key label
+        // Later in onCreate, savedInstanceState.getParcelable() takes it back out of the bag
+        if (selectedImageUri != null) { // Only save if we actually have an image selected
+            outState.putParcelable(KEY_SELECTED_IMAGE_URI, selectedImageUri);
+        }
+    }
+
+    // ==================== SETUP ====================
 
     private void setupRecyclerView() {
-        // GridLayoutManager with 2 columns - shows 2 category cards per row
+        // GridLayoutManager arranges items in a grid - 2 means 2 columns side by side
         GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
-        recyclerCategories.setLayoutManager(layoutManager);
-        categoryAdapter = new CategoryAdapter(this, categoryList, this);
-        recyclerCategories.setAdapter(categoryAdapter);
+        recyclerCategories.setLayoutManager(layoutManager); // Tell RecyclerView to use this layout
+        categoryAdapter = new CategoryAdapter(this, categoryList, this); // Create adapter with our list and click listener
+        recyclerCategories.setAdapter(categoryAdapter); // Attach adapter to RecyclerView
     }
 
-    private void checkIfAdmin() {
-        if (mAuth.getCurrentUser() == null) return; // Guest - skip check
+    // ==================== ADMIN CHECK ====================
 
-        String userId = mAuth.getCurrentUser().getUid();
-        db.collection("users")
-                .document(userId)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (document.exists()) {
-                        String role = document.getString("role");
-                        if (role != null && role.equals("ADMIN")) {
-                            isAdmin = true;
-                            tvEditMode.setVisibility(View.VISIBLE); // Show edit mode button for admin
+    private void checkIfAdmin() {
+        if (mAuth.getCurrentUser() == null) return; // Guest user - no admin features
+
+        String userId = mAuth.getCurrentUser().getUid(); // Get the logged in user's unique ID
+        db.collection("users").document(userId).get() // Fetch this user's document from Firestore
+                .addOnSuccessListener(document -> { // Runs when Firestore responds
+                    if (document.exists()) { // If the document exists
+                        String role = document.getString("role"); // Read the "role" field
+                        if (role != null && role.equals("ADMIN")) { // If role is ADMIN
+                            isAdmin = true; // Mark this user as admin
+                            tvEditMode.setVisibility(View.VISIBLE); // Show the pencil edit button
                         }
                     }
                 });
     }
 
+    // ==================== LOAD CATEGORIES ====================
+
     private void loadCategories() {
+        // addSnapshotListener listens for real time changes - runs every time Firestore data changes
         db.collection("categories")
                 .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
+                    if (error != null) { // Something went wrong with Firestore
                         Toast.makeText(this, "Error loading categories", Toast.LENGTH_SHORT).show();
-                        return;
+                        return; // Stop here - don't try to process the data
                     }
-                    categoryList.clear();
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        Category category = doc.toObject(Category.class);
-                        category.setIdFS(doc.getId());
-                        categoryList.add(category);
+                    categoryList.clear(); // Remove all old categories before adding fresh ones
+                    for (QueryDocumentSnapshot doc : snapshots) { // Loop through every category document
+                        Category category = doc.toObject(Category.class); // Convert document to Category object
+                        category.setIdFS(doc.getId()); // Save the Firestore document ID into the object
+                        categoryList.add(category); // Add to our list
                     }
-                    categoryAdapter.notifyDataSetChanged();
+                    categoryAdapter.notifyDataSetChanged(); // Tell RecyclerView the data changed so it refreshes
                 });
     }
 
+    // ==================== EDIT MODE ====================
+
     private void enterEditMode() {
-        isEditMode = true;
-        tvEditBanner.setVisibility(View.VISIBLE);
-        fabCategory.setVisibility(View.VISIBLE);
-        fabExitEditMode.setVisibility(View.VISIBLE);
-        tvEditMode.setVisibility(View.GONE);
+        isEditMode = true; // Set flag so click and long click behave differently
+        tvEditBanner.setVisibility(View.VISIBLE); // Show red "EDIT MODE" banner at top
+        fabCategory.setVisibility(View.VISIBLE); // Show + FAB to add categories
+        fabExitEditMode.setVisibility(View.VISIBLE); // Show X FAB to exit edit mode
+        tvEditMode.setVisibility(View.GONE); // Hide the pencil button
     }
 
     private void exitEditMode() {
-        isEditMode = false;
-        tvEditBanner.setVisibility(View.GONE);
-        fabCategory.setVisibility(View.GONE);
-        fabExitEditMode.setVisibility(View.GONE);
-        tvEditMode.setVisibility(View.VISIBLE);
+        isEditMode = false; // Reset flag back to normal mode
+        tvEditBanner.setVisibility(View.GONE); // Hide the red banner
+        fabCategory.setVisibility(View.GONE); // Hide + FAB
+        fabExitEditMode.setVisibility(View.GONE); // Hide X FAB
+        tvEditMode.setVisibility(View.VISIBLE); // Show pencil button again
     }
 
+    // ==================== IMAGE PICKER ====================
+
     private void showImagePickerDialog() {
-        // Show a simple dialog with 2 options - Camera or Gallery
+        // Shows a simple popup with two options: Camera or Gallery
         new AlertDialog.Builder(this)
                 .setTitle("Choose Image Source")
                 .setItems(new String[]{"📷 Camera", "🖼️ Gallery"}, (dialog, which) -> {
-                    if (which == 0) { // Camera selected
-                        // Create a temporary file URI to save the photo
-                        selectedImageUri = createTempImageUri();
-                        cameraLauncher.launch(selectedImageUri); // Launch camera
-                    } else { // Gallery selected
-                        galleryLauncher.launch("image/*"); // Launch gallery - "image/*" means any image type
+                    if (which == 0) { // Index 0 = Camera was tapped
+                        selectedImageUri = createTempImageUri(); // Create the temp file BEFORE launching camera
+                        // We must create the URI first because the camera needs to know WHERE to save the photo
+                        cameraLauncher.launch(selectedImageUri); // Open camera app
+                    } else { // Index 1 = Gallery was tapped
+                        galleryLauncher.launch("image/*"); // "image/*" means accept any image type
                     }
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("Cancel", null) // null = just close the dialog, no extra action
+                .show(); // Display the dialog
+    }
+
+    // ==================== IMAGE CONFIRMATION DIALOG ====================
+
+    private void showImageConfirmationDialog(Uri imageUri, boolean fromGallery) {
+        // Shows the selected image in a popup BEFORE it gets added to the dialog
+        // Admin can then choose: Select (add to dialog), Delete (discard), or Retake (camera only)
+        // fromGallery = true → came from gallery → NO Retake button
+        // fromGallery = false → came from camera → show Retake button
+
+        // LinearLayout is a simple container - we use it to wrap the ImageView
+        // Without a container, AlertDialog doesn't display the ImageView properly
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL); // Stack children from top to bottom
+        layout.setPadding(8, 8, 8, 8); // Small padding so image doesn't touch the dialog edges
+
+        // Create the ImageView that will show the selected/taken image
+        ImageView previewImage = new ImageView(this);
+        previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER); // Show entire image without cropping
+        previewImage.setAdjustViewBounds(true); // Automatically adjust height to keep image proportions
+        Glide.with(this).load(imageUri).into(previewImage); // Load the image from the URI using Glide
+        previewImage.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, // Full width of the dialog
+                600 // Fixed height in pixels - tall enough to clearly see the image
+        ));
+        layout.addView(previewImage); // Add the ImageView into our LinearLayout container
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setView(layout) // Show our layout (with the image) as the dialog content
+                .setPositiveButton("✅ Select", (dialog, which) -> {
+                    // Admin confirmed they want this image
+                    if (currentDialogImagePreview != null) {
+                        currentDialogImagePreview.setVisibility(View.VISIBLE); // Show the preview in the dialog
+                        currentDialogImagePreview.setScaleType(ImageView.ScaleType.FIT_CENTER); // No cropping
+                        currentDialogImagePreview.setAdjustViewBounds(true); // Keep proportions
+                        Glide.with(this).load(imageUri).into(currentDialogImagePreview); // Load image into dialog
+
+                        // FIX FOR ISSUE 1: After image is shown in dialog, make it clickable
+                        // Without this, clicking the preview after selecting did nothing
+                        // Now clicking opens showSelectedImageOptionsDialog so admin can Change or Delete
+                        currentDialogImagePreview.setOnClickListener(v ->
+                                showSelectedImageOptionsDialog(imageUri));
+                    }
+                    if (currentDialogAddImageButton != null) {
+                        currentDialogAddImageButton.setVisibility(View.GONE); // Hide Add Image button
+                    }
+                })
+                .setNegativeButton("🗑️ Delete", (dialog, which) -> {
+                    // Admin discarded the image - reset everything back
+                    selectedImageUri = null; // Clear the saved URI
+                    if (currentDialogImagePreview != null) {
+                        currentDialogImagePreview.setVisibility(View.GONE); // Hide the preview
+                        currentDialogImagePreview.setOnClickListener(null); // Remove click listener - image is gone
+                    }
+                    if (currentDialogAddImageButton != null) {
+                        currentDialogAddImageButton.setVisibility(View.VISIBLE); // Show Add Image button again
+                    }
+                });
+
+        // Only add the Retake button if the image came from the camera
+        // Gallery images don't need Retake because the user can simply pick a different image
+        if (!fromGallery) {
+            builder.setNeutralButton("📷 Retake", (dialog, which) -> {
+                showImagePickerDialog(); // Open the Camera/Gallery picker again
+            });
+        }
+
+        builder.show(); // Display the confirmation dialog
+    }
+
+    // ==================== SELECTED IMAGE OPTIONS (after picking from gallery/camera) ====================
+
+    private void showSelectedImageOptionsDialog(Uri imageUri) {
+        // Shows when admin clicks on a NEWLY picked image shown in the Add/Edit dialog
+        // This is different from showExistingImageOptionsDialog which is for images already saved in Firestore
+        // Options: Change (pick a new image), Delete (remove image), Cancel (do nothing)
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(8, 8, 8, 8);
+
+        ImageView imageView = new ImageView(this);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER); // Full image no cropping
+        imageView.setAdjustViewBounds(true); // Keep proportions
+        Glide.with(this).load(imageUri).into(imageView); // Load the newly picked image
+        imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                600 // Fixed height
+        ));
+        layout.addView(imageView); // Add image to the layout container
+
+        new AlertDialog.Builder(this)
+                .setTitle("Image Options") // Title so admin knows what the buttons do
+                .setView(layout) // Show the image in the popup
+                .setPositiveButton("🔄 Change", (dialog, which) -> {
+                    // Admin wants to pick a different image - open picker again
+                    showImagePickerDialog();
+                })
+                .setNegativeButton("🗑️ Delete", (dialog, which) -> {
+                    // Admin wants to remove the image entirely
+                    selectedImageUri = null; // Clear the URI
+                    if (currentDialogImagePreview != null) {
+                        currentDialogImagePreview.setVisibility(View.GONE); // Hide the preview in the dialog
+                        currentDialogImagePreview.setOnClickListener(null); // Remove click listener - nothing to click anymore
+                    }
+                    if (currentDialogAddImageButton != null) {
+                        currentDialogAddImageButton.setVisibility(View.VISIBLE); // Show Add Image button again
+                    }
+                })
+                .setNeutralButton("❌ Cancel", null) // null = just close the popup, keep image as is
                 .show();
     }
 
-    private Uri createTempImageUri() {
-        // Create a temporary file to store the camera photo
-        // getExternalCacheDir() returns a temporary folder in the app's storage
-        java.io.File photoFile = new java.io.File(getExternalCacheDir(), "temp_photo_" + System.currentTimeMillis() + ".jpg");
-        // FileProvider converts the file path into a URI that the camera app can use
-        return androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".provider", photoFile);
+    // ==================== EXISTING IMAGE OPTIONS (for images already saved in Firestore) ====================
+
+    private void showExistingImageOptionsDialog(String imageUrl) {
+        // Shows when admin clicks on an image that is ALREADY SAVED in Firestore (only in Edit dialog)
+        // imageUrl is a Cloudinary HTTPS URL string, not a local URI
+        // Options: Change (pick new image), Delete (remove image), Cancel (do nothing)
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(8, 8, 8, 8);
+
+        ImageView imageView = new ImageView(this);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER); // Full image no cropping
+        imageView.setAdjustViewBounds(true); // Keep proportions
+        Glide.with(this).load(imageUrl).into(imageView); // Load from Cloudinary URL (not local URI)
+        imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                600 // Fixed height
+        ));
+        layout.addView(imageView);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Image Options") // Title so admin knows what the buttons do
+                .setView(layout)
+                .setPositiveButton("🔄 Change", (dialog, which) -> {
+                    // Admin wants to replace the image - open picker
+                    showImagePickerDialog();
+                })
+                .setNeutralButton("🗑️ Delete", (dialog, which) -> {
+                    // Admin wants to remove the existing image
+                    selectedImageUri = null; // Clear any selected URI
+                    if (currentDialogImagePreview != null) {
+                        currentDialogImagePreview.setVisibility(View.GONE); // Hide preview in dialog
+                        currentDialogImagePreview.setOnClickListener(null); // Remove click listener
+                    }
+                    if (currentDialogAddImageButton != null) {
+                        currentDialogAddImageButton.setVisibility(View.VISIBLE); // Show Add Image button
+                    }
+                })
+                .setNegativeButton("❌ Cancel", (dialog, which) -> {
+                    dialog.dismiss(); // Just close the popup - keep existing image unchanged
+                })
+                .show();
     }
 
-    private void showAddCategoryDialog() {
-        selectedImageUri = null; // Reset the selected image
+    // ==================== CREATE TEMP URI FOR CAMERA ====================
 
-        // Inflate our dialog_category.xml layout
+    private Uri createTempImageUri() {
+        // Creates a temporary file on disk that the camera app will save the photo into
+        // We need this because camera apps can't save directly into our app - they need a file path
+        // System.currentTimeMillis() makes the filename unique so we don't overwrite old photos
+        java.io.File photoFile = new java.io.File(getCacheDir(), // getCacheDir() = app's private temp folder
+                "temp_photo_" + System.currentTimeMillis() + ".jpg"); // Unique filename
+        // FileProvider converts our file path into a secure URI that the camera app is allowed to write to
+        // Without FileProvider the camera app would be blocked from saving the photo (security restriction)
+        return androidx.core.content.FileProvider.getUriForFile(this,
+                getPackageName() + ".provider", // Must match the authority in AndroidManifest.xml
+                photoFile);
+    }
+
+    // ==================== ADD CATEGORY DIALOG ====================
+
+    private void showAddCategoryDialog() {
+        selectedImageUri = null; // Reset any previously selected image
+
+        // Inflate means read the XML file and build the View from it
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category, null);
 
-        // Get the views from the dialog layout
+        // Connect variables to the views inside the dialog layout
         EditText etCategoryName = dialogView.findViewById(R.id.etCategoryName);
         EditText etCategoryNameHebrew = dialogView.findViewById(R.id.etCategoryNameHebrew);
         ImageView imgPreview = dialogView.findViewById(R.id.imgPreview);
         Button btnAddImage = dialogView.findViewById(R.id.btnAddImage);
 
-        currentDialogImagePreview = imgPreview; // Save reference to the preview ImageView
+        // Save references so showImageConfirmationDialog can update them after image is picked
+        currentDialogImagePreview = imgPreview;
+        currentDialogAddImageButton = btnAddImage;
 
-        // Add Image button click - show camera/gallery picker
-        btnAddImage.setOnClickListener(v -> showImagePickerDialog());
+        btnAddImage.setOnClickListener(v -> showImagePickerDialog()); // Open picker when Add Image is clicked
 
-        // Build the dialog
+        // Build the dialog - setPositiveButton null means we handle the click manually below
+        // We do this so the dialog stays open when there are validation errors
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Add New Category")
                 .setView(dialogView)
-                .setPositiveButton("Add", null) // null because we handle click manually below
+                .setPositiveButton("Add", null) // null = don't auto-dismiss on click
                 .setNegativeButton("Cancel", null)
                 .create();
 
-        dialog.show(); // Show the dialog first so we can access the Add button
+        dialog.show(); // Display the dialog
 
-        // Override the Add button click to validate before closing
-        // We do this AFTER show() so the button exists
+        // Override the Add button click AFTER showing so we can prevent auto-dismiss on error
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String name = etCategoryName.getText().toString().trim();
-            String nameHebrew = etCategoryNameHebrew.getText().toString().trim();
+            String name = etCategoryName.getText().toString().trim(); // Read and trim the English name
+            String nameHebrew = etCategoryNameHebrew.getText().toString().trim(); // Read and trim the Hebrew name
+            boolean hasError = false; // Track if any validation failed
 
-            // Validate all 3 fields - block if any is empty
+            // Validate English name
             if (name.isEmpty()) {
                 etCategoryName.setError("Please enter the category name in English");
-                return; // Stop here - don't close the dialog
-            }
-            if (nameHebrew.isEmpty()) {
-                etCategoryNameHebrew.setError("Please enter the category name in Hebrew");
-                return; // Stop here
-            }
-            if (selectedImageUri == null) { // No image selected
-                Toast.makeText(this, "Please add an image", Toast.LENGTH_SHORT).show();
-                return; // Stop here
+                hasError = true;
+            } else if (!name.matches("[a-zA-Z ]+")) { // Only letters and spaces allowed
+                etCategoryName.setError("Category name must be in English only");
+                hasError = true;
             }
 
-            // All fields are valid - upload image to Cloudinary then save to Firestore
-            uploadImageAndSaveCategory(name, nameHebrew, null, dialog);
+            // Validate Hebrew name
+            if (nameHebrew.isEmpty()) {
+                etCategoryNameHebrew.setError("Please enter the category name in Hebrew");
+                hasError = true;
+            } else if (!nameHebrew.matches("[\\u0590-\\u05FF ]+")) { // \u0590-\u05FF = Hebrew unicode range
+                etCategoryNameHebrew.setError("Category name must be in Hebrew only");
+                hasError = true;
+            }
+
+            // Validate image was selected
+            if (selectedImageUri == null) {
+                Toast.makeText(this, "Please add an image", Toast.LENGTH_SHORT).show();
+                hasError = true;
+            }
+
+            if (hasError) return; // Stop here - don't submit if there are errors
+
+            uploadImageAndSaveCategory(name, nameHebrew, null, dialog); // null = no existing ID, this is a new category
         });
     }
 
+    // ==================== EDIT CATEGORY DIALOG ====================
+
     private void showEditCategoryDialog(Category category) {
-        selectedImageUri = null; // Reset selected image
+        selectedImageUri = null; // Reset any previously selected image
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category, null);
-
         EditText etCategoryName = dialogView.findViewById(R.id.etCategoryName);
         EditText etCategoryNameHebrew = dialogView.findViewById(R.id.etCategoryNameHebrew);
         ImageView imgPreview = dialogView.findViewById(R.id.imgPreview);
         Button btnAddImage = dialogView.findViewById(R.id.btnAddImage);
 
         currentDialogImagePreview = imgPreview;
+        currentDialogAddImageButton = btnAddImage;
 
-        // Pre-fill the fields with existing data
-        etCategoryName.setText(category.getCategoryName());
-        etCategoryNameHebrew.setText(category.getCategoryNameHebrew());
+        // Pre-fill fields with existing category data so admin can see current values
+        etCategoryName.setText(category.getCategoryName()); // Show current English name
+        etCategoryNameHebrew.setText(category.getCategoryNameHebrew()); // Show current Hebrew name
 
-        // Show the existing image in the preview
-        imgPreview.setVisibility(View.VISIBLE);
-        Glide.with(this).load(category.getImage()).into(imgPreview);
+        // Show existing image and hide the Add Image button since image already exists
+        imgPreview.setVisibility(View.VISIBLE); // Make the preview visible
+        imgPreview.setScaleType(ImageView.ScaleType.FIT_CENTER); // Full image no cropping
+        imgPreview.setAdjustViewBounds(true); // Keep image proportions
+        Glide.with(this).load(category.getImage()).into(imgPreview); // Load existing image from Cloudinary URL
+        btnAddImage.setVisibility(View.GONE); // Hide Add Image button - image already exists
 
-        // Change button text to show the image can be changed
-        btnAddImage.setText("🔄 Change Image");
-        btnAddImage.setOnClickListener(v -> showImagePickerDialog());
+        // Clicking the existing image opens showExistingImageOptionsDialog
+        // This is the Firestore image (already saved) so we pass the URL string, not a URI
+        imgPreview.setOnClickListener(v -> showExistingImageOptionsDialog(category.getImage()));
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Edit Category")
                 .setView(dialogView)
-                .setPositiveButton("Save", null)
+                .setPositiveButton("Save", null) // null = handle click manually to prevent auto-dismiss
                 .setNegativeButton("Cancel", null)
                 .create();
 
@@ -287,136 +520,128 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String name = etCategoryName.getText().toString().trim();
             String nameHebrew = etCategoryNameHebrew.getText().toString().trim();
+            boolean hasError = false;
 
+            // Validate English name
             if (name.isEmpty()) {
                 etCategoryName.setError("Please enter the category name in English");
-                return;
-            }
-            if (nameHebrew.isEmpty()) {
-                etCategoryNameHebrew.setError("Please enter the category name in Hebrew");
-                return;
+                hasError = true;
+            } else if (!name.matches("[a-zA-Z ]+")) {
+                etCategoryName.setError("Category name must be in English only");
+                hasError = true;
             }
 
-            // If admin picked a new image, upload it - otherwise keep the existing URL
-            if (selectedImageUri != null) {
+            // Validate Hebrew name
+            if (nameHebrew.isEmpty()) {
+                etCategoryNameHebrew.setError("Please enter the category name in Hebrew");
+                hasError = true;
+            } else if (!nameHebrew.matches("[\\u0590-\\u05FF ]+")) {
+                etCategoryNameHebrew.setError("Category name must be in Hebrew only");
+                hasError = true;
+            }
+
+            if (hasError) return; // Stop if there are errors
+
+            if (selectedImageUri != null) { // Admin picked a new image - upload it then update Firestore
                 uploadImageAndSaveCategory(name, nameHebrew, category.getIdFS(), dialog);
-            } else {
-                // No new image selected - keep existing image URL
+            } else { // No new image - keep the existing Cloudinary URL
                 updateCategoryInFirestore(category.getIdFS(), name, nameHebrew, category.getImage());
-                dialog.dismiss(); // Close the dialog
+                dialog.dismiss(); // Close the dialog manually since we didn't upload
             }
         });
     }
 
-    private void uploadImageAndSaveCategory(String name, String nameHebrew, String categoryId, AlertDialog dialog) {
-        // Show loading message while uploading
-        Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
-        isUploadingImage = true;
+    // ==================== UPLOAD IMAGE AND SAVE ====================
 
-        // Upload the image to Cloudinary
+    private void uploadImageAndSaveCategory(String name, String nameHebrew, String categoryId, AlertDialog dialog) {
+        Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
+
         MediaManager.get()
-                .upload(selectedImageUri) // The image URI to upload
-                .option("upload_preset", "EnglishKingdom") // Our Cloudinary upload preset
+                .upload(selectedImageUri) // Upload the image URI to Cloudinary
+                .option("upload_preset", "EnglishKingdom") // Use our unsigned upload preset
                 .callback(new UploadCallback() {
                     @Override
-                    public void onStart(String requestId) {
-                        // Called when upload starts - nothing to do here
-                    }
+                    public void onStart(String requestId) {} // Upload started - nothing to do
 
                     @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {
-                        // Called while uploading - could show a progress bar here later
-                    }
+                    public void onProgress(String requestId, long bytes, long totalBytes) {} // Could show progress bar here
 
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
-                        // Called when upload succeeds
-                        isUploadingImage = false;
-                        String imageUrl = (String) resultData.get("secure_url"); // Get the uploaded image URL
-
-                        if (categoryId == null) { // Adding new category
+                        // Upload finished successfully
+                        // resultData is a Map containing all details about the uploaded file
+                        String imageUrl = (String) resultData.get("secure_url"); // Get the HTTPS URL of the uploaded image
+                        if (categoryId == null) { // null categoryId means this is a new category
                             addCategoryToFirestore(name, nameHebrew, imageUrl);
-                        } else { // Editing existing category
+                        } else { // Non-null categoryId means we're updating an existing category
                             updateCategoryInFirestore(categoryId, name, nameHebrew, imageUrl);
                         }
-                        dialog.dismiss(); // Close the dialog
+                        dialog.dismiss(); // Close the Add/Edit dialog
                     }
 
                     @Override
                     public void onError(String requestId, ErrorInfo error) {
-                        // Called when upload fails
-                        isUploadingImage = false;
-                        Toast.makeText(LearnActivity.this, "Image upload failed: " + error.getDescription(), Toast.LENGTH_SHORT).show();
+                        // Upload failed - show the error message
+                        Toast.makeText(LearnActivity.this, "Upload failed: " + error.getDescription(), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {
-                        // Called when upload is rescheduled - nothing to do here
-                    }
+                    public void onReschedule(String requestId, ErrorInfo error) {} // Upload was rescheduled - nothing to do
                 })
                 .dispatch(); // Start the upload
     }
 
+    // ==================== FIRESTORE OPERATIONS ====================
+
     private void addCategoryToFirestore(String name, String nameHebrew, String imageUrl) {
-        Category category = new Category(null, name, nameHebrew, imageUrl, 0);
-        db.collection("categories")
-                .add(category)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(this, "Category added! 🎉", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error adding category", Toast.LENGTH_SHORT).show();
-                });
+        // Creates a new Category object and saves it as a new document in the "categories" collection
+        Category category = new Category(null, name, nameHebrew, imageUrl, 0); // 0 = no words yet
+        db.collection("categories").add(category) // add() auto-generates a document ID
+                .addOnSuccessListener(ref -> Toast.makeText(this, "Category added! 🎉", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Error adding category", Toast.LENGTH_SHORT).show());
     }
 
     private void updateCategoryInFirestore(String categoryId, String name, String nameHebrew, String imageUrl) {
-        db.collection("categories")
-                .document(categoryId)
+        // Updates only the 3 specified fields of an existing category document
+        // update() only changes the fields listed - other fields like wordCount stay the same
+        db.collection("categories").document(categoryId) // Find the specific document by ID
                 .update("categoryName", name, "categoryNameHebrew", nameHebrew, "image", imageUrl)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Category updated! ✅", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error updating category", Toast.LENGTH_SHORT).show();
-                });
+                .addOnSuccessListener(v -> Toast.makeText(this, "Category updated! ✅", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Error updating category", Toast.LENGTH_SHORT).show());
     }
 
     private void showDeleteConfirmationDialog(Category category) {
+        // Shows a confirmation popup before deleting - prevents accidental deletion
         new AlertDialog.Builder(this)
                 .setTitle("Delete Category")
                 .setMessage("Are you sure you want to delete \"" + category.getCategoryName() + "\"?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    deleteCategoryFromFirestore(category.getIdFS());
-                })
-                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> deleteCategoryFromFirestore(category.getIdFS()))
+                .setNegativeButton("Cancel", null) // null = just close, don't delete
                 .show();
     }
 
     private void deleteCategoryFromFirestore(String categoryId) {
-        db.collection("categories")
-                .document(categoryId)
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Category deleted! 🗑️", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error deleting category", Toast.LENGTH_SHORT).show();
-                });
+        // Permanently deletes the category document from Firestore
+        db.collection("categories").document(categoryId).delete()
+                .addOnSuccessListener(v -> Toast.makeText(this, "Category deleted! 🗑️", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Error deleting category", Toast.LENGTH_SHORT).show());
     }
 
+    // ==================== CLICK LISTENER IMPLEMENTATIONS ====================
+
     @Override
-    public void onCategoryClick(Category category) {
+    public void onCategoryClick(Category category) { // Called by CategoryAdapter when a card is tapped
         if (isEditMode) {
-            showEditCategoryDialog(category); // Edit mode - show edit dialog
+            showEditCategoryDialog(category); // Edit mode → open edit dialog
         } else {
-            // TODO: Go to Words screen
+            // TODO: Navigate to Words screen when normal user taps a category
         }
     }
 
     @Override
-    public void onCategoryLongClick(Category category) {
+    public void onCategoryLongClick(Category category) { // Called by CategoryAdapter when a card is long pressed
         if (isEditMode) {
-            showDeleteConfirmationDialog(category); // Show delete confirmation
+            showDeleteConfirmationDialog(category); // Edit mode → show delete confirmation
         }
     }
 }

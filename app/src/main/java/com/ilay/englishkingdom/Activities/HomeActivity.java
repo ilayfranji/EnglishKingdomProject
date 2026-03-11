@@ -1,4 +1,4 @@
-package com.ilay.englishkingdom.Activities; // The package where this file lives
+package com.ilay.englishkingdom.Activities;
 
 import android.content.Intent; // Used to navigate between screens
 import android.content.SharedPreferences; // Used to clear Remember Me on logout
@@ -16,9 +16,9 @@ import com.google.firebase.auth.FirebaseAuth; // Used to get current user and lo
 import com.google.firebase.firestore.FirebaseFirestore; // Used to get user data from Firestore
 import com.ilay.englishkingdom.R; // Used to reference our XML resources
 
-public class HomeActivity extends AppCompatActivity { // HomeActivity is a screen in our app
+public class HomeActivity extends AppCompatActivity {
 
-    // Declare all UI elements - declared here so we can use them in any method
+    // Declare all UI elements
     private TextView tvWelcome; // The welcome message text
     private TextView tvMenu; // The hamburger menu button
     private TextView tvQuote; // The motivational quote text
@@ -29,155 +29,149 @@ public class HomeActivity extends AppCompatActivity { // HomeActivity is a scree
     private FirebaseFirestore db; // Our connection to Firestore database
     private SharedPreferences sharedPreferences; // Our encrypted local storage
 
-    private String[] quotes; // Quotes array - will be loaded from strings.xml
+    private String[] quotes; // Array of motivational quotes loaded from strings.xml
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) { // onCreate runs when the screen is first created
-        super.onCreate(savedInstanceState); // Call the parent class onCreate - always required
-        setContentView(R.layout.activity_home); // Connect this Java file to the XML layout
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home);
 
-        // Load the quotes array from strings.xml
-        // getResources() gives us access to all res files
-        // getStringArray() gets the string-array we defined in strings.xml
+        // getResources().getStringArray() loads the string-array from strings.xml
+        // R.array.motivational_quotes is the ID of our quotes array in strings.xml
         quotes = getResources().getStringArray(R.array.motivational_quotes);
 
-        mAuth = FirebaseAuth.getInstance(); // Get the Firebase Auth instance - connects us to Firebase
-        db = FirebaseFirestore.getInstance(); // Get the Firestore instance - connects us to our database
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
-        // Initialize EncryptedSharedPreferences to store data safely on the device
+        // Initialize EncryptedSharedPreferences to store data safely
         try {
-            // MasterKey is the encryption key that will protect our data
-            // AES256_GCM is a very strong encryption method used by banks and governments
-            MasterKey masterKey = new MasterKey.Builder(this) // "this" is the current activity
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM) // Set the encryption type
-                    .build(); // Build the key
+            // MasterKey is the encryption key - AES256_GCM is a very strong encryption method
+            MasterKey masterKey = new MasterKey.Builder(this)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build();
 
-            // Create EncryptedSharedPreferences - works exactly like SharedPreferences but encrypts everything
+            // EncryptedSharedPreferences works like SharedPreferences but encrypts everything
             sharedPreferences = EncryptedSharedPreferences.create(
-                    this, // The current activity context
-                    "EnglishKingdomPrefs", // The name of our local storage file
-                    masterKey, // The encryption key we just created
+                    this,
+                    "EnglishKingdomPrefs", // Name of our local storage file
+                    masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, // Encrypts the keys
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM // Encrypts the values
             );
-        } catch (Exception e) { // If something goes wrong with encryption
-            // Fall back to regular SharedPreferences - not encrypted but app won't crash
+        } catch (Exception e) {
+            // If encryption fails fall back to regular SharedPreferences
             sharedPreferences = getSharedPreferences("EnglishKingdomPrefs", MODE_PRIVATE);
         }
 
-        // Connect each Java variable to its XML view using the ID we gave it in XML
-        tvWelcome = findViewById(R.id.tvWelcome); // Connect welcome text
-        tvMenu = findViewById(R.id.tvMenu); // Connect menu button
-        tvQuote = findViewById(R.id.tvQuote); // Connect quote text
-        cardLearn = findViewById(R.id.cardLearn); // Connect Learn card
-        cardPractice = findViewById(R.id.cardPractice); // Connect Practice card
+        // Connect each Java variable to its XML view
+        tvWelcome = findViewById(R.id.tvWelcome);
+        tvMenu = findViewById(R.id.tvMenu);
+        tvQuote = findViewById(R.id.tvQuote);
+        cardLearn = findViewById(R.id.cardLearn);
+        cardPractice = findViewById(R.id.cardPractice);
 
-        loadUserName(); // Call the method that loads the user's name from Firestore
-        showRandomQuote(); // Call the method that shows a random motivational quote
+        loadUserName(); // Load user's name from Firestore
+        showRandomQuote(); // Show a random motivational quote
 
-        // Set click listener on the menu button
+        // Menu button click - show the popup menu
         tvMenu.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when the menu button is clicked
-                showMenu(v); // Call showMenu and pass the view that was clicked so menu appears near it
+            public void onClick(View v) {
+                showMenu(v); // Pass the view so the menu appears near it
             }
         });
 
-        // Set click listener on the Learn card
+        // Learn card click - navigate to LearnActivity
+        // Previously this was WRONG because the click listener was nested inside itself!
+        // The outer click set a new click listener instead of actually navigating
+        // Now it correctly navigates to LearnActivity when clicked
         cardLearn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when the Learn card is clicked
-                cardLearn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        startActivity(new Intent(HomeActivity.this, LearnActivity.class)); // Go to LearnActivity
-                    }
-                });
+            public void onClick(View v) {
+                startActivity(new Intent(HomeActivity.this, LearnActivity.class)); // Go to LearnActivity
             }
         });
 
-        // Set click listener on the Practice card
+        // Practice card click - TODO: navigate to Practice screen
         cardPractice.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when the Practice card is clicked
+            public void onClick(View v) {
                 // TODO: Go to Practice screen (we will build this later)
             }
         });
     }
 
-    private void loadUserName() { // This method loads the user's name from Firestore
-        if (mAuth.getCurrentUser() == null) { // Check if the user is a guest (not logged in)
-            tvWelcome.setText("Welcome, Guest! 👋"); // Show generic welcome for guest
-            return; // Stop the method - no need to fetch from Firestore
+    private void loadUserName() { // Loads the user's first name from Firestore
+        if (mAuth.getCurrentUser() == null) { // If user is a guest (not logged in)
+            tvWelcome.setText("Welcome, Guest! 👋"); // Show generic welcome
+            return; // Stop method - no need to fetch from Firestore
         }
 
-        // User is logged in - get their unique ID from Firebase Auth
-        String userId = mAuth.getCurrentUser().getUid(); // getUid() returns the unique ID of the logged in user
+        String userId = mAuth.getCurrentUser().getUid(); // Get the logged in user's unique ID
 
-        // Access Firestore to get the user's data
-        db.collection("users") // Access the "users" collection in Firestore
-                .document(userId) // Get the specific document that has the user's ID as its name
-                .get() // Fetch the document from Firestore
-                .addOnSuccessListener(document -> { // Runs when Firestore responds successfully
-                    if (document.exists()) { // Check if the document actually exists in Firestore
-                        String firstName = document.getString("firstName"); // Get the "firstName" field from the document
-                        tvWelcome.setText("Welcome, " + firstName + "! 👋"); // Set the welcome message with the user's real name
-                    } else { // If the document doesn't exist in Firestore
-                        tvWelcome.setText("Welcome! 👋"); // Show a generic welcome message
+        db.collection("users")
+                .document(userId) // Get the document with this user's ID
+                .get() // Fetch from Firestore
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) { // If document exists in Firestore
+                        String firstName = document.getString("firstName"); // Get firstName field
+                        tvWelcome.setText("Welcome, " + firstName + "! 👋"); // Set welcome with real name
+                    } else {
+                        tvWelcome.setText("Welcome! 👋"); // Fallback if document doesn't exist
                     }
                 })
-                .addOnFailureListener(e -> { // Runs if something goes wrong with Firestore
-                    tvWelcome.setText("Welcome! 👋"); // Show generic welcome if Firestore fails
+                .addOnFailureListener(e -> {
+                    tvWelcome.setText("Welcome! 👋"); // Fallback if Firestore fails
                 });
     }
 
-    private void showRandomQuote() { // This method picks and shows a random motivational quote
-        int randomIndex = (int) (Math.random() * quotes.length); // Pick a random number between 0 and the number of quotes
-        tvQuote.setText(quotes[randomIndex]); // Set the quote at the random index
+    private void showRandomQuote() { // Picks and shows a random motivational quote
+        // Math.random() returns a number between 0.0 and 1.0
+        // Multiplying by quotes.length gives us a number between 0 and the number of quotes
+        // (int) converts it to a whole number - this is our random index
+        int randomIndex = (int) (Math.random() * quotes.length);
+        tvQuote.setText(quotes[randomIndex]); // Show the quote at the random index
     }
 
-    private void showMenu(View v) { // This method shows the hamburger menu
-        PopupMenu popupMenu = new PopupMenu(this, v); // Create a PopupMenu - "this" is the activity, "v" is where it appears
-
-        // Inflate the menu from our XML file in res/menu/home_menu.xml
-        // "Inflate" means read the XML file and build the menu from it
+    private void showMenu(View v) { // Shows the hamburger popup menu
+        PopupMenu popupMenu = new PopupMenu(this, v); // Create popup - appears near the clicked view
+        // Inflate means read the XML file and build the menu from it
         popupMenu.getMenuInflater().inflate(R.menu.home_menu, popupMenu.getMenu());
 
-        // Handle menu item clicks
-        popupMenu.setOnMenuItemClickListener(item -> { // This runs when any menu item is clicked
-            int id = item.getItemId(); // Get the ID of the item that was clicked
+        popupMenu.setOnMenuItemClickListener(item -> { // Runs when any menu item is clicked
+            int id = item.getItemId(); // Get the ID of the clicked item
 
-            if (id == R.id.menu_profile) { // If Profile was clicked
-                // TODO: Go to Profile screen (we will build this later)
-                return true; // Return true means we handled this click
+            if (id == R.id.menu_profile) { // Profile clicked
+                // TODO: Go to Profile screen
+                return true; // true means we handled this click
 
-            } else if (id == R.id.menu_how_to_play) { // If How to Play was clicked
-                // TODO: Go to How to Play screen (we will build this later)
-                return true; // Return true means we handled this click
+            } else if (id == R.id.menu_how_to_play) { // How to Play clicked
+                // TODO: Go to How to Play screen
+                return true;
 
-            } else if (id == R.id.menu_logout) { // If Logout was clicked
-                logoutUser(); // Call the logout method
-                return true; // Return true means we handled this click
+            } else if (id == R.id.menu_logout) { // Logout clicked
+                logoutUser();
+                return true;
             }
 
-            return false; // Return false means we did not handle this click
+            return false; // false means we did not handle this click
         });
 
-        popupMenu.show(); // Display the menu on screen
+        popupMenu.show(); // Display the menu
     }
 
-    private void logoutUser() { // This method logs out the user
-        mAuth.signOut(); // Tell Firebase to sign out the current user
+    private void logoutUser() { // Logs out the user and goes back to Login screen
+        mAuth.signOut(); // Sign out from Firebase
 
-        // Clear the Remember Me data from SharedPreferences
-        SharedPreferences.Editor editor = sharedPreferences.edit(); // Open SharedPreferences for editing
+        // Clear Remember Me data from SharedPreferences
+        SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("rememberMe", false); // Set rememberMe to false
-        editor.remove("email"); // Remove the saved email
-        editor.apply(); // Save all the changes
+        editor.remove("email"); // Remove saved email
+        editor.apply(); // Save changes
 
-        // Navigate back to the Login screen
-        Intent intent = new Intent(HomeActivity.this, LoginActivity.class); // Create intent to go to LoginActivity
-        startActivity(intent); // Open LoginActivity
-        finish(); // Close HomeActivity so user cannot press back and return to it
+        // Navigate to LoginActivity
+        Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish(); // Close HomeActivity so user can't press back to return
     }
 }

@@ -30,12 +30,15 @@
         <!-- Learn Screen -->
         <activity
             android:name=".Activities.LearnActivity"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="false" />
 
 
         <!-- Splash Screen - this is the ONLY launcher activity, meaning it opens first when the app starts -->
         <activity
             android:name=".Activities.SplashActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
 
 
@@ -53,16 +56,19 @@
         <!-- Login Screen - exported=false means only our app can open this activity -->
         <activity
             android:name=".Activities.LoginActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Register Screen - exported=false means only our app can open this activity -->
         <activity
             android:name=".Activities.RegisterActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Home Screen - exported=false means only our app can open this activity -->
         <activity
             android:name=".Activities.HomeActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- FileProvider - allows our app to share files with the camera app securely -->
