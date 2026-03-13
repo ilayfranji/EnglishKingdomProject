@@ -1,262 +1,262 @@
-package com.ilay.englishkingdom.Activities; // The package where this file lives
+package com.ilay.englishkingdom.Activities;
 
-import android.content.Intent; // Used to navigate between screens
-import android.content.SharedPreferences; // Used to save small data locally on the device
-import android.os.Bundle; // Used when creating the activity
-import android.util.Patterns; // Used to validate email format
-import android.view.View; // Used to reference UI elements
-import android.widget.Button; // Used for buttons
-import android.widget.CheckBox; // Used for the "Remember Me" checkbox
-import android.widget.EditText; // Used for text input fields
-import android.widget.TextView; // Used for clickable texts
-import android.widget.Toast; // Used to show short popup messages
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.util.Patterns;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // Used to show popup windows
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
-import androidx.security.crypto.EncryptedSharedPreferences; // Used to encrypt our local storage
-import androidx.security.crypto.MasterKey; // Used to create the encryption key
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.security.crypto.EncryptedSharedPreferences;
+import androidx.security.crypto.MasterKey;
 
-import com.google.firebase.auth.FirebaseAuth; // Firebase Authentication
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException; // Thrown when email or password is wrong
-import com.google.firebase.auth.FirebaseAuthInvalidUserException; // Thrown when no account found with this email
-import com.ilay.englishkingdom.R; // Used to reference our XML resources
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.ilay.englishkingdom.R;
 
-public class LoginActivity extends AppCompatActivity { // LoginActivity is a screen in our app
+public class LoginActivity extends AppCompatActivity {
 
-    // Declare all UI elements - declared here so we can use them in any method
-    private EditText etEmail; // Input field for email
-    private EditText etPassword; // Input field for password
-    private Button btnLogin; // Login button
-    private Button btnGuest; // Guest button
-    private CheckBox cbRememberMe; // Remember Me checkbox
-    private TextView tvForgotPassword; // Forgot password clickable text
-    private TextView tvRegister; // Register clickable text
+    // הצהרה על כל רכיבי ממשק המשתמש - מוצהרים כאן כדי שנוכל להשתמש בהם בכל הפונק'
+    private EditText etEmail;
+    private EditText etPassword;
+    private Button btnLogin;
+    private Button btnGuest;
+    private CheckBox cbRememberMe;
+    private TextView tvForgotPassword;
+    private TextView tvRegister;
 
-    private FirebaseAuth mAuth; // Our connection to Firebase Authentication
-    private SharedPreferences sharedPreferences; // Our encrypted local storage
+    private FirebaseAuth mAuth; // חיבור לאימות של פיירבייס
+    private SharedPreferences sharedPreferences; // מידע מקומי שנשמר בהצפנה
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) { // onCreate runs when the screen is first created
-        super.onCreate(savedInstanceState); // Call the parent class onCreate - always required
-        setContentView(R.layout.activity_login); // Connect this Java file to the XML layout
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
 
-        mAuth = FirebaseAuth.getInstance(); // Get the Firebase Auth instance - connects us to Firebase
+        mAuth = FirebaseAuth.getInstance(); // אתחול אובייקט ה-Authentication של Firebase לצורך ניהול משתמשים
 
-        // Initialize EncryptedSharedPreferences to store data safely on the device
+        // אתחול EncryptedSharedPreferences לשמירת נתונים בצורה מאובטחת על המכשיר
         try {
-            // MasterKey is the encryption key that will protect our data
-            // AES256_GCM is a very strong encryption method used by banks and governments
-            MasterKey masterKey = new MasterKey.Builder(this) // "this" is the current activity
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM) // Set the encryption type
-                    .build(); // Build the key
+            // MasterKey הוא מפתח ההצפנה שיגן על הנתונים שלנו
+            // AES256_GCM היא שיטת הצפנה חזקה מאוד המשמשת בנקים וממשלות
+            MasterKey masterKey = new MasterKey.Builder(this) // "this" מייצג את האקטיביטי הנוכחית
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM) // הגדרת סוג ההצפנה
+                    .build(); // בניית המפתח
 
-            // Create EncryptedSharedPreferences - works exactly like SharedPreferences but encrypts everything
+            // יצירת ה-EncryptedSharedPreferences - עובד בדיוק כמו SharedPreferences רגיל אך מצפין הכל
             sharedPreferences = EncryptedSharedPreferences.create(
-                    this, // The current activity context
-                    "EnglishKingdomPrefs", // The name of our local storage file
-                    masterKey, // The encryption key we just created
-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, // Encrypts the keys
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM // Encrypts the values
+                    this, // הקשר (Context) של האקטיביטי הנוכחית
+                    "EnglishKingdomPrefs", // שם הקובץ לאחסון המקומי שלנו
+                    masterKey, // מפתח ההצפנה שיצרנו הרגע
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, // מצפין את המפתחות (Keys)
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM // מצפין את הערכים (Values)
             );
-        } catch (Exception e) { // If something goes wrong with encryption
-            sharedPreferences = getSharedPreferences("EnglishKingdomPrefs", MODE_PRIVATE); // Fall back to regular SharedPreferences
+        } catch (Exception e) { // אם משהו משתבש בתהליך ההצפנה
+            sharedPreferences = getSharedPreferences("EnglishKingdomPrefs", MODE_PRIVATE); // חזרה ל-SharedPreferences רגיל כגיבוי
         }
 
-        // Connect each Java variable to its XML view using the ID we gave it in XML
-        etEmail = findViewById(R.id.etEmail); // Connect email input
-        etPassword = findViewById(R.id.etPassword); // Connect password input
-        btnLogin = findViewById(R.id.btnLogin); // Connect login button
-        btnGuest = findViewById(R.id.btnGuest); // Connect guest button
-        cbRememberMe = findViewById(R.id.cbRememberMe); // Connect remember me checkbox
-        tvForgotPassword = findViewById(R.id.tvForgotPassword); // Connect forgot password text
-        tvRegister = findViewById(R.id.tvRegister); // Connect register text
+        // חיבור כל משתנה Java לרכיב ה-XML שלו באמצעות ה-ID שנתנו לו ב-XML
+        etEmail = findViewById(R.id.etEmail); // חיבור שדה האימייל
+        etPassword = findViewById(R.id.etPassword); // חיבור שדה הסיסמה
+        btnLogin = findViewById(R.id.btnLogin); // חיבור כפתור ההתחברות
+        btnGuest = findViewById(R.id.btnGuest); // חיבור כפתור האורח
+        cbRememberMe = findViewById(R.id.cbRememberMe); // חיבור תיבת הסימון "זכור אותי"
+        tvForgotPassword = findViewById(R.id.tvForgotPassword); // חיבור טקסט "שכחתי סיסמה"
+        tvRegister = findViewById(R.id.tvRegister); // חיבור טקסט "הרשמה"
 
-        // Check if the user previously checked "Remember Me"
-        boolean rememberMe = sharedPreferences.getBoolean("rememberMe", false); // Get saved value, default is false
-        if (rememberMe && mAuth.getCurrentUser() != null) { // If remember me is true AND user is still logged in Firebase
-            goToHome(); // Skip login screen and go directly to Home
-            return; // Stop running the rest of onCreate
+        // בדיקה אם המשתמש סימן בעבר "זכור אותי"
+        boolean rememberMe = sharedPreferences.getBoolean("rememberMe", false); // קבלת הערך השמור, ברירת המחדל היא false
+        if (rememberMe && mAuth.getCurrentUser() != null) { // אם "זכור אותי" מסומן וגם המשתמש עדיין מחובר ב-Firebase
+            goToHome(); // דלג על מסך ההתחברות ועבור ישירות למסך הבית
+            return; // הפסקת הרצת שאר הקוד בתוך onCreate
         }
 
-        // Load the saved email if it exists
-        String savedEmail = sharedPreferences.getString("email", ""); // Get saved email, default is empty string
-        if (!savedEmail.isEmpty()) { // If there is a saved email
-            etEmail.setText(savedEmail); // Fill the email field automatically
+        // טעינת האימייל השמור במידה והוא קיים
+        String savedEmail = sharedPreferences.getString("email", ""); // קבלת האימייל השמור, ברירת מחדל היא מחרוזת ריקה
+        if (!savedEmail.isEmpty()) { // אם קיים אימייל שמור
+            etEmail.setText(savedEmail); // מילוי שדה האימייל באופן אוטומטי
         }
 
-        // Set click listener on the Login button
+        // הגדרת מאזין ללחיצה על כפתור ההתחברות
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when the login button is clicked
-                loginUser(); // Call the loginUser method
+            public void onClick(View v) { // רץ כאשר לוחצים על כפתור ההתחברות
+                loginUser(); // קריאה למתודת loginUser
             }
         });
 
-        // Set click listener on the Guest button
+        // הגדרת מאזין ללחיצה על כפתור האורח
         btnGuest.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when the guest button is clicked
-                showGuestWarning(); // Call the showGuestWarning method
+            public void onClick(View v) { // רץ כאשר לוחצים על כפתור האורח
+                showGuestWarning(); // קריאה למתודת showGuestWarning
             }
         });
 
-        // Set click listener on the Forgot Password text
+        // הגדרת מאזין ללחיצה על טקסט "שכחתי סיסמה"
         tvForgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { // This runs when forgot password is clicked
-                resetPassword(); // Call the resetPassword method
+            public void onClick(View v) { // רץ כאשר לוחצים על שכחתי סיסמה
+                resetPassword(); // קריאה למתודת resetPassword
             }
         });
 
-        // Set click listener on the Register text
+        // הגדרת מאזין ללחיצה על טקסט ההרשמה
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Clear all fields before going to Register
-                // This ensures fields are empty when user comes back to Login
-                etEmail.setText(""); // Clear email field
-                etPassword.setText(""); // Clear password field
-                etEmail.setError(null); // Clear any error on email field
-                etPassword.setError(null); // Clear any error on password field
-                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)); // Go to RegisterActivity
+                // ניקוי כל השדות לפני מעבר למסך הרשמה
+                // זה מבטיח שהשדות יהיו ריקים כשהמשתמש יחזור למסך ההתחברות
+                etEmail.setText(""); // ניקוי שדה אימייל
+                etPassword.setText(""); // ניקוי שדה סיסמה
+                etEmail.setError(null); // הסרת התראת שגיאה משדה האימייל
+                etPassword.setError(null); // הסרת התראת שגיאה משדה הסיסמה
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class)); // מעבר ל-RegisterActivity
             }
         });
     }
 
-    private void loginUser() { // This method handles the login logic
-        String email = etEmail.getText().toString().trim(); // Get email text and remove extra spaces
-        String password = etPassword.getText().toString().trim(); // Get password text and remove extra spaces
+    private void loginUser() { // מתודה זו מטפלת בלוגיקה של ההתחברות
+        String email = etEmail.getText().toString().trim(); // קבלת טקסט האימייל והסרת רווחים מיותרים
+        String password = etPassword.getText().toString().trim(); // קבלת טקסט הסיסמה והסרת רווחים מיותרים
 
-        boolean hasError = false; // This flag tracks if any field has an error - if true we stop the method
+        boolean hasError = false; // דגל למעקב אם קיימת שגיאה באחד השדות - אם true, נעצור את הפעולה
 
-        // Validate email - check if it is empty
+        // אימות אימייל - בדיקה אם השדה ריק
         if (email.isEmpty()) {
-            etEmail.setError("Email is required"); // Show error directly under the email field
-            hasError = true; // Mark that there is an error
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // Check if email format is valid
-            etEmail.setError("Please enter a valid email"); // Show error under email field
-            hasError = true; // Mark that there is an error
+            etEmail.setError("Email is required"); // הצגת שגיאה ישירות מתחת לשדה האימייל
+            hasError = true; // סימון שקיימת שגיאה
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // בדיקה אם פורמט האימייל תקין
+            etEmail.setError("Please enter a valid email"); // הצגת שגיאה מתחת לשדה האימייל
+            hasError = true; // סימון שקיימת שגיאה
         }
 
-        // Validate password - check if it is empty
+        // אימות סיסמה - בדיקה אם השדה ריק
         if (password.isEmpty()) {
-            etPassword.setError("Password is required"); // Show error under password field
-            hasError = true; // Mark that there is an error
-        } else if (password.length() < 6) { // Check if password is at least 6 characters
-            etPassword.setError("Password must be at least 6 characters"); // Show error under password field
-            hasError = true; // Mark that there is an error
+            etPassword.setError("Password is required"); // הצגת שגיאה מתחת לשדה הסיסמה
+            hasError = true; // סימון שקיימת שגיאה
+        } else if (password.length() < 6) { // בדיקה אם הסיסמה היא באורך של 6 תווים לפחות
+            etPassword.setError("Password must be at least 6 characters"); // הצגת שגיאה מתחת לשדה הסיסמה
+            hasError = true; // סימון שקיימת שגיאה
         }
 
-        if (hasError) return; // If any field has an error stop the method - ALL errors show at once
+        if (hasError) return; // אם קיימת שגיאה באחד השדות, הפסקת המתודה - כל השגיאות יוצגו בבת אחת
 
-        // All validation passed - tell Firebase to sign in with email and password
+        // כל הבדיקות עברו בהצלחה - נבקש מ-Firebase לבצע התחברות עם אימייל וסיסמה
         mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> { // addOnCompleteListener waits for Firebase to finish
-                    if (task.isSuccessful()) { // If login was successful
+                .addOnCompleteListener(task -> { // addOnCompleteListener ממתין ל-Firebase שיסיים את הפעולה
+                    if (task.isSuccessful()) { // אם ההתחברות הצליחה
 
-                        // Check if the user has verified their email
-                        if (mAuth.getCurrentUser().isEmailVerified()) { // isEmailVerified() returns true if user clicked the verification link
-                            // Email is verified - save Remember Me and go to Home
-                            SharedPreferences.Editor editor = sharedPreferences.edit(); // Open SharedPreferences for editing
-                            if (cbRememberMe.isChecked()) { // If Remember Me checkbox is checked
-                                editor.putBoolean("rememberMe", true); // Save rememberMe = true
-                                editor.putString("email", email); // Save the email
-                            } else { // If Remember Me is NOT checked
-                                editor.putBoolean("rememberMe", false); // Save rememberMe = false
-                                editor.remove("email"); // Delete any saved email
+                        // בדיקה אם המשתמש אימת את האימייל שלו
+                        if (mAuth.getCurrentUser().isEmailVerified()) { // isEmailVerified() מחזיר true אם המשתמש לחץ על קישור האימות
+                            // האימייל מאומת - שמירת "זכור אותי" ומעבר למסך הבית
+                            SharedPreferences.Editor editor = sharedPreferences.edit(); // פתיחת SharedPreferences לעריכה
+                            if (cbRememberMe.isChecked()) { // אם תיבת "זכור אותי" מסומנת
+                                editor.putBoolean("rememberMe", true); // שמירה שזכור אותי = true
+                                editor.putString("email", email); // שמירת האימייל
+                            } else { // אם "זכור אותי" לא מסומן
+                                editor.putBoolean("rememberMe", false); // שמירה שזכור אותי = false
+                                editor.remove("email"); // מחיקת אימייל שמור במידה והיה
                             }
-                            editor.apply(); // Apply all changes to SharedPreferences
-                            goToHome(); // Navigate to Home screen
+                            editor.apply(); // החלת כל השינויים ב-SharedPreferences
+                            goToHome(); // מעבר למסך הבית
 
-                        } else { // If email is NOT verified yet
-                            mAuth.signOut(); // Sign out the user immediately so they cannot access the app
+                        } else { // אם האימייל עדיין לא אומת
+                            mAuth.signOut(); // ניתוק מיידי של המשתמש כדי שלא יוכל לגשת לאפליקציה
 
-                            // Show a popup telling the user to verify their email first
+                            // הצגת הודעה קופצת המורה למשתמש לאמת את האימייל תחילה
                             new AlertDialog.Builder(LoginActivity.this)
-                                    .setTitle("Email Not Verified") // Popup title
-                                    .setMessage("Please verify your email before logging in. Check your inbox.") // Popup message
-                                    .setPositiveButton("Resend Email", (dialog, which) -> { // Button to resend the verification email
-                                        // Sign in temporarily just to resend the verification email
+                                    .setTitle("Email Not Verified") // כותרת ההודעה
+                                    .setMessage("Please verify your email before logging in. Check your inbox.") // תוכן ההודעה
+                                    .setPositiveButton("Resend Email", (dialog, which) -> { // כפתור לשליחה חוזרת של אימייל האימות
+                                        // התחברות זמנית רק כדי לשלוח שוב את אימייל האימות
                                         mAuth.signInWithEmailAndPassword(email, password)
                                                 .addOnSuccessListener(authResult -> {
-                                                    authResult.getUser().sendEmailVerification(); // Send verification email again
-                                                    mAuth.signOut(); // Sign out immediately after sending
+                                                    authResult.getUser().sendEmailVerification(); // שליחה חוזרת של אימייל האימות
+                                                    mAuth.signOut(); // ניתוק מיידי לאחר השליחה
                                                     Toast.makeText(LoginActivity.this, "Verification email sent! Check your inbox 📧", Toast.LENGTH_LONG).show();
                                                 });
                                     })
-                                    .setNegativeButton("OK", null) // Close the popup
-                                    .show(); // Display the popup
+                                    .setNegativeButton("OK", null) // סגירת ההודעה הקופצת
+                                    .show(); // הצגת ההודעה
                         }
 
-                    } else { // If login failed
-                        Exception exception = task.getException(); // Get the exception from Firebase
+                    } else { // אם ההתחברות נכשלה
+                        Exception exception = task.getException(); // קבלת החרגת השגיאה (Exception) מ-Firebase
 
                         if (exception instanceof FirebaseAuthInvalidUserException) {
-                            // FirebaseAuthInvalidUserException is a specific Firebase exception
-                            // It means no account exists with this email in Firebase
-                            etEmail.setError("No user found, please create an account first"); // Show error under email field
-                            etEmail.requestFocus(); // Move cursor to email field
+                            // FirebaseAuthInvalidUserException היא שגיאה ספציפית של Firebase
+                            // היא אומרת שלא קיים חשבון עם האימייל הזה במערכת
+                            etEmail.setError("No user found, please create an account first"); // הצגת שגיאה מתחת לשדה האימייל
+                            etEmail.requestFocus(); // העברת הסמן לשדה האימייל
 
                         } else if (exception instanceof FirebaseAuthInvalidCredentialsException) {
-                            // FirebaseAuthInvalidCredentialsException means the credentials are wrong
-                            // In newer Firebase versions, it no longer tells us if it's the email or password
-                            // This is intentional for security - to prevent hackers from knowing which emails are registered
-                            // So we show a combined message for both wrong email and wrong password
+                            // FirebaseAuthInvalidCredentialsException אומרת שהפרטים שגויים
+                            // בגרסאות חדשות של Firebase, המערכת לא אומרת אם האימייל או הסיסמה הם השגויים
+                            // זה מכוון מטעמי אבטחה - כדי למנוע מהאקרים לדעת אילו אימיילים רשומים
+                            // לכן נציג הודעה משולבת עבור אימייל או סיסמה שגויים
                             Toast.makeText(LoginActivity.this, "Incorrect email or password, please try again", Toast.LENGTH_LONG).show();
 
                         } else if (exception != null && exception.getMessage() != null && exception.getMessage().contains("network")) {
-                            // Network error - no internet connection
+                            // שגיאת רשת - אין חיבור לאינטרנט
                             Toast.makeText(LoginActivity.this, "No internet connection", Toast.LENGTH_LONG).show();
 
                         } else {
-                            // Firebase issue - something went wrong on Firebase's side
-                            // This could be a server issue or any other unexpected error
+                            // בעיית Firebase - משהו השתבש בצד של Firebase
+                            // זה יכול להיות בעיית שרת או כל שגיאה בלתי צפויה אחרת
                             Toast.makeText(LoginActivity.this, "A Firebase error occurred, please try again later", Toast.LENGTH_LONG).show();
                         }
                     }
                 });
     }
 
-    private void resetPassword() { // This method sends a password reset email
-        String email = etEmail.getText().toString().trim(); // Get the email from the input field
+    private void resetPassword() { // מתודה זו שולחת אימייל לאיפוס סיסמה
+        String email = etEmail.getText().toString().trim(); // קבלת האימייל משדה הקלט
 
-        if (email.isEmpty()) { // If the email field is empty
-            etEmail.setError("Please enter your email first"); // Show error under email field
-            etEmail.requestFocus(); // Move cursor to email field
-            return; // Stop the method
+        if (email.isEmpty()) { // אם שדה האימייל ריק
+            etEmail.setError("Please enter your email first"); // הצגת שגיאה מתחת לשדה האימייל
+            etEmail.requestFocus(); // העברת הסמן לשדה האימייל
+            return; // עצירת המתודה
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // If email format is invalid
-            etEmail.setError("Please enter a valid email"); // Show error under email field
-            etEmail.requestFocus(); // Move cursor to email field
-            return; // Stop the method
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // אם פורמט האימייל לא תקין
+            etEmail.setError("Please enter a valid email"); // הצגת שגיאה מתחת לשדה האימייל
+            etEmail.requestFocus(); // העברת הסמן לשדה האימייל
+            return; // עצירת המתודה
         }
 
-        // Tell Firebase to send a password reset email to the user
+        // בקשה מ-Firebase לשלוח אימייל איפוס סיסמה למשתמש
         mAuth.sendPasswordResetEmail(email)
-                .addOnCompleteListener(task -> { // Wait for Firebase to finish
-                    if (task.isSuccessful()) { // If email was sent successfully
+                .addOnCompleteListener(task -> { // המתנה לסיום הפעולה ב-Firebase
+                    if (task.isSuccessful()) { // אם האימייל נשלח בהצלחה
                         Toast.makeText(LoginActivity.this, "Reset email sent! Check your inbox 📧", Toast.LENGTH_LONG).show();
-                    } else { // If something went wrong
+                    } else { // אם משהו השתבש
                         Toast.makeText(LoginActivity.this, "Error sending reset email, please try again", Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
-    private void showGuestWarning() { // This method shows a warning popup before continuing as guest
-        new AlertDialog.Builder(this) // Create a new popup dialog
-                .setTitle("Continue as Guest") // Set the title of the popup
-                .setMessage("As a guest you can access the Learn section and Practice games, but your records will not be saved and AI practice will not be available.") // Warning message
-                .setPositiveButton("Continue", (dialog, which) -> { // "Continue" button - runs when clicked
-                    goToHome(); // Go to Home screen as guest
+    private void showGuestWarning() { // מתודה זו מציגה הודעת אזהרה לפני המשך כמשתמש אורח
+        new AlertDialog.Builder(this) // יצירת הודעה קופצת חדשה
+                .setTitle("Continue as Guest") // קביעת כותרת ההודעה
+                .setMessage("As a guest you can access the Learn section and Practice games, but your records will not be saved and AI practice will not be available.") // הודעת האזהרה
+                .setPositiveButton("Continue", (dialog, which) -> { // כפתור "המשך" - רץ בעת לחיצה
+                    goToHome(); // מעבר למסך הבית כאורח
                 })
-                .setNegativeButton("Cancel", null) // "Cancel" button - closes the popup and does nothing
-                .show(); // Display the popup on screen
+                .setNegativeButton("Cancel", null) // כפתור "ביטול" - סוגר את ההודעה ולא עושה כלום
+                .show(); // הצגת ההודעה הקופצת על המסך
     }
 
-    private void goToHome() { // This method navigates to the Home screen
-        Intent intent = new Intent(LoginActivity.this, HomeActivity.class); // Create intent to go to HomeActivity
-        startActivity(intent); // Open HomeActivity
-        finish(); // Close LoginActivity so user cannot press back and return to login
+    private void goToHome() { // מתודה זו מבצעת ניווט למסך הבית
+        Intent intent = new Intent(LoginActivity.this, HomeActivity.class); // יצירת Intent למעבר ל-HomeActivity
+        startActivity(intent); // פתיחת HomeActivity
+        finish(); // סגירת LoginActivity כדי שהמשתמש לא יוכל ללחוץ על "חזור" ולחזור למסך ההתחברות
     }
 }

@@ -1,118 +1,118 @@
-package com.ilay.englishkingdom.Adapters; // The package where this file lives
+package com.ilay.englishkingdom.Adapters; // החבילה (package) שבה הקובץ הזה נמצא
 
-import android.content.Context; // Context gives us access to app resources and system services
-import android.view.LayoutInflater; // LayoutInflater converts XML layout files into actual View objects
-import android.view.View; // View is the base class for all UI elements
-import android.view.ViewGroup; // ViewGroup is a container that holds other views
-import android.widget.ImageView; // Used to display images
-import android.widget.ProgressBar; // Used to display the progress bar
-import android.widget.TextView; // Used to display text
+import android.content.Context; // Context נותן לנו גישה למשאבי אפליקציה ושירותי מערכת
+import android.view.LayoutInflater; // LayoutInflater ממיר קבצי עיצוב XML לאובייקטי View אמיתיים
+import android.view.View; // View הוא מחלקת הבסיס לכל אלמנטי ממשק המשתמש
+import android.view.ViewGroup; // ViewGroup הוא מיכל המחזיק תצוגות (Views) אחרות
+import android.widget.ImageView; // משמש להצגת תמונות
+import android.widget.ProgressBar; // משמש להצגת פס התקדמות
+import android.widget.TextView; // משמש להצגת טקסט
 
-import androidx.annotation.NonNull; // NonNull means this parameter cannot be null
-import androidx.recyclerview.widget.RecyclerView; // RecyclerView is the list we use to display categories
+import androidx.annotation.NonNull; // NonNull אומר שפרמטר זה אינו יכול להיות null
+import androidx.recyclerview.widget.RecyclerView; // RecyclerView היא הרשימה בה אנו משתמשים להצגת קטגוריות
 
-import com.bumptech.glide.Glide; // Glide is the library we use to load images from URLs
-import com.ilay.englishkingdom.Models.Category; // Our Category model class
-import com.ilay.englishkingdom.R; // Used to reference our XML resources
+import com.bumptech.glide.Glide; // Glide היא הספרייה בה אנו משתמשים לטעינת תמונות מכתובות URL
+import com.ilay.englishkingdom.Models.Category; // מחלקת המודל Category שלנו
+import com.ilay.englishkingdom.R; // משמש לרפרנס של משאבי ה-XML שלנו
 
-import java.util.List; // List is a collection that holds multiple Category objects
+import java.util.List; // List הוא אוסף המחזיק מספר אובייקטי Category
 
-// CategoryAdapter connects our list of Category objects to the RecyclerView
-// Think of it like a "bridge" between the data and the UI
-// RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> means this adapter uses CategoryViewHolder
+// CategoryAdapter מחבר את רשימת אובייקטי ה-Category שלנו ל-RecyclerView
+// חשוב על זה כעל "גשר" בין הנתונים לבין ממשק המשתמש (UI)
+// RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> אומר שהאדפטר הזה משתמש ב-CategoryViewHolder
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
 
-    private Context context; // Context is needed to inflate layouts and load images
-    private List<Category> categoryList; // The list of categories we will display
-    private OnCategoryClickListener listener; // Interface for handling clicks - explained below
+    private Context context; // ה-Context נחוץ כדי "לנפח" (inflate) עיצובים ולטעון תמונות
+    private List<Category> categoryList; // רשימת הקטגוריות שנציג
+    private OnCategoryClickListener listener; // ממשק (Interface) לטיפול בלחיצות - מוסבר בהמשך
 
-    // Interface for handling category clicks and long presses
-    // An interface is like a contract - whoever uses this adapter must implement these methods
+    // ממשק לטיפול בלחיצות רגילות וארוכות על קטגוריה
+    // ממשק הוא כמו חוזה - מי שמשתמש באדפטר הזה חייב לממש את המתודות האלו
     public interface OnCategoryClickListener {
-        void onCategoryClick(Category category); // Called when a category is clicked
-        void onCategoryLongClick(Category category); // Called when a category is long pressed
+        void onCategoryClick(Category category); // נקרא כשלוחצים על קטגוריה
+        void onCategoryLongClick(Category category); // נקרא כשמבצעים לחיצה ארוכה על קטגוריה
     }
 
-    // Constructor - called when we create a new CategoryAdapter
+    // בנאי (Constructor) - נקרא כשאנו יוצרים CategoryAdapter חדש
     public CategoryAdapter(Context context, List<Category> categoryList, OnCategoryClickListener listener) {
-        this.context = context; // Save the context
-        this.categoryList = categoryList; // Save the list of categories
-        this.listener = listener; // Save the click listener
+        this.context = context; // שמירת ה-context
+        this.categoryList = categoryList; // שמירת רשימת הקטגוריות
+        this.listener = listener; // שמירת מאזין הלחיצות
     }
 
-    // onCreateViewHolder is called when RecyclerView needs a new card view
-    // It inflates (creates) the single_category.xml layout for each card
+    // onCreateViewHolder נקרא כש-RecyclerView זקוק לכרטיס (card view) חדש
+    // הוא "מנפח" (יוצר) את עיצוב ה-single_category.xml עבור כל כרטיס
     @NonNull
     @Override
     public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // LayoutInflater converts our single_category.xml into an actual View object
+        // LayoutInflater ממיר את ה-single_category.xml שלנו לאובייקט View אמיתי
         View view = LayoutInflater.from(context).inflate(R.layout.single_category, parent, false);
-        return new CategoryViewHolder(view); // Return a new ViewHolder with the inflated view
+        return new CategoryViewHolder(view); // החזרת ViewHolder חדש עם התצוגה שנוצרה
     }
 
-    // onBindViewHolder is called for each category card to fill it with data
-    // "position" is the index of the current category in the list
+    // onBindViewHolder נקרא עבור כל כרטיס קטגוריה כדי למלא אותו בנתונים
+    // "position" הוא האינדקס של הקטגוריה הנוכחית ברשימה
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
-        Category category = categoryList.get(position); // Get the category at this position
+        Category category = categoryList.get(position); // קבלת הקטגוריה במיקום הנוכחי
 
-        holder.tvCategoryName.setText(category.getCategoryName()); // Set the English name
-        holder.tvCategoryNameHebrew.setText(category.getCategoryNameHebrew()); // Set the Hebrew name
-        holder.tvWordCount.setText(category.getWordCount() + " words"); // Set the word count
+        holder.tvCategoryName.setText(category.getCategoryName()); // הגדרת השם באנגלית
+        holder.tvCategoryNameHebrew.setText(category.getCategoryNameHebrew()); // הגדרת השם בעברית
+        holder.tvWordCount.setText(category.getWordCount() + " words"); // הגדרת כמות המילים
 
-        // Load the category image from Cloudinary URL using Glide
-        // Glide handles downloading, caching and displaying the image automatically
+        // טעינת תמונת הקטגוריה מכתובת Cloudinary באמצעות Glide
+        // Glide מטפל בהורדה, שמירה בזיכרון המטמון (caching) והצגת התמונה באופן אוטומטי
         Glide.with(context)
-                .load(category.getImage()) // Load image from the URL stored in Firestore
-                .placeholder(R.drawable.ic_launcher_background) // Show this while image is loading
-                .error(R.drawable.ic_launcher_background) // Show this if image fails to load
-                .into(holder.imgCategory); // Put the image into the ImageView
+                .load(category.getImage()) // טעינת תמונה מה-URL השמור ב-Firestore
+                .placeholder(R.drawable.ic_launcher_background) // הצגת תמונה זו בזמן שהתמונה נטענת
+                .error(R.drawable.ic_launcher_background) // הצגת תמונה זו אם טעינת התמונה נכשלת
+                .into(holder.imgCategory); // הכנסת התמונה לתוך ה-ImageView
 
-        // Set click listener on the card
+        // הגדרת מאזין לחיצה על הכרטיס
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) { // Make sure listener exists
-                listener.onCategoryClick(category); // Tell the Activity that this category was clicked
+            if (listener != null) { // וודא שהמאזין קיים
+                listener.onCategoryClick(category); // עדכון ה-Activity שהקטגוריה הזו נלחצה
             }
         });
 
-        // Set long click listener on the card
+        // הגדרת מאזין לחיצה ארוכה על הכרטיס
         holder.itemView.setOnLongClickListener(v -> {
-            if (listener != null) { // Make sure listener exists
-                listener.onCategoryLongClick(category); // Tell the Activity that this category was long pressed
+            if (listener != null) { // וודא שהמאזין קיים
+                listener.onCategoryLongClick(category); // עדכון ה-Activity שבוצעה לחיצה ארוכה על הקטגוריה
             }
-            return true; // Return true means we handled the long click
+            return true; // החזרת true אומרת שטיפלנו בלחיצה הארוכה
         });
     }
 
-    // getItemCount returns the total number of categories in our list
-    // RecyclerView uses this to know how many cards to create
+    // getItemCount מחזיר את המספר הכולל של קטגוריות ברשימה שלנו
+    // RecyclerView משתמש בזה כדי לדעת כמה כרטיסים עליו ליצור
     @Override
     public int getItemCount() {
-        return categoryList.size(); // Return the size of our category list
+        return categoryList.size(); // החזרת גודל רשימת הקטגוריות שלנו
     }
 
-    // Method to update the progress bar for a specific category
+    // מתודה לעדכון פס ההתקדמות עבור קטגוריה ספציפית
     public void updateProgress(int position, int wordsLearned, int totalWords) {
-        if (totalWords > 0) { // Make sure we don't divide by zero
-            int progress = (wordsLearned * 100) / totalWords; // Calculate progress percentage
-            categoryList.get(position).setWordCount(totalWords); // Update word count
-            notifyItemChanged(position); // Tell RecyclerView to refresh this card
+        if (totalWords > 0) { // וודא שאיננו מחלקים באפס
+            int progress = (wordsLearned * 100) / totalWords; // חישוב אחוז ההתקדמות
+            categoryList.get(position).setWordCount(totalWords); // עדכון כמות המילים
+            notifyItemChanged(position); // הוראה ל-RecyclerView לרענן את הכרטיס הזה
         }
     }
 
-    // CategoryViewHolder holds references to all the views in a single category card
-    // This avoids calling findViewById() every time which is slow
+    // CategoryViewHolder מחזיק רפרנסים לכל התצוגות בכרטיס קטגוריה בודד
+    // זה מונע קריאה ל-findViewById() בכל פעם, פעולה שנחשבת לאיטית
     public class CategoryViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView imgCategory; // The category image
-        TextView tvCategoryName; // The English name
-        TextView tvCategoryNameHebrew; // The Hebrew name
-        TextView tvWordCount; // The word count
-        ProgressBar progressCategory; // The progress bar
+        ImageView imgCategory; // תמונת הקטגוריה
+        TextView tvCategoryName; // השם באנגלית
+        TextView tvCategoryNameHebrew; // השם בעברית
+        TextView tvWordCount; // כמות המילים
+        ProgressBar progressCategory; // פס ההתקדמות
 
         public CategoryViewHolder(@NonNull View itemView) {
-            super(itemView); // Call the parent constructor with the card view
-            // Connect each variable to its XML view using the IDs we set in single_category.xml
+            super(itemView); // קריאה לבנאי האב עם תצוגת הכרטיס
+            // חיבור כל משתנה לתצוגת ה-XML שלו באמצעות ה-IDs שהגדרנו ב-single_category.xml
             imgCategory = itemView.findViewById(R.id.imgCategory);
             tvCategoryName = itemView.findViewById(R.id.tvCategoryName);
             tvCategoryNameHebrew = itemView.findViewById(R.id.tvCategoryNameHebrew);

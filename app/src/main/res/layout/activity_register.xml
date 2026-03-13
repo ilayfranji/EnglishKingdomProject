@@ -8,7 +8,7 @@
     android:background="#1A237E"
     tools:context=".Activities.RegisterActivity">
 
-    <!-- Crown Icon -->
+    <!-- סמל הכתר -->
     <TextView
         android:id="@+id/tvCrown"
         android:layout_width="wrap_content"
@@ -20,7 +20,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="40dp"/>
 
-    <!-- App Name -->
+    <!-- שם האפליקציה -->
     <TextView
         android:id="@+id/tvAppName"
         android:layout_width="wrap_content"
@@ -35,7 +35,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"/>
 
-    <!-- Register Title -->
+    <!-- כותרת המסך -->
     <TextView
         android:id="@+id/tvRegisterTitle"
         android:layout_width="wrap_content"
@@ -49,8 +49,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>
 
-    <!-- Profile Picture - circular avatar, optional -->
-    <!-- Clicking this opens the camera/gallery picker -->
+    <!-- תמונת פרופיל של משתמש, אם לא בחר כלום, תהיה דיפולט אם בחר יכול לשנות אותה אחר כך או למחוק -->
     <ImageView
         android:id="@+id/imgProfilePicture"
         android:layout_width="90dp"
@@ -62,7 +61,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- First Name Input -->
+    <!-- שדה הכנסת שם פרטי -->
     <EditText
         android:id="@+id/etFirstName"
         android:layout_width="0dp"
@@ -80,7 +79,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Last Name Input -->
+    <!-- שדה הכנסת שם משפחה -->
     <EditText
         android:id="@+id/etLastName"
         android:layout_width="0dp"
@@ -98,7 +97,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Email Input -->
+    <!-- שדה הכנסת אימייל -->
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="0dp"
@@ -116,7 +115,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Password Input -->
+    <!--שדה הכנסת סיסמה -->
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="0dp"
@@ -134,7 +133,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Confirm Password Input -->
+    <!-- שדה אימות סיסמה -->
     <EditText
         android:id="@+id/etConfirmPassword"
         android:layout_width="0dp"
@@ -152,7 +151,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Register Button -->
+    <!-- כפתור הרשמה -->
     <Button
         android:id="@+id/btnRegister"
         android:layout_width="0dp"
@@ -169,7 +168,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Already have account -->
+    <!-- חזרה למסך הלוג אין מי שיש לו כבר משתמש -->
     <TextView
         android:id="@+id/tvLogin"
         android:layout_width="wrap_content"

@@ -1,32 +1,32 @@
-package com.ilay.englishkingdom; // The package where this file lives - in the main package, not in Activities
+package com.ilay.englishkingdom; // החבילה שבה הקובץ הזה נמצא - בחבילה הראשית, לא ב-Activities
 
-import android.app.Application; // Application is a base class provided by Android that runs before any Activity starts
+import android.app.Application; // Application היא מחלקת בסיס של אנדרואיד שרצה לפני שכל Activity מתחילה
 
-import com.cloudinary.android.MediaManager; // MediaManager is Cloudinary's main class - we use it to upload images
+import com.cloudinary.android.MediaManager; // MediaManager היא המחלקה הראשית של Cloudinary - אנו משתמשים בה להעלאת תמונות
 
-import java.util.HashMap; // HashMap is a data structure that stores key-value pairs - like a dictionary
-import java.util.Map; // Map is the interface that HashMap implements
+import java.util.HashMap; // HashMap הוא מבנה נתונים המאחסן זוגות של מפתח-ערך - כמו מילון
+import java.util.Map; // Map הוא הממשק (interface) ש-HashMap מממש
 
-// AppInitializer extends Application - this means Android will run this class FIRST before any screen opens
-// Its job is to initialize and set up everything the app needs before any screen opens
+// AppInitializer מרחיב את Application - זה אומר שאנדרואיד יריץ את המחלקה הזו ראשונה לפני שכל מסך נפתח
+// תפקידה הוא לאתחל ולהגדיר את כל מה שהאפליקציה צריכה לפני שכל מסך נפתח
 public class AppInitializer extends Application {
 
     @Override
-    public void onCreate() { // onCreate runs automatically when the app first starts - before any Activity
-        super.onCreate(); // Always call the parent's onCreate first - this is required
+    public void onCreate() { // onCreate רץ אוטומטית כשהאפליקציה מתחילה לראשונה - לפני כל Activity
+        super.onCreate(); // תמיד קרא ל-onCreate של האב תחילה - זה נדרש
 
-        initCloudinary(); // Call our method to set up Cloudinary
+        initCloudinary(); // קריאה למתודה שלנו להגדרת Cloudinary
     }
 
     private void initCloudinary() {
         Map<String, Object> config = new HashMap<>();
-        config.put("cloud_name", "djbp6p30q"); // Our Cloudinary cloud name - identifies our account
-        config.put("api_key", "124468166385282"); // API key is required by the SDK - it is NOT a secret
-        config.put("api_secret", "Oea9YawwemULIaW8SNZD936pL6U"); // Required by SDK for initialization
-        // Even though we include the secret here, our uploads are still unsigned
-        // because we use an unsigned upload_preset in our upload calls
-        // This means no paid features are used and we stay on the free tier
-        config.put("secure", true); // Use HTTPS for all image URLs
+        config.put("cloud_name", "djbp6p30q"); // שם הענן שלנו ב-Cloudinary - מזהה את החשבון שלנו
+        config.put("api_key", "124468166385282"); // מפתח ה-API נדרש על ידי ה-SDK - הוא אינו סוד
+        config.put("api_secret", "Oea9YawwemULIaW8SNZD936pL6U"); // נדרש על ידי ה-SDK לצורך אתחול
+        // למרות שאנחנו כוללים את ה-secret כאן, ההעלאות שלנו עדיין אינן חתומות (unsigned)
+        // מכיוון שאנו משתמשים ב-upload_preset לא חתום בקריאות ההעלאה שלנו
+        // זה אומר שלא נעשה שימוש בתכונות בתשלום ואנחנו נשארים במסלול החינמי
+        config.put("secure", true); // שימוש ב-HTTPS עבור כל כתובות ה-URL של התמונות
 
         MediaManager.init(this, config);
     }

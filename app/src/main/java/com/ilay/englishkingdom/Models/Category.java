@@ -1,70 +1,70 @@
-package com.ilay.englishkingdom.Models; // The package where this file lives - in the Models package
+package com.ilay.englishkingdom.Models; // החבילה שבה הקובץ הזה נמצא - בחבילת ה-Models
 
-// Category is a Model class - it represents a category object in our app
-// This class mirrors exactly what we store in Firestore
+// Category היא מחלקת מודל (Model) - היא מייצגת אובייקט של קטגוריה באפליקציה שלנו
+// המחלקה הזו משקפת בדיוק את מה שאנחנו שומרים ב-Firestore
 public class Category {
 
-    // These are the fields of the Category - each one represents a piece of data
-    private String idFS; // The unique ID of the category in Firestore - "FS" stands for Firestore
-    private String categoryName; // The name of the category in English (e.g. "Animals")
-    private String categoryNameHebrew; // The name of the category in Hebrew (e.g. "בעלי חיים")
-    private String image; // The URL of the category image stored in Cloudinary
-    private int wordCount; // The number of words in this category
+    // אלו הם השדות של הקטגוריה - כל אחד מייצג פיסת מידע
+    private String idFS; // ה-ID הייחודי של הקטגוריה ב-Firestore - "FS" מייצג את Firestore
+    private String categoryName; // שם הקטגוריה באנגלית (למשל "Animals")
+    private String categoryNameHebrew; // שם הקטגוריה בעברית (למשל "בעלי חיים")
+    private String image; // כתובת ה-URL של תמונת הקטגוריה השמורה ב-Cloudinary
+    private int wordCount; // מספר המילים בקטגוריה הזו
 
-    // Empty constructor - required by Firestore!
-    // Firestore needs an empty constructor to convert database data back into a Category object
+    // בנאי ריק - נדרש על ידי Firestore!
+    // Firestore זקוק לבנאי ריק כדי להמיר נתונים מהדאטה-בייס בחזרה לאובייקט Category
     public Category() {
     }
 
-    // Full constructor - used when we create a new Category object with all its data
+    // בנאי מלא - משמש כאשר אנו יוצרים אובייקט Category חדש עם כל הנתונים שלו
     public Category(String idFS, String categoryName, String categoryNameHebrew, String image, int wordCount) {
-        this.idFS = idFS; // "this.idFS" refers to the field above, "idFS" is the parameter passed in
-        this.categoryName = categoryName; // Set the English name
-        this.categoryNameHebrew = categoryNameHebrew; // Set the Hebrew name
-        this.image = image; // Set the image URL
-        this.wordCount = wordCount; // Set the word count
+        this.idFS = idFS; // "this.idFS" מתייחס לשדה למעלה, "idFS" הוא הפרמטר שהועבר
+        this.categoryName = categoryName; // הגדרת השם באנגלית
+        this.categoryNameHebrew = categoryNameHebrew; // הגדרת השם בעברית
+        this.image = image; // הגדרת כתובת ה-URL של התמונה
+        this.wordCount = wordCount; // הגדרת כמות המילים
     }
 
-    // Getters - these methods allow other classes to READ the private fields
-    // Fields are private so only getters and setters can access them - this is called Encapsulation
+    // Getters - מתודות אלו מאפשרות למחלקות אחרות לקרוא (READ) את השדות הפרטיים
+    // השדות הם פרטיים (private) כך שרק getters ו-setters יכולים לגשת אליהם - זה נקרא "כמוסה" (Encapsulation)
     public String getIdFS() {
-        return idFS; // Return the Firestore ID
+        return idFS; // החזרת ה-ID מ-Firestore
     }
 
     public String getCategoryName() {
-        return categoryName; // Return the English name
+        return categoryName; // החזרת השם באנגלית
     }
 
     public String getCategoryNameHebrew() {
-        return categoryNameHebrew; // Return the Hebrew name
+        return categoryNameHebrew; // החזרת השם בעברית
     }
 
     public String getImage() {
-        return image; // Return the image URL
+        return image; // החזרת כתובת ה-URL של התמונה
     }
 
     public int getWordCount() {
-        return wordCount; // Return the word count
+        return wordCount; // החזרת כמות המילים
     }
 
-    // Setters - these methods allow other classes to WRITE/CHANGE the private fields
+    // Setters - מתודות אלו מאפשרות למחלקות אחרות לכתוב או לשנות (WRITE/CHANGE) את השדות הפרטיים
     public void setIdFS(String idFS) {
-        this.idFS = idFS; // Update the Firestore ID
+        this.idFS = idFS; // עדכון ה-ID מ-Firestore
     }
 
     public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName; // Update the English name
+        this.categoryName = categoryName; // עדכון השם באנגלית
     }
 
     public void setCategoryNameHebrew(String categoryNameHebrew) {
-        this.categoryNameHebrew = categoryNameHebrew; // Update the Hebrew name
+        this.categoryNameHebrew = categoryNameHebrew; // עדכון השם בעברית
     }
 
     public void setImage(String image) {
-        this.image = image; // Update the image URL
+        this.image = image; // עדכון כתובת ה-URL של התמונה
     }
 
     public void setWordCount(int wordCount) {
-        this.wordCount = wordCount; // Update the word count
+        this.wordCount = wordCount; // עדכון כמות המילים
     }
 }

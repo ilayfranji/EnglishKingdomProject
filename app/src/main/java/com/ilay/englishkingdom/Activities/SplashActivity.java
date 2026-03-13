@@ -13,23 +13,23 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); // Call the parent class onCreate
-        setContentView(R.layout.activity_splash); // Connect this Java file to the XML layout
+        super.onCreate(savedInstanceState); // קריאה ל-onCreate של מחלקת האב
+        setContentView(R.layout.activity_splash); // חיבור קובץ הג'אווה הזה לעיצוב ה-XML
 
-        // Handler waits for a delay before running code
+        // Handler ממתין השהייה מסוימת לפני הרצת הקוד
         new Handler().postDelayed(new Runnable() {
 
-            // run() is the code that will execute after the delay
+            // run() הוא הקוד שיבוצע לאחר סיום ההשהייה
             @Override
             public void run() {
-                // Intent is like a message that says "go to this screen"
+                // Intent הוא כמו הודעה שאומרת "עבור למסך הזה"
                 Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
 
-                startActivity(intent); // Open the LoginActivity screen
+                startActivity(intent); // פתיחת מסך ה-LoginActivity
 
-                finish(); // Close the SplashActivity so user can't go back to it
+                finish(); // סגירת ה-SplashActivity כדי שהמשתמש לא יוכל לחזור אליו
             }
 
-        }, 3000); // 3000 milliseconds = 3 seconds delay
+        }, 3000); // 3000 מילישניות = 3 שניות השהייה
     }
 }

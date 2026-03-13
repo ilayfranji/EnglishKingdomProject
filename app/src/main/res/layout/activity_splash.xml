@@ -8,7 +8,7 @@
     android:background="#1A237E"
     tools:context=".Activities.SplashActivity">
 
-    <!-- Crown Icon -->
+    <!-- סמל הכתר -->
     <TextView
         android:id="@+id/tvCrown"
         android:layout_width="wrap_content"
@@ -22,7 +22,7 @@
         app:layout_constraintVertical_chainStyle="packed"
         android:layout_marginBottom="8dp"/>
 
-    <!-- App Name -->
+    <!-- שם האפליקציה -->
     <TextView
         android:id="@+id/tvAppName"
         android:layout_width="wrap_content"
@@ -38,7 +38,7 @@
         app:layout_constraintTop_toBottomOf="@id/tvCrown"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Welcome Message -->
+    <!-- הודעת ברוכים הבאים -->
     <TextView
         android:id="@+id/tvWelcome"
         android:layout_width="wrap_content"
@@ -53,7 +53,7 @@
         app:layout_constraintTop_toBottomOf="@id/tvAppName"
         android:layout_marginBottom="8dp"/>
 
-    <!-- Subtitle -->
+    <!-- תיאור האפליקציה -->
     <TextView
         android:id="@+id/tvSubtitle"
         android:layout_width="wrap_content"

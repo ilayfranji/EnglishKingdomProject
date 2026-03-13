@@ -8,7 +8,7 @@
     android:background="#1A237E"
     tools:context=".Activities.HomeActivity">
 
-    <!-- Top Bar - contains the app name and menu button -->
+    <!-- סרגל עליון (Top Bar) - מכיל את שם האפליקציה וכפתור התפריט -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"
@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Crown + App Name -->
+        <!-- לוגו של כתר ושם האפליקציה -->
         <TextView
             android:id="@+id/tvAppName"
             android:layout_width="0dp"
@@ -33,7 +33,7 @@
             android:textColor="#FFD700"
             android:fontFamily="serif"/>
 
-        <!-- Menu Button -->
+        <!-- כפתור התפריט -->
         <TextView
             android:id="@+id/tvMenu"
             android:layout_width="wrap_content"
@@ -45,7 +45,7 @@
 
     </LinearLayout>
 
-    <!-- Welcome Message -->
+    <!-- הודעת ברוך הבא -->
     <TextView
         android:id="@+id/tvWelcome"
         android:layout_width="wrap_content"
@@ -59,7 +59,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"/>
 
-    <!-- Subtitle -->
+    <!-- הודעה למשתמש על אפשרות הבחירה -->
     <TextView
         android:id="@+id/tvSubtitle"
         android:layout_width="wrap_content"
@@ -72,7 +72,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="4dp"/>
 
-    <!-- Learn Card -->
+    <!-- קארד ויו של למידה -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLearn"
         android:layout_width="0dp"
@@ -91,7 +91,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Learn Emoji -->
+            <!-- איור ספרים -->
             <TextView
                 android:id="@+id/tvLearnEmoji"
                 android:layout_width="wrap_content"
@@ -103,7 +103,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginStart="24dp"/>
 
-            <!-- Learn Title -->
+            <!-- כותרת הקארד ויו "Learn" -->
             <TextView
                 android:id="@+id/tvLearnTitle"
                 android:layout_width="0dp"
@@ -119,7 +119,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"/>
 
-            <!-- Learn Description -->
+            <!-- תיאור מה עושים במסכי הלמידה -->
             <TextView
                 android:id="@+id/tvLearnDesc"
                 android:layout_width="0dp"
@@ -137,7 +137,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Practice Card -->
+    <!-- קארד ויו של תרגול -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardPractice"
         android:layout_width="0dp"
@@ -156,7 +156,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Practice Emoji -->
+            <!-- איור של תרגול -->
             <TextView
                 android:id="@+id/tvPracticeEmoji"
                 android:layout_width="wrap_content"
@@ -168,7 +168,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginStart="24dp"/>
 
-            <!-- Practice Title -->
+            <!-- כותרת הקארד ויו "Practice" -->
             <TextView
                 android:id="@+id/tvPracticeTitle"
                 android:layout_width="0dp"
@@ -184,7 +184,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"/>
 
-            <!-- Practice Description -->
+            <!-- תיאור של מה עושים במסכי התרגול -->
             <TextView
                 android:id="@+id/tvPracticeDesc"
                 android:layout_width="0dp"
@@ -202,9 +202,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Motivational Quote -->
-    <!-- Previously this was constrained to the BOTTOM of the screen which pushed it too low -->
-    <!-- Now it is constrained to the BOTTOM of the Practice card so it appears right below it -->
+    <!-- משפטי מוטיבציה -->
     <TextView
         android:id="@+id/tvQuote"
         android:layout_width="0dp"

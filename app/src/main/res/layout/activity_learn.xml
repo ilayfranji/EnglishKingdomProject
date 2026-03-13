@@ -8,7 +8,7 @@
     android:background="#1A237E"
     tools:context=".Activities.LearnActivity">
 
-    <!-- Top Bar -->
+    <!-- סרגל עליון -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"
@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Back Button -->
+        <!-- כפתור חזרה למסך הבית -->
         <TextView
             android:id="@+id/tvBack"
             android:layout_width="wrap_content"
@@ -31,7 +31,7 @@
             android:textColor="#FFD700"
             android:padding="8dp"/>
 
-        <!-- Screen Title -->
+        <!-- כותרת המסך -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="0dp"
@@ -44,7 +44,7 @@
             android:gravity="center"
             android:fontFamily="serif"/>
 
-        <!-- Edit Mode Button (FAB replacement in top bar) - only visible to admin -->
+        <!-- לפני שהמנהל במצב עריכה מופיע לו על כפתור הfab סימן עריכה, כשהוא נלחץ הוא הופך להוספה, שוב רק המנהל רואה -->
         <TextView
             android:id="@+id/tvEditMode"
             android:layout_width="wrap_content"
@@ -56,7 +56,7 @@
 
     </LinearLayout>
 
-    <!-- Edit Mode Banner - shown when admin is in edit mode -->
+    <!-- הודעה שמופיעה למנהל כשהוא במצב עריכה -->
     <TextView
         android:id="@+id/tvEditBanner"
         android:layout_width="0dp"
@@ -72,8 +72,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- RecyclerView - displays the list of category cards -->
-    <!-- RecyclerView is an efficient way to display a scrollable list of items -->
+    <!-- ריסייקלר וויו, נותן למשתמש לגלול בין הקארד וויו של כל קטגוריה -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerCategories"
         android:layout_width="0dp"
@@ -84,8 +83,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- FAB - Floating Action Button - only visible to admin -->
-    <!-- FAB is a round button that floats above the content -->
+    <!-- כפתור FAB floating action bar מאפשר להוסיף קטגוריות, רק המנהל רואה אותו -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCategory"
         android:layout_width="wrap_content"
@@ -98,7 +96,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Exit Edit Mode Button - only visible when admin is in edit mode -->
+    <!-- יציאה ממצב עריכה -רק מנהל רואה כפתור זה -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabExitEditMode"
         android:layout_width="wrap_content"

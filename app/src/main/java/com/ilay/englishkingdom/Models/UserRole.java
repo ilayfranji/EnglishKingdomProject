@@ -1,7 +1,7 @@
 package com.ilay.englishkingdom.Models;
 
 public enum UserRole {
-    GUEST,  // Can access Learn and Practice games, but cannot save records and cannot use AI practice
-    USER,   // Can access Learn, Practice games, and records are saved
-    ADMIN   // Can access everything + add/edit categories and words
+    GUEST,  // יכול לגשת למשחקי הלמידה והתרגול, אך לא יכול לשמור הישגים ולא יכול להשתמש בתרגול ה-AI
+    USER,   // יכול לגשת ללמידה, למשחקי התרגול, וההישגים שלו נשמרים
+    ADMIN   // יכול לגשת להכל + להוסיף/לערוך קטגוריות ומילים
 }

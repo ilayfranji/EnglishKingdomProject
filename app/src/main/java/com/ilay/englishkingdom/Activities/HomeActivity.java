@@ -1,177 +1,177 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.content.Intent; // Used to navigate between screens
-import android.content.SharedPreferences; // Used to clear Remember Me on logout
-import android.os.Bundle; // Used when creating the activity
-import android.view.View; // Used to reference UI elements
-import android.widget.PopupMenu; // Used for the hamburger menu popup
-import android.widget.TextView; // Used for text views
+import android.content.Intent; // משמש לניווט בין מסכים
+import android.content.SharedPreferences; // משמש לניקוי נתוני "זכור אותי" בהתנתקות
+import android.os.Bundle; // משמש בעת יצירת ה-Activity
+import android.view.View; // משמש לרפרנס של אלמנטי ממשק משתמש (UI)
+import android.widget.PopupMenu; // משמש עבור תפריט הפופ-אפ (המבורגר)
+import android.widget.TextView; // משמש עבור תיבות טקסט
 
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
-import androidx.cardview.widget.CardView; // Used for the card views
-import androidx.security.crypto.EncryptedSharedPreferences; // Used to encrypt our local storage
-import androidx.security.crypto.MasterKey; // Used to create the encryption key
+import androidx.appcompat.app.AppCompatActivity; // מחלקת הבסיס לכל המסכים
+import androidx.cardview.widget.CardView; // משמש עבור תצוגות כרטיס (CardViews)
+import androidx.security.crypto.EncryptedSharedPreferences; // משמש להצפנת האחסון המקומי שלנו
+import androidx.security.crypto.MasterKey; // משמש ליצירת מפתח ההצפנה
 
-import com.google.firebase.auth.FirebaseAuth; // Used to get current user and logout
-import com.google.firebase.firestore.FirebaseFirestore; // Used to get user data from Firestore
-import com.ilay.englishkingdom.R; // Used to reference our XML resources
+import com.google.firebase.auth.FirebaseAuth; // משמש לקבלת המשתמש הנוכחי והתנתקות
+import com.google.firebase.firestore.FirebaseFirestore; // משמש לקבלת נתוני משתמש מ-Firestore
+import com.ilay.englishkingdom.R; // משמש לרפרנס של משאבי ה-XML שלנו
 
 public class HomeActivity extends AppCompatActivity {
 
-    // Declare all UI elements
-    private TextView tvWelcome; // The welcome message text
-    private TextView tvMenu; // The hamburger menu button
-    private TextView tvQuote; // The motivational quote text
-    private CardView cardLearn; // The Learn card
-    private CardView cardPractice; // The Practice card
+    // הצהרה על כל אלמנטי הממשק
+    private TextView tvWelcome; // טקסט הודעת הברוכים הבאים
+    private TextView tvMenu; // כפתור תפריט ההמבורגר
+    private TextView tvQuote; // טקסט הציטוט המוטיבציוני
+    private CardView cardLearn; // כרטיס הלמידה
+    private CardView cardPractice; // כרטיס התרגול
 
-    private FirebaseAuth mAuth; // Our connection to Firebase Authentication
-    private FirebaseFirestore db; // Our connection to Firestore database
-    private SharedPreferences sharedPreferences; // Our encrypted local storage
+    private FirebaseAuth mAuth; // החיבור שלנו ל-Firebase Authentication
+    private FirebaseFirestore db; // החיבור שלנו למסד הנתונים Firestore
+    private SharedPreferences sharedPreferences; // האחסון המקומי המוצפן שלנו
 
-    private String[] quotes; // Array of motivational quotes loaded from strings.xml
+    private String[] quotes; // מערך של ציטוטי מוטיבציה שנטענים מ-strings.xml
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // getResources().getStringArray() loads the string-array from strings.xml
-        // R.array.motivational_quotes is the ID of our quotes array in strings.xml
+        // getResources().getStringArray() טוען את מערך המחרוזות מ-strings.xml
+        // R.array.motivational_quotes הוא ה-ID של מערך הציטוטים שלנו ב-strings.xml
         quotes = getResources().getStringArray(R.array.motivational_quotes);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // Initialize EncryptedSharedPreferences to store data safely
+        // אתחול EncryptedSharedPreferences לאחסון נתונים בבטחה
         try {
-            // MasterKey is the encryption key - AES256_GCM is a very strong encryption method
+            // MasterKey הוא מפתח ההצפנה - AES256_GCM היא שיטת הצפנה חזקה מאוד
             MasterKey masterKey = new MasterKey.Builder(this)
                     .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                     .build();
 
-            // EncryptedSharedPreferences works like SharedPreferences but encrypts everything
+            // EncryptedSharedPreferences עובד כמו SharedPreferences רגיל אבל מצפין הכל
             sharedPreferences = EncryptedSharedPreferences.create(
                     this,
-                    "EnglishKingdomPrefs", // Name of our local storage file
+                    "EnglishKingdomPrefs", // שם קובץ האחסון המקומי שלנו
                     masterKey,
-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, // Encrypts the keys
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM // Encrypts the values
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, // מצפין את המפתחות
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM // מצפין את הערכים
             );
         } catch (Exception e) {
-            // If encryption fails fall back to regular SharedPreferences
+            // אם ההצפנה נכשלת, חזור ל-SharedPreferences רגיל
             sharedPreferences = getSharedPreferences("EnglishKingdomPrefs", MODE_PRIVATE);
         }
 
-        // Connect each Java variable to its XML view
+        // חיבור כל משתנה ג'אווה לתצוגת ה-XML שלו
         tvWelcome = findViewById(R.id.tvWelcome);
         tvMenu = findViewById(R.id.tvMenu);
         tvQuote = findViewById(R.id.tvQuote);
         cardLearn = findViewById(R.id.cardLearn);
         cardPractice = findViewById(R.id.cardPractice);
 
-        loadUserName(); // Load user's name from Firestore
-        showRandomQuote(); // Show a random motivational quote
+        loadUserName(); // טעינת שם המשתמש מ-Firestore
+        showRandomQuote(); // הצגת ציטוט מוטיבציה אקראי
 
-        // Menu button click - show the popup menu
+        // לחיצה על כפתור התפריט - הצגת תפריט הפופ-אפ
         tvMenu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showMenu(v); // Pass the view so the menu appears near it
+                showMenu(v); // העברת ה-view כדי שהתפריט יופיע לידו
             }
         });
 
-        // Learn card click - navigate to LearnActivity
-        // Previously this was WRONG because the click listener was nested inside itself!
-        // The outer click set a new click listener instead of actually navigating
-        // Now it correctly navigates to LearnActivity when clicked
+        // לחיצה על כרטיס הלמידה - ניווט ל-LearnActivity
+        // קודם לכן זה היה שגוי כי מאזין הלחיצה היה מקונן בתוך עצמו!
+        // הלחיצה החיצונית הגדירה מאזין לחיצה חדש במקום לנווט בפועל
+        // עכשיו זה מנווט בצורה נכונה ל-LearnActivity בעת לחיצה
         cardLearn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(HomeActivity.this, LearnActivity.class)); // Go to LearnActivity
+                startActivity(new Intent(HomeActivity.this, LearnActivity.class)); // מעבר ל-LearnActivity
             }
         });
 
-        // Practice card click - TODO: navigate to Practice screen
+        // לחיצה על כרטיס התרגול - TODO: ניווט למסך התרגול
         cardPractice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: Go to Practice screen (we will build this later)
+                // TODO: מעבר למסך התרגול (נבנה זאת בהמשך)
             }
         });
     }
 
-    private void loadUserName() { // Loads the user's first name from Firestore
-        if (mAuth.getCurrentUser() == null) { // If user is a guest (not logged in)
-            tvWelcome.setText("Welcome, Guest! 👋"); // Show generic welcome
-            return; // Stop method - no need to fetch from Firestore
+    private void loadUserName() { // טוען את השם הפרטי של המשתמש מ-Firestore
+        if (mAuth.getCurrentUser() == null) { // אם המשתמש הוא אורח (לא מחובר)
+            tvWelcome.setText("Welcome, Guest! 👋"); // הצגת ברוכים הבאים כללי
+            return; // עצירת המתודה - אין צורך למשוך נתונים מ-Firestore
         }
 
-        String userId = mAuth.getCurrentUser().getUid(); // Get the logged in user's unique ID
+        String userId = mAuth.getCurrentUser().getUid(); // קבלת ה-ID הייחודי של המשתמש המחובר
 
         db.collection("users")
-                .document(userId) // Get the document with this user's ID
-                .get() // Fetch from Firestore
+                .document(userId) // קבלת המסמך עם ה-ID של המשתמש הזה
+                .get() // משיכה מ-Firestore
                 .addOnSuccessListener(document -> {
-                    if (document.exists()) { // If document exists in Firestore
-                        String firstName = document.getString("firstName"); // Get firstName field
-                        tvWelcome.setText("Welcome, " + firstName + "! 👋"); // Set welcome with real name
+                    if (document.exists()) { // אם המסמך קיים ב-Firestore
+                        String firstName = document.getString("firstName"); // קבלת שדה firstName
+                        tvWelcome.setText("Welcome, " + firstName + "! 👋"); // הגדרת ברוכים הבאים עם השם האמיתי
                     } else {
-                        tvWelcome.setText("Welcome! 👋"); // Fallback if document doesn't exist
+                        tvWelcome.setText("Welcome! 👋"); // ברירת מחדל אם המסמך לא קיים
                     }
                 })
                 .addOnFailureListener(e -> {
-                    tvWelcome.setText("Welcome! 👋"); // Fallback if Firestore fails
+                    tvWelcome.setText("Welcome! 👋"); // ברירת מחדל אם Firestore נכשל
                 });
     }
 
-    private void showRandomQuote() { // Picks and shows a random motivational quote
-        // Math.random() returns a number between 0.0 and 1.0
-        // Multiplying by quotes.length gives us a number between 0 and the number of quotes
-        // (int) converts it to a whole number - this is our random index
+    private void showRandomQuote() { // בוחר ומציג ציטוט מוטיבציה אקראי
+        // Math.random() מחזיר מספר בין 0.0 ל-1.0
+        // הכפלה ב-quotes.length נותנת לנו מספר בין 0 למספר הציטוטים
+        // (int) ממיר את זה למספר שלם - זה האינדקס האקראי שלנו
         int randomIndex = (int) (Math.random() * quotes.length);
-        tvQuote.setText(quotes[randomIndex]); // Show the quote at the random index
+        tvQuote.setText(quotes[randomIndex]); // הצגת הציטוט באינדקס האקראי
     }
 
-    private void showMenu(View v) { // Shows the hamburger popup menu
-        PopupMenu popupMenu = new PopupMenu(this, v); // Create popup - appears near the clicked view
-        // Inflate means read the XML file and build the menu from it
+    private void showMenu(View v) { // מציג את תפריט הפופ-אפ (המבורגר)
+        PopupMenu popupMenu = new PopupMenu(this, v); // יצירת פופ-אפ - מופיע ליד ה-view שנלחץ
+        // Inflate פירושו קריאת קובץ ה-XML ובניית התפריט ממנו
         popupMenu.getMenuInflater().inflate(R.menu.home_menu, popupMenu.getMenu());
 
-        popupMenu.setOnMenuItemClickListener(item -> { // Runs when any menu item is clicked
-            int id = item.getItemId(); // Get the ID of the clicked item
+        popupMenu.setOnMenuItemClickListener(item -> { // רץ כשלוחצים על פריט כלשהו בתפריט
+            int id = item.getItemId(); // קבלת ה-ID של הפריט שנלחץ
 
-            if (id == R.id.menu_profile) { // Profile clicked
-                // TODO: Go to Profile screen
-                return true; // true means we handled this click
+            if (id == R.id.menu_profile) { // נלחץ פרופיל
+                // TODO: מעבר למסך הפרופיל
+                return true; // true אומר שטיפלנו בלחיצה הזו
 
-            } else if (id == R.id.menu_how_to_play) { // How to Play clicked
-                // TODO: Go to How to Play screen
+            } else if (id == R.id.menu_how_to_play) { // נלחץ "איך לשחק"
+                // TODO: מעבר למסך "איך לשחק"
                 return true;
 
-            } else if (id == R.id.menu_logout) { // Logout clicked
+            } else if (id == R.id.menu_logout) { // נלחץ התנתקות
                 logoutUser();
                 return true;
             }
 
-            return false; // false means we did not handle this click
+            return false; // false אומר שלא טיפלנו בלחיצה הזו
         });
 
-        popupMenu.show(); // Display the menu
+        popupMenu.show(); // הצגת התפריט
     }
 
-    private void logoutUser() { // Logs out the user and goes back to Login screen
-        mAuth.signOut(); // Sign out from Firebase
+    private void logoutUser() { // מנתק את המשתמש וחוזר למסך ההתחברות
+        mAuth.signOut(); // התנתקות מ-Firebase
 
-        // Clear Remember Me data from SharedPreferences
+        // ניקוי נתוני "זכור אותי" מ-SharedPreferences
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean("rememberMe", false); // Set rememberMe to false
-        editor.remove("email"); // Remove saved email
-        editor.apply(); // Save changes
+        editor.putBoolean("rememberMe", false); // הגדרת rememberMe ל-false
+        editor.remove("email"); // הסרת האימייל השמור
+        editor.apply(); // שמירת השינויים
 
-        // Navigate to LoginActivity
+        // ניווט ל-LoginActivity
         Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
         startActivity(intent);
-        finish(); // Close HomeActivity so user can't press back to return
+        finish(); // סגירת HomeActivity כדי שהמשתמש לא יוכל ללחוץ "חזור" כדי לחזור
     }
 }

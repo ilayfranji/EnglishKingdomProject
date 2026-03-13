@@ -8,7 +8,7 @@
     android:background="#1A237E"
     tools:context=".Activities.LoginActivity">
 
-    <!-- Crown Icon -->
+    <!-- אייקון של כתר -->
     <TextView
         android:id="@+id/tvCrown"
         android:layout_width="wrap_content"
@@ -20,7 +20,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="40dp"/>
 
-    <!-- App Name -->
+    <!-- שם האפליקציה -->
     <TextView
         android:id="@+id/tvAppName"
         android:layout_width="wrap_content"
@@ -35,7 +35,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"/>
 
-    <!-- Login Title -->
+    <!-- כותרת לוג אין -->
     <TextView
         android:id="@+id/tvLogin"
         android:layout_width="wrap_content"
@@ -49,7 +49,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="32dp"/>
 
-    <!-- Email Input -->
+    <!-- שדה הכנסת אימייל -->
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="0dp"
@@ -67,7 +67,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Password Input -->
+    <!-- שדה הכנסת סיסמה -->
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="0dp"
@@ -85,7 +85,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Remember Me Checkbox -->
+    <!-- "זכור אותי" צ'ק בוקס -->
     <CheckBox
         android:id="@+id/cbRememberMe"
         android:layout_width="wrap_content"
@@ -97,7 +97,7 @@
         app:layout_constraintStart_toStartOf="@id/etPassword"
         android:layout_marginTop="12dp"/>
 
-    <!-- Forgot Password -->
+    <!-- שכחתי סיסמה -->
     <TextView
         android:id="@+id/tvForgotPassword"
         android:layout_width="wrap_content"
@@ -109,7 +109,7 @@
         app:layout_constraintEnd_toEndOf="@id/etPassword"
         android:layout_marginTop="16dp"/>
 
-    <!-- Login Button -->
+    <!-- כפתור התחברות -->
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="0dp"
@@ -126,7 +126,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Continue as Guest Button -->
+    <!-- כפתור להכנס בתור אורח -->
     <Button
         android:id="@+id/btnGuest"
         android:layout_width="0dp"
@@ -143,7 +143,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"/>
 
-    <!-- Register Link -->
+    <!-- מעבר למסך הרגיסטר -->
     <TextView
         android:id="@+id/tvRegister"
         android:layout_width="wrap_content"

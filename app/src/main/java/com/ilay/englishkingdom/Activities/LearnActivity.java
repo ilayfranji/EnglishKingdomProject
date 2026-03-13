@@ -29,76 +29,76 @@ import java.util.List;
 
 public class LearnActivity extends AppCompatActivity implements CategoryAdapter.OnCategoryClickListener {
 
-    // ==================== UI ELEMENTS ====================
+    // ==================== אלמנטי ממשק משתמש (UI) ====================
 
-    private RecyclerView recyclerCategories; // The scrollable grid of category cards
-    private FloatingActionButton fabCategory; // The + button shown in edit mode to add categories
-    private FloatingActionButton fabExitEditMode; // The X button to exit edit mode
-    private TextView tvBack; // Back arrow to go back to HomeActivity
-    private TextView tvEditMode; // Pencil button shown only to admins
-    private TextView tvEditBanner; // Red banner shown at top when in edit mode
+    private RecyclerView recyclerCategories; // הגריד הניתן לגלילה של כרטיסי הקטגוריות
+    private FloatingActionButton fabCategory; // כפתור ה-+ שמוצג במצב עריכה להוספת קטגוריות
+    private FloatingActionButton fabExitEditMode; // כפתור ה-X ליציאה ממצב עריכה
+    private TextView tvBack; // חץ חזרה כדי לחזור ל-HomeActivity
+    private TextView tvEditMode; // כפתור העיפרון שמוצג רק למנהלים
+    private TextView tvEditBanner; // באנר אדום שמוצג למעלה כשנמצאים במצב עריכה
 
-    // ==================== FIREBASE ====================
+    // ==================== פיירבייס (FIREBASE) ====================
 
-    private FirebaseFirestore db; // Our connection to the Firestore database
-    private FirebaseAuth mAuth; // Our connection to Firebase Authentication
+    private FirebaseFirestore db; // החיבור שלנו למסד הנתונים Firestore
+    private FirebaseAuth mAuth; // החיבור שלנו ל-Firebase Authentication
 
-    // ==================== ADAPTER AND DATA ====================
+    // ==================== אדפטר ונתונים ====================
 
-    private CategoryAdapter categoryAdapter; // Connects our category list to the RecyclerView
-    private List<Category> categoryList; // The list of all categories loaded from Firestore
+    private CategoryAdapter categoryAdapter; // מחבר את רשימת הקטגוריות שלנו ל-RecyclerView
+    private List<Category> categoryList; // רשימת כל הקטגוריות שנטענו מ-Firestore
 
-    // ==================== STATE FLAGS ====================
+    // ==================== דגלי מצב (STATE FLAGS) ====================
 
-    private boolean isEditMode = false; // true = admin is in edit mode, false = normal mode
-    private boolean isAdmin = false; // true = current user is an admin
+    private boolean isEditMode = false; // true = מנהל נמצא במצב עריכה, false = מצב רגיל
+    private boolean isAdmin = false; // true = המשתמש הנוכחי הוא מנהל
 
-    // ==================== HELPERS AND DIALOGS ====================
+    // ==================== עוזרים ודיאלוגים ====================
 
-    // ImagePickerHelper handles ALL camera/gallery/permission logic
-    // We create it once here and pass it to both dialogs so they share it
+    // ImagePickerHelper מטפל בכל לוגיקת המצלמה/גלריה/הרשאות
+    // אנחנו יוצרים אותו פעם אחת כאן ומעבירים אותו לשני הדיאלוגים כדי שישתפו אותו
     private ImagePickerHelper imagePicker;
 
-    // AddCategoryDialog handles the entire "Add New Category" flow
-    // We create it once and call addDialog.show() when admin taps +
+    // AddCategoryDialog מטפל בכל תהליך ה-"הוסף קטגוריה חדשה"
+    // אנחנו יוצרים אותו פעם אחת וקוראים ל-addDialog.show() כשהמנהל לוחץ על +
     private AddCategoryDialog addDialog;
 
-    // EditCategoryDialog handles the entire "Edit Category" flow
-    // We create it once and call editDialog.show(category) when admin taps a card
+    // EditCategoryDialog מטפל בכל תהליך ה-"ערוך קטגוריה"
+    // אנחנו יוצרים אותו פעם אחת וקוראים ל-editDialog.show(category) כשהמנהל לוחץ על כרטיס
     private EditCategoryDialog editDialog;
 
-    // ==================== SAVE/RESTORE STATE ====================
+    // ==================== שמירה/שחזור מצב (STATE) ====================
 
-    // Key used to save and restore the camera URI when Android kills the activity
-    // Android might kill LearnActivity when camera opens to free up memory
-    // We save the URI before that happens and restore it when activity comes back
+    // מפתח המשמש לשמירה ושחזור של ה-URI של המצלמה כשאנדרואיד הורג את ה-activity
+    // אנדרואיד עשוי להרוג את LearnActivity כשהמצלמה נפתחת כדי לפנות זיכרון
+    // אנחנו שומרים את ה-URI לפני שזה קורה ומשחזרים אותו כשה-activity חוזרת
     private static final String KEY_CAMERA_URI = "camera_uri";
 
     // ==================== ACTIVITY RESULT LAUNCHERS ====================
 
-    // These MUST be created here in the Activity - Android does not allow creating
-    // them inside helper classes or dialogs. We pass them into ImagePickerHelper
-    // so it can launch them, but they live here.
+    // אלו חייבים להיווצר כאן בתוך ה-Activity - אנדרואיד לא מרשה ליצור אותם
+    // בתוך מחלקות עזר או דיאלוגים. אנחנו מעבירים אותם ל-ImagePickerHelper
+    // כדי שיוכל להפעיל אותם, אבל הם חיים כאן.
 
-    // Gallery launcher - opens gallery, result comes back here, we forward it to ImagePickerHelper
+    // Launcher לגלריה - פותח גלריה, התוצאה חוזרת לכאן, אנחנו מעבירים אותה ל-ImagePickerHelper
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
-            uri -> imagePicker.onGalleryResult(uri)); // Forward result to ImagePickerHelper
+            uri -> imagePicker.onGalleryResult(uri)); // העברת התוצאה ל-ImagePickerHelper
 
-    // Camera launcher - opens camera, result comes back here, we forward it to ImagePickerHelper
+    // Launcher למצלמה - פותח מצלמה, התוצאה חוזרת לכאן, אנחנו מעבירים אותה ל-ImagePickerHelper
     private final ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
-            success -> imagePicker.onCameraResult(success)); // Forward result to ImagePickerHelper
+            success -> imagePicker.onCameraResult(success)); // העברת התוצאה ל-ImagePickerHelper
 
-    // ==================== LIFECYCLE ====================
+    // ==================== מחזור חיים (LIFECYCLE) ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_learn);
 
-        // Restore camera URI if Android killed and recreated the activity
-        // savedInstanceState is null the first time, but has our saved data if recreated
+        // שחזור ה-URI של המצלמה אם אנדרואיד הרג ובנה מחדש את ה-activity
+        // savedInstanceState הוא null בפעם הראשונה, אבל מכיל את הנתונים השמורים שלנו אם נבנה מחדש
         Uri restoredUri = null;
         if (savedInstanceState != null) {
             restoredUri = savedInstanceState.getParcelable(KEY_CAMERA_URI);
@@ -119,45 +119,45 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
         checkIfAdmin();
         loadCategories();
 
-        // Create ImagePickerHelper - pass the launchers and a callback
-        // The callback (onImagePicked) runs when the user picks a photo
-        // We decide here which dialog gets the photo based on which one is currently open
+        // יצירת ImagePickerHelper - העברת ה-launchers ו-callback
+        // ה-callback (onImagePicked) רץ כשהמשתמש בוחר תמונה
+        // אנחנו מחליטים כאן איזה דיאלוג מקבל את התמונה על סמך מי מהם פתוח כרגע
         imagePicker = new ImagePickerHelper(this,
                 (uri, fromGallery) -> {
-                    // This runs after the user picks or takes a photo
-                    // We tell BOTH dialogs about the new image
-                    // Each dialog ignores it if it's not currently open (checked with isShowing())
+                    // זה רץ אחרי שהמשתמש בוחר או מצלם תמונה
+                    // אנחנו מעדכנים את שניהם לגבי התמונה החדשה
+                    // כל דיאלוג מתעלם מזה אם הוא לא פתוח כרגע (נבדק באמצעות isShowing())
                     addDialog.onImagePicked(uri);
                     editDialog.onImagePicked(uri);
                 },
                 galleryLauncher,
                 cameraLauncher);
 
-        // Restore the camera URI into ImagePickerHelper if activity was recreated
+        // שחזור ה-URI של המצלמה לתוך ImagePickerHelper אם ה-activity נבנתה מחדש
         if (restoredUri != null) {
             imagePicker.setPendingCameraUri(restoredUri);
         }
 
-        // Create the dialogs - pass imagePicker so they can trigger image picking
+        // יצירת הדיאלוגים - העברת ה-imagePicker כדי שיוכלו להפעיל בחירת תמונה
         addDialog = new AddCategoryDialog(this, imagePicker,
-                () -> {}); // Empty callback - snapshot listener already refreshes the list automatically
+                () -> {}); // Callback ריק - המאזין (snapshot listener) כבר מרענן את הרשימה אוטומטית
 
         editDialog = new EditCategoryDialog(this, imagePicker,
-                () -> {}); // Empty callback - same reason
+                () -> {}); // Callback ריק - מאותה סיבה
 
-        // Set click listeners
-        tvBack.setOnClickListener(v -> finish()); // Close this screen and go back
-        tvEditMode.setOnClickListener(v -> enterEditMode()); // Enter edit mode
-        fabCategory.setOnClickListener(v -> addDialog.show()); // Show Add dialog - ONE LINE!
-        fabExitEditMode.setOnClickListener(v -> exitEditMode()); // Exit edit mode
+        // הגדרת מאזיני לחיצה (click listeners)
+        tvBack.setOnClickListener(v -> finish()); // סגירת המסך הזה וחזרה אחורה
+        tvEditMode.setOnClickListener(v -> enterEditMode()); // כניסה למצב עריכה
+        fabCategory.setOnClickListener(v -> addDialog.show()); // הצגת דיאלוג הוספה - שורה אחת!
+        fabExitEditMode.setOnClickListener(v -> exitEditMode()); // יציאה ממצב עריכה
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        // Save the camera URI before Android might kill the activity
-        // imagePicker.getPendingCameraUri() returns the URI we created for the camera
-        // If it's null (no camera in progress) nothing gets saved - that's fine
+        // שמירת ה-URI של המצלמה לפני שאנדרואיד עשוי להרוג את ה-activity
+        // imagePicker.getPendingCameraUri() מחזיר את ה-URI שיצרנו עבור המצלמה
+        // אם הוא null (אין מצלמה בתהליך) שום דבר לא נשמר - וזה בסדר
         if (imagePicker != null && imagePicker.getPendingCameraUri() != null) {
             outState.putParcelable(KEY_CAMERA_URI, imagePicker.getPendingCameraUri());
         }
@@ -166,25 +166,25 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Forward the permission result to ImagePickerHelper
-        // ImagePickerHelper is the one who requested the permission so it handles the result
+        // העברת תוצאת ההרשאה ל-ImagePickerHelper
+        // ImagePickerHelper הוא זה שביקש את ההרשאה ולכן הוא מטפל בתוצאה
         imagePicker.onPermissionResult(requestCode, grantResults);
     }
 
-    // ==================== SETUP ====================
+    // ==================== הגדרות (SETUP) ====================
 
     private void setupRecyclerView() {
-        // GridLayoutManager with 2 columns arranges cards side by side
+        // GridLayoutManager עם 2 עמודות מסדר את הכרטיסים זה לצד זה
         GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         recyclerCategories.setLayoutManager(layoutManager);
         categoryAdapter = new CategoryAdapter(this, categoryList, this);
         recyclerCategories.setAdapter(categoryAdapter);
     }
 
-    // ==================== ADMIN CHECK ====================
+    // ==================== בדיקת מנהל (ADMIN CHECK) ====================
 
     private void checkIfAdmin() {
-        if (mAuth.getCurrentUser() == null) return; // No user logged in - skip
+        if (mAuth.getCurrentUser() == null) return; // אין משתמש מחובר - דלג
 
         String userId = mAuth.getCurrentUser().getUid();
         db.collection("users").document(userId).get()
@@ -193,41 +193,41 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
                         String role = document.getString("role");
                         if (role != null && role.equals("ADMIN")) {
                             isAdmin = true;
-                            tvEditMode.setVisibility(View.VISIBLE); // Show pencil button for admin only
+                            tvEditMode.setVisibility(View.VISIBLE); // הצגת כפתור העיפרון למנהל בלבד
                         }
                     }
                 });
     }
 
-    // ==================== LOAD CATEGORIES ====================
+    // ==================== טעינת קטגוריות ====================
 
     private void loadCategories() {
-        // addSnapshotListener = real time updates - runs every time Firestore data changes
-        // So when we add/edit/delete a category it refreshes automatically
+        // addSnapshotListener = עדכונים בזמן אמת - רץ בכל פעם שנתוני Firestore משתנים
+        // כך שכשמוסיפים/עורכים/מוחקים קטגוריה הרשימה מתרעננת אוטומטית
         db.collection("categories")
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
                         Toast.makeText(this, "Error loading categories", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    categoryList.clear(); // Clear old data before adding fresh data
+                    categoryList.clear(); // ניקוי נתונים ישנים לפני הוספת נתונים טריים
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        Category category = doc.toObject(Category.class); // Convert document to Category object
-                        category.setIdFS(doc.getId()); // Save the Firestore document ID into the object
+                        Category category = doc.toObject(Category.class); // המרת המסמך לאובייקט Category
+                        category.setIdFS(doc.getId()); // שמירת ה-ID של מסמך ה-Firestore לתוך האובייקט
                         categoryList.add(category);
                     }
-                    categoryAdapter.notifyDataSetChanged(); // Tell RecyclerView to refresh
+                    categoryAdapter.notifyDataSetChanged(); // הוראה ל-RecyclerView להתרענן
                 });
     }
 
-    // ==================== EDIT MODE ====================
+    // ==================== מצב עריכה (EDIT MODE) ====================
 
     private void enterEditMode() {
         isEditMode = true;
-        tvEditBanner.setVisibility(View.VISIBLE); // Show red edit mode banner
-        fabCategory.setVisibility(View.VISIBLE); // Show + button
-        fabExitEditMode.setVisibility(View.VISIBLE); // Show X button
-        tvEditMode.setVisibility(View.GONE); // Hide pencil button
+        tvEditBanner.setVisibility(View.VISIBLE); // הצגת באנר העריכה האדום
+        fabCategory.setVisibility(View.VISIBLE); // הצגת כפתור ה-+
+        fabExitEditMode.setVisibility(View.VISIBLE); // הצגת כפתור ה-X
+        tvEditMode.setVisibility(View.GONE); // הסתרת כפתור העיפרון
     }
 
     private void exitEditMode() {
@@ -235,43 +235,43 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
         tvEditBanner.setVisibility(View.GONE);
         fabCategory.setVisibility(View.GONE);
         fabExitEditMode.setVisibility(View.GONE);
-        tvEditMode.setVisibility(View.VISIBLE); // Show pencil button again
+        tvEditMode.setVisibility(View.VISIBLE); // הצגת כפתור העיפרון שוב
     }
 
-    // ==================== CATEGORY CLICK LISTENERS ====================
+    // ==================== מאזיני לחיצה על קטגוריה ====================
 
     @Override
     public void onCategoryClick(Category category) {
-        // Called by CategoryAdapter when a card is tapped
+        // נקרא על ידי ה-CategoryAdapter כשלוחצים על כרטיס
         if (isEditMode) {
-            editDialog.show(category); // Edit mode → open edit dialog - ONE LINE!
+            editDialog.show(category); // מצב עריכה ← פתיחת דיאלוג עריכה - שורה אחת!
         } else {
-            // TODO: Navigate to Words screen
+            // TODO: ניווט למסך המילים
         }
     }
 
     @Override
     public void onCategoryLongClick(Category category) {
-        // Called by CategoryAdapter when a card is long pressed
+        // נקרא על ידי ה-CategoryAdapter בלחיצה ארוכה על כרטיס
         if (isEditMode) {
-            showDeleteConfirmationDialog(category); // Edit mode → show delete confirmation
+            showDeleteConfirmationDialog(category); // מצב עריכה ← הצגת אישור מחיקה
         }
     }
 
-    // ==================== DELETE ====================
+    // ==================== מחיקה (DELETE) ====================
 
     private void showDeleteConfirmationDialog(Category category) {
-        // Simple confirmation popup before permanently deleting - prevents accidents
+        // פופ-אפ אישור פשוט לפני מחיקה קבועה - מונע תקלות
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Delete Category")
                 .setMessage("Are you sure you want to delete \"" + category.getCategoryName() + "\"?")
                 .setPositiveButton("Delete", (dialog, which) -> deleteCategoryFromFirestore(category.getIdFS()))
-                .setNegativeButton("Cancel", null) // null = just close, don't delete
+                .setNegativeButton("Cancel", null) // null = פשוט סגור, אל תמחק
                 .show();
     }
 
     private void deleteCategoryFromFirestore(String categoryId) {
-        // Permanently deletes the category document from Firestore
+        // מחיקה קבועה של מסמך הקטגוריה מ-Firestore
         db.collection("categories").document(categoryId).delete()
                 .addOnSuccessListener(v -> Toast.makeText(this, "Category deleted! 🗑️", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Error deleting category", Toast.LENGTH_SHORT).show());

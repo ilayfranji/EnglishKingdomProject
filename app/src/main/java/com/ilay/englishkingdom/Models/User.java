@@ -1,89 +1,89 @@
-package com.ilay.englishkingdom.Models; // The package where this file lives - in the Models package
+package com.ilay.englishkingdom.Models; // החבילה שבה הקובץ הזה נמצא - בחבילת ה-Models
 
-// User is a Model class - it represents a user object in our app
-// This class mirrors exactly what we store in Firestore under the "users" collection
+// User היא מחלקת מודל (Model) - היא מייצגת אובייקט של משתמש באפליקציה שלנו
+// המחלקה הזו משקפת בדיוק את מה שאנחנו שומרים ב-Firestore תחת האוסף "users"
 public class User {
 
-    // These are the fields of the User - each one represents a piece of data
-    private String idFS; // The unique ID of the user in Firestore - matches the Firebase Auth UID
-    private String firstName; // The first name of the user - must start with capital letter
-    private String lastName; // The last name of the user - must start with capital letter
-    private String email; // The email address of the user
-    private String role; // The role of the user - either "USER" or "ADMIN"
-    private String profilePicture; // The URL of the profile picture stored in Cloudinary - empty string if no picture
-    private long createdAt; // The time the account was created - stored as milliseconds since 1970
+    // אלו הם השדות של המשתמש - כל אחד מייצג פיסת מידע
+    private String idFS; // ה-ID הייחודי של המשתמש ב-Firestore - תואם ל-UID של Firebase Auth
+    private String firstName; // השם הפרטי של המשתמש - חייב להתחיל באות גדולה (באנגלית)
+    private String lastName; // שם המשפחה של המשתמש - חייב להתחיל באות גדולה (באנגלית)
+    private String email; // כתובת האימייל של המשתמש
+    private String role; // תפקיד המשתמש - או "USER" או "ADMIN"
+    private String profilePicture; // כתובת ה-URL של תמונת הפרופיל ב-Cloudinary - מחרוזת ריקה אם אין תמונה
+    private long createdAt; // זמן יצירת החשבון - נשמר כמילישניות מאז 1970
 
-    // Empty constructor - required by Firestore!
-    // Firestore needs an empty constructor to convert database data back into a User object
+    // בנאי ריק - נדרש על ידי Firestore!
+    // Firestore זקוק לבנאי ריק כדי להמיר נתונים מהדאטה-בייס בחזרה לאובייקט User
     public User() {
     }
 
-    // Full constructor - used when we create a new User object with all its data
+    // בנאי מלא - משמש כאשר אנו יוצרים אובייקט User חדש עם כל הנתונים שלו
     public User(String idFS, String firstName, String lastName, String email, String role, String profilePicture, long createdAt) {
-        this.idFS = idFS; // "this.idFS" refers to the field above, "idFS" is the parameter passed in
-        this.firstName = firstName; // Set the first name
-        this.lastName = lastName; // Set the last name
-        this.email = email; // Set the email
-        this.role = role; // Set the role
-        this.profilePicture = profilePicture; // Set the profile picture URL
-        this.createdAt = createdAt; // Set the creation time
+        this.idFS = idFS; // "this.idFS" מתייחס לשדה למעלה, "idFS" הוא הפרמטר שהועבר
+        this.firstName = firstName; // הגדרת השם הפרטי
+        this.lastName = lastName; // הגדרת שם המשפחה
+        this.email = email; // הגדרת האימייל
+        this.role = role; // הגדרת התפקיד
+        this.profilePicture = profilePicture; // הגדרת כתובת ה-URL של תמונת הפרופיל
+        this.createdAt = createdAt; // הגדרת זמן היצירה
     }
 
-    // Getters - allow other classes to READ the private fields
+    // Getters - מאפשרים למחלקות אחרות לקרוא (READ) את השדות הפרטיים
     public String getIdFS() {
-        return idFS; // Return the Firestore ID
+        return idFS; // החזרת ה-ID מ-Firestore
     }
 
     public String getFirstName() {
-        return firstName; // Return the first name
+        return firstName; // החזרת השם הפרטי
     }
 
     public String getLastName() {
-        return lastName; // Return the last name
+        return lastName; // החזרת שם המשפחה
     }
 
     public String getEmail() {
-        return email; // Return the email
+        return email; // החזרת האימייל
     }
 
     public String getRole() {
-        return role; // Return the role
+        return role; // החזרת התפקיד
     }
 
     public String getProfilePicture() {
-        return profilePicture; // Return the profile picture URL
+        return profilePicture; // החזרת כתובת התמונה
     }
 
     public long getCreatedAt() {
-        return createdAt; // Return the creation time
+        return createdAt; // החזרת זמן היצירה
     }
 
-    // Setters - allow other classes to WRITE/CHANGE the private fields
+    // Setters - מאפשרים למחלקות אחרות לכתוב או לשנות (WRITE/CHANGE) את השדות הפרטיים
     public void setIdFS(String idFS) {
-        this.idFS = idFS; // Update the Firestore ID
+        this.idFS = idFS; // עדכון ה-ID מ-Firestore
     }
 
     public void setFirstName(String firstName) {
-        this.firstName = firstName; // Update the first name
+        this.firstName = firstName; // עדכון השם הפרטי
     }
 
     public void setLastName(String lastName) {
-        this.lastName = lastName; // Update the last name
+        this.lastName = lastName; // עדכון שם המשפחה
     }
 
     public void setEmail(String email) {
-        this.email = email; // Update the email
+        this.email = email; // עדכון האימייל
     }
 
     public void setRole(String role) {
-        this.role = role; // Update the role
+        this.role = role; // עדכון התפקיד
     }
 
     public void setProfilePicture(String profilePicture) {
-        this.profilePicture = profilePicture; // Update the profile picture URL
+        this.profilePicture = profilePicture; // עדכון כתובת התמונה
     }
 
     public void setCreatedAt(long createdAt) {
-        this.createdAt = createdAt; // Update the creation time
+        this.createdAt = createdAt; // עדכון זמן היצירה
     }
 }

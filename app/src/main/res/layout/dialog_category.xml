@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This is the layout for the Add/Edit Category popup dialog -->
+<!-- מסך של דיאלוג ההוספה של קטגוריה -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -8,7 +8,7 @@
     android:padding="16dp"
     android:background="#1A237E">
 
-    <!-- Category Name in English input -->
+    <!-- שדה הכנסת שם הקטגוריה באנגלית -->
     <EditText
         android:id="@+id/etCategoryName"
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
         android:padding="12dp"
         android:layout_marginBottom="12dp"/>
 
-    <!-- Category Name in Hebrew input -->
+    <!-- שדה הכנסת שם הקטגוריה בעברית -->
     <EditText
         android:id="@+id/etCategoryNameHebrew"
         android:layout_width="match_parent"
@@ -34,10 +34,14 @@
         android:padding="12dp"
         android:layout_marginBottom="12dp"/>
 
-    <!-- Image preview - shown after admin selects an image OR when editing existing category -->
-    <!-- visibility="gone" means hidden by default - shown when image is selected -->
-    <!-- adjustViewBounds=true keeps the original image proportions -->
-    <!-- scaleType="fitCenter" shows full image without cropping -->
+    <!--תצוגה מקדימה של תמונה - מוצגת לאחר שהמנהל בוחר תמונה או בעת עריכת קטגוריה קיימת
+
+נראות מוסתרת (gone) פירושה שהרכיב חבוי כברירת מחדל - ויוצג רק כשנבחרת תמונה
+
+הגדרת התאמת גבולות התצוגה לאמת שומרת על הפרופורציות המקוריות של התמונה
+
+סוג קנה מידה של התאמה למרכז מציג את התמונה המלאה ללא חיתוך -->
+
     <ImageView
         android:id="@+id/imgPreview"
         android:layout_width="match_parent"
@@ -47,7 +51,7 @@
         android:layout_marginBottom="8dp"
         android:visibility="gone"/>
 
-    <!-- Add Image button - hidden after image is selected -->
+    <!-- כפתור הוספת תמונה, נעלם אחרי שנבחרה תמונה -->
     <Button
         android:id="@+id/btnAddImage"
         android:layout_width="match_parent"
