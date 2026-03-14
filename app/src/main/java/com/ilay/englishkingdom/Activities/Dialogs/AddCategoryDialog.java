@@ -21,58 +21,52 @@ import com.ilay.englishkingdom.R;
 import java.util.Map;
 
 public class AddCategoryDialog {
-    // למחלקה הזו יש תפקיד אחד: להציג את דיאלוג הוספת הקטגוריה ולשמור את הקטגוריה החדשה
-    // היא מטפלת ב: הצגת הטופס, אימות קלט, העלאת תמונה ושמירה ל-Firestore
-    // LearnActivity פשוט קוראת ל-addDialog.show() - שורה אחת במקום 100+
-
-    // ==================== ממשק CALLBACK ====================
+    // This class has ONE job: show the Add Category dialog and save the new category
+    // It handles: showing the form, validating input, checking duplicates, uploading image, saving to Firestore
+    // LearnActivity just calls addDialog.show() - one line instead of 100+
 
     public interface OnCategoryAddedListener {
-        // נקרא לאחר שהקטגוריה נשמרה בהצלחה ב-Firestore
-        // LearnActivity משתמשת בזה כדי לדעת מתי השמירה הסתיימה
-        void onCategoryAdded();
+        void onCategoryAdded(); // Called after category is successfully saved to Firestore
     }
 
-    // ==================== שדות (FIELDS) ====================
+    // ==================== FIELDS ====================
 
-    private final Activity activity; // נחוץ כדי לנפח (inflate) תצוגות ולהציג הודעות טוסט
-    private final ImagePickerHelper imagePicker; // מטפל במצלמה/גלריה - אנחנו רק קוראים ל-imagePicker.show()
-    private final OnCategoryAddedListener listener; // את מי לעדכן כשהקטגוריה נשמרת
-    private final FirebaseFirestore db; // חיבור למסד הנתונים שלנו
+    private final Activity activity; // Needed to inflate views and show toasts
+    private final ImagePickerHelper imagePicker; // Handles camera/gallery
+    private final OnCategoryAddedListener listener; // Who to notify when category is saved
+    private final FirebaseFirestore db; // Our database connection
 
-    private Uri selectedImageUri = null; // התמונה שהמנהל בחר - null אומר שעדיין אין תמונה
-    private ImageView imgPreview; // רפרנס ל-ImageView של התצוגה המקדימה בתוך הדיאלוג
-    private Button btnAddImage; // רפרנס לכפתור הוספת תמונה בתוך הדיאלוג
-    private AlertDialog openDialog; // רפרנס לדיאלוג עצמו כדי שנוכל לסגור אותו אחרי השמירה
+    private Uri selectedImageUri = null; // The image admin picked - null means no image yet
+    private ImageView imgPreview; // Reference to preview ImageView inside dialog
+    private Button btnAddImage; // Reference to Add Image button inside dialog
+    private AlertDialog openDialog; // Reference to dialog so we can dismiss it after saving
 
-    // ==================== בנאי (CONSTRUCTOR) ====================
+    // ==================== CONSTRUCTOR ====================
 
     public AddCategoryDialog(Activity activity, ImagePickerHelper imagePicker,
                              OnCategoryAddedListener listener) {
-        // הבנאי שומר את כל הדברים שאנחנו צריכים כדי לבצע את העבודה
         this.activity = activity;
         this.imagePicker = imagePicker;
         this.listener = listener;
         this.db = FirebaseFirestore.getInstance();
     }
 
-    // ==================== תצוגה (SHOW) ====================
+    // ==================== SHOW ====================
 
     public void show() {
-        selectedImageUri = null; // איפוס התמונה מכל פעם קודמת שהדיאלוג נפתח
+        selectedImageUri = null; // Reset image from any previous time dialog was opened
 
-        // Inflate = קריאת קובץ ה-XML של העיצוב ובניית אובייקטי ה-View ממנו
+        // Inflate = read the XML layout file and build the View objects from it
         View view = activity.getLayoutInflater().inflate(R.layout.dialog_category, null);
         EditText etName = view.findViewById(R.id.etCategoryName);
         EditText etNameHebrew = view.findViewById(R.id.etCategoryNameHebrew);
-        imgPreview = view.findViewById(R.id.imgPreview); // שמירת רפרנס - נחוץ ב-onImagePicked()
-        btnAddImage = view.findViewById(R.id.btnAddImage); // שמירת רפרנס - נחוץ ב-onImagePicked()
+        imgPreview = view.findViewById(R.id.imgPreview);
+        btnAddImage = view.findViewById(R.id.btnAddImage);
 
-        // כשמנהל לוחץ על כפתור הוספת תמונה, הצג את בחירת המצלמה/גלריה
-        btnAddImage.setOnClickListener(v -> imagePicker.show());
+        // Save references so onImagePicked() can update them after image is picked
+        btnAddImage.setOnClickListener(v -> imagePicker.show()); // Open picker when Add Image tapped
 
-        // בניית הדיאלוג עם null עבור הכפתור החיובי כדי שנוכל לטפל בלחיצה ידנית
-        // null = אל תסגור אוטומטית כשלוחצים על "הוסף" - אנחנו רוצים להשאיר אותו פתוח אם יש שגיאות
+        // null for positive button = handle click manually so dialog stays open on errors
         openDialog = new AlertDialog.Builder(activity)
                 .setTitle("Add New Category")
                 .setView(view)
@@ -82,106 +76,122 @@ public class AddCategoryDialog {
 
         openDialog.show();
 
-        // דריסת לחיצת כפתור ה-"Add" אחרי ה-show() כדי שנשלוט מתי הדיאלוג נסגר
+        // Override Add button click AFTER show() so we control when the dialog dismisses
         openDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String nameHebrew = etNameHebrew.getText().toString().trim();
-            boolean hasError = false; // אנחנו משתמשים בדגל הזה כדי להציג את כל השגיאות בבת אחת
+            boolean hasError = false; // Track if any validation failed - show ALL errors at once
 
-            // אימות שם באנגלית
+            // Validate English name
             if (name.isEmpty()) { etName.setError("Required"); hasError = true; }
             else if (!name.matches("[a-zA-Z ]+")) { etName.setError("English only"); hasError = true; }
+            else if (!Character.isUpperCase(name.charAt(0))) { etName.setError("Must start with a capital letter"); hasError = true; }
 
-            // אימות שם בעברית
+            // Validate Hebrew name
             if (nameHebrew.isEmpty()) { etNameHebrew.setError("Required"); hasError = true; }
             else if (!nameHebrew.matches("[\\u0590-\\u05FF ]+")) { etNameHebrew.setError("Hebrew only"); hasError = true; }
 
-            // אימות שנבחרה תמונה
+            // Validate image was selected
             if (selectedImageUri == null) {
                 Toast.makeText(activity, "Please add an image", Toast.LENGTH_SHORT).show();
                 hasError = true;
             }
 
-            if (hasError) return; // עצור כאן - השאר את הדיאלוג פתוח כדי שהמנהל יוכל לתקן שגיאות
+            if (hasError) return; // Stop here - keep dialog open so admin can fix errors
 
-            uploadAndSave(name, nameHebrew); // הכל תקין - העלה תמונה ואז שמור ב-Firestore
+            // All validation passed - now check if a category with this name already exists
+            // We query Firestore for any category document where categoryName equals our name
+            // This runs BEFORE uploading the image so we don't waste a Cloudinary upload
+            db.collection("categories")
+                    .whereEqualTo("categoryName", name) // Search for matching English name
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (!snapshot.isEmpty()) {
+                            // snapshot.isEmpty() = false means we found at least one match
+                            // A category with this name already exists - show error and stop
+                            etName.setError("A category with this name already exists");
+                            Toast.makeText(activity, "Category already exists!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            // No duplicate found - safe to upload image and save to Firestore
+                            uploadAndSave(name, nameHebrew);
+                        }
+                    })
+                    .addOnFailureListener(e ->
+                            // Something went wrong with the Firestore query - show error
+                            Toast.makeText(activity, "Error checking duplicates", Toast.LENGTH_SHORT).show());
         });
     }
 
-    // ==================== CALLBACK לבחירת תמונה ====================
+    // ==================== IMAGE PICKED CALLBACK ====================
 
     public void onImagePicked(Uri uri) {
-        // LearnActivity קוראת לזה אחרי ש-ImagePickerHelper מחזיר צילום
-        // LearnActivity היא ה"גשר" בין ImagePickerHelper לבין הדיאלוג הזה
-        // מכיוון שה-launchers חייבים לחיות בתוך ה-Activity
-        selectedImageUri = uri; // שמירת ה-URI כדי שנוכל להעלות אותו כשלוחצים על "Add"
+        // LearnActivity calls this after ImagePickerHelper returns a photo
+        selectedImageUri = uri; // Save the URI so we can upload it when Add is tapped
 
-        // עדכן את ממשק המשתמש רק אם הדיאלוג פתוח וגלוי כרגע
         if (imgPreview != null && openDialog != null && openDialog.isShowing()) {
-            imgPreview.setVisibility(View.VISIBLE); // הצג את התצוגה המקדימה של התמונה
-            Glide.with(activity).load(uri).into(imgPreview); // טען את התמונה שנבחרה לתוך התצוגה המקדימה
-            btnAddImage.setVisibility(View.GONE); // הסתר את כפתור הוספת תמונה - התמונה כבר נבחרה
+            imgPreview.setVisibility(View.VISIBLE); // Show the image preview
+            Glide.with(activity).load(uri).into(imgPreview); // Load the picked image
+            btnAddImage.setVisibility(View.GONE); // Hide Add Image button
 
-            // הפוך את התצוגה המקדימה ללחיצה כדי שהמנהל יוכל לשנות או למחוק את התמונה
-            // בלי זה, לחיצה על התמונה אחרי הבחירה לא תעשה כלום
+            // Make preview clickable so admin can Change or Delete after selecting
             imgPreview.setOnClickListener(v -> showSelectedImageOptions(uri));
         }
     }
 
-    // ==================== אפשרויות עבור תמונה שנבחרה ====================
+    // ==================== SELECTED IMAGE OPTIONS ====================
 
     private void showSelectedImageOptions(Uri uri) {
-        // מוצג כשמנהל לוחץ על התצוגה המקדימה של התמונה בתוך דיאלוג ההוספה
-        // זה מאפשר למנהל לשנות (לבחור תמונה אחרת) או למחוק (להסיר את התמונה לחלוטין)
+        // Shows when admin taps on the image preview inside the dialog
+        // Options: Change (pick different image) or Delete (remove image)
         new AlertDialog.Builder(activity)
                 .setTitle("Image Options")
                 .setItems(new String[]{"🔄 Change", "🗑️ Delete"}, (dialog, which) -> {
-                    if (which == 0) { // נלחץ Change
-                        imagePicker.show(); // פתח שוב את בחירת המצלמה/גלריה כדי לבחור תמונה אחרת
-                    } else { // נלחץ Delete
-                        selectedImageUri = null; // נקה את ה-URI - לא נבחרה יותר תמונה
-                        imgPreview.setVisibility(View.GONE); // הסתר את התצוגה המקדימה
-                        imgPreview.setOnClickListener(null); // הסר את מאזין הלחיצה - אין יותר על מה ללחוץ
-                        btnAddImage.setVisibility(View.VISIBLE); // הצג שוב את כפתור הוספת תמונה
+                    if (which == 0) { // Change tapped
+                        imagePicker.show(); // Open camera/gallery picker again
+                    } else { // Delete tapped
+                        selectedImageUri = null; // Clear the URI
+                        imgPreview.setVisibility(View.GONE); // Hide the preview
+                        imgPreview.setOnClickListener(null); // Remove click listener
+                        btnAddImage.setVisibility(View.VISIBLE); // Show Add Image button again
                     }
                 })
-                .setNegativeButton("Cancel", null) // null = פשוט סגור, השאר את התמונה כפי שהיא
+                .setNegativeButton("Cancel", null) // null = just close, keep image as is
                 .show();
     }
 
-    // ==================== העלאה ושמירה ====================
+    // ==================== UPLOAD AND SAVE ====================
 
     private void uploadAndSave(String name, String nameHebrew) {
         Toast.makeText(activity, "Uploading...", Toast.LENGTH_SHORT).show();
 
         MediaManager.get().upload(selectedImageUri)
-                .option("upload_preset", "EnglishKingdom") // ה-unsigned preset שלנו ב-Cloudinary
+                .option("upload_preset", "EnglishKingdom") // Our Cloudinary unsigned preset
                 .callback(new UploadCallback() {
-                    @Override public void onStart(String id) {} // אין מה לעשות כשהעלאה מתחילה
-                    @Override public void onProgress(String id, long bytes, long total) {} // ניתן להוסיף כאן סרגל התקדמות
-                    @Override public void onReschedule(String id, ErrorInfo e) {} // אין מה לעשות אם ההעלאה מתוזמנת מחדש
+                    @Override public void onStart(String id) {} // Nothing to do when upload starts
+                    @Override public void onProgress(String id, long bytes, long total) {} // Could add progress bar
+                    @Override public void onReschedule(String id, ErrorInfo e) {} // Nothing to do if rescheduled
 
                     @Override
                     public void onSuccess(String id, Map result) {
-                        // ההעלאה הסתיימה - קבל את כתובת ה-HTTPS של התמונה שהועלתה מ-Cloudinary
+                        // Upload finished - get the HTTPS URL of the uploaded image
                         String url = (String) result.get("secure_url");
-                        // צור אובייקט קטגוריה חדש - 0 מילים כי היא חדשה לגמרי
+                        // Create new Category - 0 words because it's brand new
                         Category category = new Category(null, name, nameHebrew, url, 0);
-                        // שמירה ל-Firestore - הפעולה add() מייצרת אוטומטית מזהה מסמך (ID)
+                        // Save to Firestore - add() auto-generates a document ID
                         db.collection("categories").add(category)
                                 .addOnSuccessListener(r -> {
                                     Toast.makeText(activity, "Category added! 🎉", Toast.LENGTH_SHORT).show();
-                                    if (openDialog != null) openDialog.dismiss(); // סגור את הדיאלוג
-                                    if (listener != null) listener.onCategoryAdded(); // עדכן את LearnActivity
+                                    if (openDialog != null) openDialog.dismiss(); // Close the dialog
+                                    if (listener != null) listener.onCategoryAdded(); // Notify LearnActivity
                                 })
                                 .addOnFailureListener(e -> Toast.makeText(activity, "Error saving category", Toast.LENGTH_SHORT).show());
                     }
 
                     @Override
                     public void onError(String id, ErrorInfo e) {
-                        // ההעלאה נכשלה - הצג את השגיאה, השאר את הדיאלוג פתוח כדי שהמנהל יוכל לנסות שוב
+                        // Upload failed - show error, keep dialog open so admin can retry
                         Toast.makeText(activity, "Upload failed: " + e.getDescription(), Toast.LENGTH_SHORT).show();
                     }
-                }).dispatch(); // dispatch() למעשה מתחיל את ההעלאה
+                }).dispatch(); // dispatch() actually starts the upload
     }
 }

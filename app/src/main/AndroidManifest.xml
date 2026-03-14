@@ -30,17 +30,13 @@
         <!-- מסך הלמידה -->
         <activity
             android:name=".Activities.LearnActivity"
-            android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="false" />
-
-
-        <!-- מגדיר את המסך הזה (Splash) כמסך היחיד שדרכו נכנסים לאפליקציה, ולכן הוא ייפתח ראשון בכל פעם -->
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- מגדיר את המסך הזה (Splash) כמסך היחיד שדרכו נכנסים לאפליקציה, ולכן הוא ייפתח ראשון בכל פעם -->
         <activity
             android:name=".Activities.SplashActivity"
-            android:screenOrientation="portrait"
-            android:exported="true">
-
+            android:exported="true"
+            android:screenOrientation="portrait">
 
             <!-- רכיב המגדיר למערכת אנדרואיד כיצד ומתי להפעיל את המסך (Activity) הספציפי הזה -->
             <intent-filter>
@@ -50,24 +46,23 @@
                 <!-- הגדרת המסך הזה כנקודת הכניסה של האפליקציה שמופיעה כאייקון בתפריט המכשיר -->
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
-
-        <!-- מסך הלוג אין - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
+        </activity> <!-- מסך הלוג אין - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
         <activity
             android:name=".Activities.LoginActivity"
-            android:screenOrientation="portrait"
-            android:exported="false" />
-
-        <!-- מסך ההירשמות - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- מסך ההירשמות - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
         <activity
             android:name=".Activities.RegisterActivity"
-            android:screenOrientation="portrait"
-            android:exported="false" />
-
-        <!-- מסך הבית - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- מסך הבית - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
         <activity
             android:name=".Activities.HomeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- מסך המילים -->
+        <activity
+            android:name=".Activities.WordsActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
 
@@ -79,9 +74,8 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"/>
+                android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 
 </manifest>

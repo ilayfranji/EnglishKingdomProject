@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- מסך שמציג מילה אחת -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardBackgroundColor="#1A237E"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <!-- תמונה של המילה -->
+        <ImageView
+            android:id="@+id/imgWord"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Word image" />
+
+        <!-- תוכן המילה -->
+        <!-- layout_width="0dp" + layout_weight="1" means take up all REMAINING space -->
+        <!-- This leaves room for the checkmark on the right -->
+        <!-- Before it was match_parent which took ALL the space and hid the checkmark -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            android:gravity="center_vertical">
+
+            <!-- המילה באנגלית -->
+            <TextView
+                android:id="@+id/tvWordEnglish"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFD700"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- תרגום של המילה לעברית -->
+            <TextView
+                android:id="@+id/tvWordHebrew"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#B0BEC5"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp" />
+
+            <!-- משפט דוגמה לשימוש במילה -->
+            <TextView
+                android:id="@+id/tvExampleSentence"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#7986CB"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <!-- סימון וי ירוק כאשר המילה נלמדה -->
+        <!-- Now visible because the LinearLayout no longer takes all the space -->
+        <TextView
+            android:id="@+id/tvLearned"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✅"
+            android:textSize="24sp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

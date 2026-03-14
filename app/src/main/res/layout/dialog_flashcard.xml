@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is the layout for the flashcard popup -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#1A237E">
+
+    <!-- Word image at the top - big and clear -->
+    <ImageView
+        android:id="@+id/imgFlashcardWord"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="12dp" />
+
+    <!-- English word - big and gold -->
+    <TextView
+        android:id="@+id/tvFlashcardEnglish"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFD700"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Hebrew translation -->
+    <TextView
+        android:id="@+id/tvFlashcardHebrew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#B0BEC5"
+        android:textSize="20sp"
+        android:textAlignment="center"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Example sentence - italic -->
+    <TextView
+        android:id="@+id/tvFlashcardExample"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#7986CB"
+        android:textSize="14sp"
+        android:textStyle="italic"
+        android:textAlignment="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Buttons side by side -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- ❌ Still learning button on the left -->
+        <Button
+            android:id="@+id/btnStillLearning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="❌ Still Learning"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#C62828"
+            android:layout_marginEnd="8dp" />
+
+        <!-- ✅ I know this button on the right -->
+        <Button
+            android:id="@+id/btnKnow"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="✅ I Know This"
+            android:textColor="#1A237E"
+            android:backgroundTint="#FFD700" />
+
+    </LinearLayout>
+
+</LinearLayout>

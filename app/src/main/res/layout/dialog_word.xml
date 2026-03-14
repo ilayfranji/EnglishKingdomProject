@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- תצוגת מסך לדיאלוג ההוספה/ שינוי -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#1A237E">
+
+    <!-- שדה הכנסת מילה באנגלית -->
+    <EditText
+        android:id="@+id/etWordEnglish"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Word in English"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <!--שדה הכנסת מילה בעברית -->
+    <EditText
+        android:id="@+id/etWordHebrew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="מילה בעברית"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- שגה הכנסת משפט לדוגמה -->
+    <EditText
+        android:id="@+id/etExampleSentence"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Example sentence"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- תצוגה של תמונה של המילה -->
+    <ImageView
+        android:id="@+id/imgPreview"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
+    <!-- כפתור ההוספה -->
+    <Button
+        android:id="@+id/btnAddImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📷 Add Image"
+        android:textColor="#1A237E"
+        android:backgroundTint="#FFD700"
+        android:textStyle="bold" />
+
+</LinearLayout>
