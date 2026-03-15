@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout for the Add/Edit Letter dialog -->
+<!-- Letters only have a letter name and Hebrew explanation - no image, no example sentence -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#1A237E">
+
+    <!-- Letter name input e.g. A-a or B-b -->
+    <EditText
+        android:id="@+id/etLetterName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="The letter"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Hebrew explanation input e.g. אלף -->
+    <EditText
+        android:id="@+id/etLetterExplanation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="הסבר בעברית"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+</LinearLayout>

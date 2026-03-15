@@ -6,7 +6,7 @@ import android.view.View; // Used to show and hide UI elements
 import android.widget.TextView; // Used for the back button, edit button, banner, category name
 import android.widget.Toast; // Used to show short popup messages
 
-import androidx.activity.result.ActivityResultLauncher; // Used to launch gallery/camera and get result back
+import androidx.activity.result.ActivityResultLauncher; // Used to launch gallery/camera
 import androidx.activity.result.contract.ActivityResultContracts; // Provides contracts for gallery and camera
 import androidx.appcompat.app.AlertDialog; // Used to show the delete confirmation popup
 import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
@@ -15,13 +15,19 @@ import androidx.recyclerview.widget.RecyclerView; // The scrollable list of word
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton; // The round + and X buttons
 import com.google.firebase.auth.FirebaseAuth; // Used to get the current logged in user
+import com.google.firebase.firestore.FieldValue; // Used to remove items from Firestore arrays
 import com.google.firebase.firestore.FirebaseFirestore; // Used to read/write words from our database
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single word document from Firestore
-import com.ilay.englishkingdom.Activities.Dialogs.AddWordDialog; // Handles the Add Word flow
-import com.ilay.englishkingdom.Activities.Dialogs.EditWordDialog; // Handles the Edit Word flow
+import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single word document
+import com.ilay.englishkingdom.Activities.Dialogs.AddLetterDialog; // Handles adding a letter
+import com.ilay.englishkingdom.Activities.Dialogs.AddSentenceDialog; // Handles adding a sentence
+import com.ilay.englishkingdom.Activities.Dialogs.AddWordDialog; // Handles adding a word
+import com.ilay.englishkingdom.Activities.Dialogs.EditLetterDialog; // Handles editing a letter
+import com.ilay.englishkingdom.Activities.Dialogs.EditSentenceDialog; // Handles editing a sentence
+import com.ilay.englishkingdom.Activities.Dialogs.EditWordDialog; // Handles editing a word
 import com.ilay.englishkingdom.Activities.Dialogs.FlashcardDialog; // Shows the flashcard popup
-import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper; // Handles camera/gallery/permissions
+import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper; // Handles camera/gallery
 import com.ilay.englishkingdom.Adapters.WordAdapter; // Connects our word list to the RecyclerView
+import com.ilay.englishkingdom.Models.CategoryType; // Our CategoryType enum
 import com.ilay.englishkingdom.Models.Word; // Our Word data model
 import com.ilay.englishkingdom.R; // Used to reference XML resources
 
@@ -33,16 +39,16 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
     // ==================== UI ELEMENTS ====================
 
     private RecyclerView recyclerWords; // The scrollable list of word cards
-    private FloatingActionButton fabWord; // The + button shown in edit mode to add words
+    private FloatingActionButton fabWord; // The + button shown in edit mode
     private FloatingActionButton fabExitEditMode; // The X button to exit edit mode
     private TextView tvBack; // Back arrow to go back to LearnActivity
     private TextView tvEditMode; // Pencil button shown only to admins
     private TextView tvEditBanner; // Red banner shown at top when in edit mode
-    private TextView tvCategoryName; // Shows the category name at the top of the screen
+    private TextView tvCategoryName; // Shows the category name at the top
 
     // ==================== FIREBASE ====================
 
-    private FirebaseFirestore db; // Our connection to the Firestore database
+    private FirebaseFirestore db; // Our connection to Firestore
     private FirebaseAuth mAuth; // Our connection to Firebase Authentication
 
     // ==================== ADAPTER AND DATA ====================
@@ -52,15 +58,25 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
 
     // ==================== STATE ====================
 
-    private boolean isEditMode = false; // true = admin is in edit mode, false = normal mode
-    private String categoryId; // The Firestore ID of the category we are showing words for
+    private boolean isEditMode = false; // true = admin is in edit mode
+    private String categoryId; // The Firestore ID of the category we are showing
 
-    // ==================== HELPERS AND DIALOGS ====================
+    // The type of this category - determines which dialog opens and which fields show
+    // Passed from LearnActivity via Intent along with categoryId
+    private CategoryType categoryType;
 
-    private ImagePickerHelper imagePicker; // Handles ALL camera/gallery/permission logic
-    private AddWordDialog addWordDialog; // Handles the entire Add Word flow
-    private EditWordDialog editWordDialog; // Handles the entire Edit Word flow
-    private FlashcardDialog flashcardDialog; // Shows the flashcard when user taps a word card
+    // ==================== DIALOGS ====================
+
+    // We create all 3 pairs of dialogs but only use the ones matching the category type
+    // This keeps the code clean - WordsActivity doesn't need to know the details of each dialog
+    private ImagePickerHelper imagePicker; // Handles camera/gallery - only used for WORDS type
+    private AddWordDialog addWordDialog; // Add dialog for WORDS type
+    private EditWordDialog editWordDialog; // Edit dialog for WORDS type
+    private AddLetterDialog addLetterDialog; // Add dialog for LETTERS type
+    private EditLetterDialog editLetterDialog; // Edit dialog for LETTERS type
+    private AddSentenceDialog addSentenceDialog; // Add dialog for SENTENCES type
+    private EditSentenceDialog editSentenceDialog; // Edit dialog for SENTENCES type
+    private FlashcardDialog flashcardDialog; // Flashcard shown when user taps any item
 
     // ==================== SAVE/RESTORE STATE ====================
 
@@ -69,13 +85,14 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
     // ==================== ACTIVITY RESULT LAUNCHERS ====================
 
     // These MUST live here in the Activity - passed into ImagePickerHelper
+    // Only used when category type is WORDS because only words have images
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
-            uri -> imagePicker.onGalleryResult(uri)); // Forward result to ImagePickerHelper
+            uri -> { if (imagePicker != null) imagePicker.onGalleryResult(uri); });
 
     private final ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
-            success -> imagePicker.onCameraResult(success)); // Forward result to ImagePickerHelper
+            success -> { if (imagePicker != null) imagePicker.onCameraResult(success); });
 
     // ==================== LIFECYCLE ====================
 
@@ -84,11 +101,19 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_words);
 
-        // Get the categoryId and categoryName that LearnActivity passed via Intent
-        categoryId = getIntent().getStringExtra("categoryId");
-        String categoryName = getIntent().getStringExtra("categoryName");
+        // Get the data passed from LearnActivity via Intent
+        categoryId = getIntent().getStringExtra("categoryId"); // Which category to load
+        String categoryName = getIntent().getStringExtra("categoryName"); // For display only
+        String categoryTypeString = getIntent().getStringExtra("categoryType"); // "WORDS"/"LETTERS"/"SENTENCES"
 
-        // If categoryId is missing something went wrong - close immediately
+        // Convert the String back to a CategoryType enum
+        // If missing or unrecognized, default to WORDS so the screen still works
+        try {
+            categoryType = CategoryType.valueOf(categoryTypeString);
+        } catch (Exception e) {
+            categoryType = CategoryType.WORDS; // Default to WORDS if something goes wrong
+        }
+
         if (categoryId == null) {
             Toast.makeText(this, "Error loading words", Toast.LENGTH_SHORT).show();
             finish();
@@ -115,37 +140,50 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
         if (categoryName != null) tvCategoryName.setText(categoryName);
 
         wordList = new ArrayList<>();
-
-        // LinearLayoutManager = single vertical list, one card per row
         recyclerWords.setLayoutManager(new LinearLayoutManager(this));
-        wordAdapter = new WordAdapter(this, wordList, categoryId, this);
+
+        // Pass the category type to the adapter so it knows which fields to show/hide
+        wordAdapter = new WordAdapter(this, wordList, categoryId, categoryType, this);
         recyclerWords.setAdapter(wordAdapter);
 
         checkIfAdmin();
-        loadWords(); // Load words from Firestore in real time
-        loadLearnedWords(); // Load learned words in real time so checkmarks stay updated
+        loadWords();
+        loadLearnedWords();
 
-        // Create ImagePickerHelper - forward image to whichever dialog is open
-        imagePicker = new ImagePickerHelper(this,
-                (uri, fromGallery) -> {
-                    addWordDialog.onImagePicked(uri);
-                    editWordDialog.onImagePicked(uri);
-                },
-                galleryLauncher,
-                cameraLauncher);
+        // Only set up image picker for WORDS type - letters and sentences don't need it
+        if (categoryType == CategoryType.WORDS) {
+            imagePicker = new ImagePickerHelper(this,
+                    (uri, fromGallery) -> {
+                        // Forward image to whichever word dialog is currently open
+                        if (addWordDialog != null) addWordDialog.onImagePicked(uri);
+                        if (editWordDialog != null) editWordDialog.onImagePicked(uri);
+                    },
+                    galleryLauncher,
+                    cameraLauncher);
 
-        if (restoredUri != null) imagePicker.setPendingCameraUri(restoredUri);
+            if (restoredUri != null) imagePicker.setPendingCameraUri(restoredUri);
 
-        addWordDialog = new AddWordDialog(this, imagePicker, categoryId, () -> {});
-        editWordDialog = new EditWordDialog(this, imagePicker, categoryId, () -> {});
+            // Create word dialogs
+            addWordDialog = new AddWordDialog(this, imagePicker, categoryId, () -> {});
+            editWordDialog = new EditWordDialog(this, imagePicker, categoryId, () -> {});
 
-        // FlashcardDialog doesn't need a callback anymore because loadLearnedWords()
-        // is already listening in real time - checkmarks update automatically
+        } else if (categoryType == CategoryType.LETTERS) {
+            // Create letter dialogs - no image picker needed
+            addLetterDialog = new AddLetterDialog(this, categoryId, () -> {});
+            editLetterDialog = new EditLetterDialog(this, categoryId, () -> {});
+
+        } else if (categoryType == CategoryType.SENTENCES) {
+            // Create sentence dialogs - no image picker needed
+            addSentenceDialog = new AddSentenceDialog(this, categoryId, () -> {});
+            editSentenceDialog = new EditSentenceDialog(this, categoryId, () -> {});
+        }
+
+        // Flashcard dialog works for all types - no changes needed
         flashcardDialog = new FlashcardDialog(this, categoryId, () -> {});
 
         tvBack.setOnClickListener(v -> finish());
         tvEditMode.setOnClickListener(v -> enterEditMode());
-        fabWord.setOnClickListener(v -> addWordDialog.show());
+        fabWord.setOnClickListener(v -> showAddDialog()); // Show the right add dialog based on type
         fabExitEditMode.setOnClickListener(v -> exitEditMode());
     }
 
@@ -164,21 +202,47 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        imagePicker.onPermissionResult(requestCode, grantResults);
+        // Only forward to imagePicker if it exists (only exists for WORDS type)
+        if (imagePicker != null) imagePicker.onPermissionResult(requestCode, grantResults);
+    }
+
+    // ==================== SHOW RIGHT ADD DIALOG ====================
+
+    private void showAddDialog() {
+        // Opens the correct Add dialog based on the category type
+        if (categoryType == CategoryType.WORDS) {
+            addWordDialog.show(); // Regular word dialog with image
+        } else if (categoryType == CategoryType.LETTERS) {
+            addLetterDialog.show(); // Letter dialog - letter name + Hebrew explanation
+        } else if (categoryType == CategoryType.SENTENCES) {
+            addSentenceDialog.show(); // Sentence dialog - English + Hebrew only
+        }
+    }
+
+    // ==================== SHOW RIGHT EDIT DIALOG ====================
+
+    private void showEditDialog(Word word) {
+        // Opens the correct Edit dialog based on the category type
+        if (categoryType == CategoryType.WORDS) {
+            editWordDialog.show(word); // Regular word edit dialog
+        } else if (categoryType == CategoryType.LETTERS) {
+            editLetterDialog.show(word); // Letter edit dialog
+        } else if (categoryType == CategoryType.SENTENCES) {
+            editSentenceDialog.show(word); // Sentence edit dialog
+        }
     }
 
     // ==================== ADMIN CHECK ====================
 
     private void checkIfAdmin() {
         if (mAuth.getCurrentUser() == null) return;
-
         String userId = mAuth.getCurrentUser().getUid();
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
                     if (document.exists()) {
                         String role = document.getString("role");
                         if (role != null && role.equals("ADMIN")) {
-                            tvEditMode.setVisibility(View.VISIBLE); // Show pencil for admin only
+                            tvEditMode.setVisibility(View.VISIBLE);
                         }
                     }
                 });
@@ -201,41 +265,31 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
                         word.setIdFS(doc.getId());
                         wordList.add(word);
                     }
-                    wordAdapter.notifyDataSetChanged(); // Refresh the list
+                    wordAdapter.notifyDataSetChanged();
                 });
     }
 
     // ==================== LOAD LEARNED WORDS ====================
 
     private void loadLearnedWords() {
-        // Only load for logged in users - guests have no progress
         if (mAuth.getCurrentUser() == null) return;
-
         String userId = mAuth.getCurrentUser().getUid();
 
-        // addSnapshotListener = real time listener
-        // Every time the user taps I Know This or Still Learning in FlashcardDialog,
-        // Firestore updates the progress document and this listener fires automatically
-        // It then passes the updated list to the adapter so checkmarks refresh instantly
+        // Real time listener - fires every time the user marks an item as learned or not learned
         db.collection("users").document(userId)
                 .collection("progress").document(categoryId)
                 .addSnapshotListener((document, error) -> {
-                    if (error != null) return; // Something went wrong - skip silently
+                    if (error != null) return;
 
-                    // Read the learnedWords array - list of wordIds the user has learned
-                    // If the document doesn't exist yet, use an empty list
                     List<String> learnedWords = new ArrayList<>();
                     if (document != null && document.exists()
                             && document.get("learnedWords") != null) {
-                        // Firestore returns arrays as List<Object> so we cast each item to String
                         List<Object> raw = (List<Object>) document.get("learnedWords");
                         for (Object item : raw) {
-                            learnedWords.add((String) item); // Add each wordId to our list
+                            learnedWords.add((String) item);
                         }
                     }
-
-                    // Pass the list to the adapter
-                    // The adapter uses it to show/hide the green checkmark on each card
+                    // Pass updated list to adapter so checkmarks refresh instantly
                     wordAdapter.setLearnedWords(learnedWords);
                 });
     }
@@ -262,9 +316,8 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
 
     @Override
     public void onWordClick(Word word) {
-        // Called by WordAdapter when a word card is tapped
         if (isEditMode) {
-            editWordDialog.show(word); // Edit mode → open edit dialog
+            showEditDialog(word); // Edit mode → open correct edit dialog
         } else {
             flashcardDialog.show(word); // Normal mode → show flashcard
         }
@@ -272,18 +325,16 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
 
     @Override
     public void onWordLongClick(Word word) {
-        // Called by WordAdapter when a word card is long pressed
         if (isEditMode) {
-            showDeleteConfirmationDialog(word); // Edit mode → show delete confirmation
+            showDeleteConfirmationDialog(word);
         }
     }
 
     // ==================== DELETE ====================
 
     private void showDeleteConfirmationDialog(Word word) {
-        // Shows a confirmation popup before deleting - prevents accidental deletion
         new AlertDialog.Builder(this)
-                .setTitle("Delete Word")
+                .setTitle("Delete")
                 .setMessage("Are you sure you want to delete \"" + word.getWordEnglish() + "\"?")
                 .setPositiveButton("Delete", (dialog, which) -> deleteWord(word.getIdFS()))
                 .setNegativeButton("Cancel", null)
@@ -291,23 +342,52 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
     }
 
     private void deleteWord(String wordId) {
-        // Delete the word document from Firestore
+        // Step 1 - delete the word/letter/sentence document from Firestore
         db.collection("categories").document(categoryId)
                 .collection("words").document(wordId).delete()
                 .addOnSuccessListener(v -> {
-                    Toast.makeText(this, "Word deleted! 🗑️", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Deleted! 🗑️", Toast.LENGTH_SHORT).show();
 
-                    // After deleting recount the words and update wordCount in the category
-                    // This keeps the word count text and progress bar in LearnActivity accurate
+                    // Step 2 - recount remaining items and update wordCount in the category
                     db.collection("categories").document(categoryId)
                             .collection("words").get()
                             .addOnSuccessListener(snapshot -> {
-                                int totalWords = snapshot.size(); // How many words are left
                                 db.collection("categories").document(categoryId)
-                                        .update("wordCount", totalWords); // Update the category
+                                        .update("wordCount", snapshot.size());
+                            });
+
+                    // Step 3 - remove this wordId from ALL users' learnedWords arrays
+                    // so their progress doesn't count a deleted item
+                    db.collection("users").get()
+                            .addOnSuccessListener(usersSnapshot -> {
+                                for (QueryDocumentSnapshot userDoc : usersSnapshot) {
+                                    String userId = userDoc.getId();
+                                    db.collection("users").document(userId)
+                                            .collection("progress").document(categoryId)
+                                            .get()
+                                            .addOnSuccessListener(progressDoc -> {
+                                                if (!progressDoc.exists()) return;
+
+                                                List<String> learnedWords = new ArrayList<>();
+                                                if (progressDoc.get("learnedWords") != null) {
+                                                    List<Object> raw = (List<Object>) progressDoc.get("learnedWords");
+                                                    for (Object item : raw) learnedWords.add((String) item);
+                                                }
+
+                                                // Only update users who had learned this specific item
+                                                if (learnedWords.contains(wordId)) {
+                                                    db.collection("users").document(userId)
+                                                            .collection("progress").document(categoryId)
+                                                            .update(
+                                                                    "learnedWords", FieldValue.arrayRemove(wordId),
+                                                                    "wordsLearned", learnedWords.size() - 1
+                                                            );
+                                                }
+                                            });
+                                }
                             });
                 })
                 .addOnFailureListener(e -> Toast.makeText(this,
-                        "Error deleting word", Toast.LENGTH_SHORT).show());
+                        "Error deleting", Toast.LENGTH_SHORT).show());
     }
 }

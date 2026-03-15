@@ -3,9 +3,11 @@ package com.ilay.englishkingdom.Activities.Dialogs;
 import android.app.Activity;
 import android.net.Uri;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -16,14 +18,15 @@ import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.ilay.englishkingdom.Models.Category;
+import com.ilay.englishkingdom.Models.CategoryType;
 import com.ilay.englishkingdom.R;
 
 import java.util.Map;
 
 public class AddCategoryDialog {
-    // This class has ONE job: show the Add Category dialog and save the new category
-    // It handles: showing the form, validating input, checking duplicates, uploading image, saving to Firestore
-    // LearnActivity just calls addDialog.show() - one line instead of 100+
+    // This class shows the Add Category dialog and saves the new category
+    // Admin picks the category type from a spinner (dropdown)
+    // All types now require an image
 
     public interface OnCategoryAddedListener {
         void onCategoryAdded(); // Called after category is successfully saved to Firestore
@@ -56,15 +59,26 @@ public class AddCategoryDialog {
     public void show() {
         selectedImageUri = null; // Reset image from any previous time dialog was opened
 
-        // Inflate = read the XML layout file and build the View objects from it
+        // Inflate = read dialog_category.xml and build the View objects from it
         View view = activity.getLayoutInflater().inflate(R.layout.dialog_category, null);
         EditText etName = view.findViewById(R.id.etCategoryName);
         EditText etNameHebrew = view.findViewById(R.id.etCategoryNameHebrew);
         imgPreview = view.findViewById(R.id.imgPreview);
         btnAddImage = view.findViewById(R.id.btnAddImage);
+        Spinner spinnerType = view.findViewById(R.id.spinnerCategoryType); // The type dropdown
 
-        // Save references so onImagePicked() can update them after image is picked
-        btnAddImage.setOnClickListener(v -> imagePicker.show()); // Open picker when Add Image tapped
+        // Set up the spinner with the 3 category types
+        // ArrayAdapter connects our string array to the spinner
+        // android.R.layout.simple_spinner_item is the built in Android spinner item layout
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(activity,
+                android.R.layout.simple_spinner_item,
+                new String[]{"Words", "Letters", "Sentences"});
+        // simple_spinner_dropdown_item is the built in layout for the dropdown list items
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerType.setAdapter(spinnerAdapter); // Connect the adapter to the spinner
+
+        // Open image picker when Add Image button is tapped
+        btnAddImage.setOnClickListener(v -> imagePicker.show());
 
         // null for positive button = handle click manually so dialog stays open on errors
         openDialog = new AlertDialog.Builder(activity)
@@ -82,16 +96,23 @@ public class AddCategoryDialog {
             String nameHebrew = etNameHebrew.getText().toString().trim();
             boolean hasError = false; // Track if any validation failed - show ALL errors at once
 
+            // Read which type admin selected from the spinner
+            // getSelectedItemPosition() returns 0 = Words, 1 = Letters, 2 = Sentences
+            int selectedPosition = spinnerType.getSelectedItemPosition();
+            CategoryType selectedType;
+            if (selectedPosition == 0) selectedType = CategoryType.WORDS;
+            else if (selectedPosition == 1) selectedType = CategoryType.LETTERS;
+            else selectedType = CategoryType.SENTENCES;
+
             // Validate English name
             if (name.isEmpty()) { etName.setError("Required"); hasError = true; }
             else if (!name.matches("[a-zA-Z ]+")) { etName.setError("English only"); hasError = true; }
-            else if (!Character.isUpperCase(name.charAt(0))) { etName.setError("Must start with a capital letter"); hasError = true; }
 
             // Validate Hebrew name
             if (nameHebrew.isEmpty()) { etNameHebrew.setError("Required"); hasError = true; }
             else if (!nameHebrew.matches("[\\u0590-\\u05FF ]+")) { etNameHebrew.setError("Hebrew only"); hasError = true; }
 
-            // Validate image was selected
+            // Image is required for ALL category types - not just Words
             if (selectedImageUri == null) {
                 Toast.makeText(activity, "Please add an image", Toast.LENGTH_SHORT).show();
                 hasError = true;
@@ -99,25 +120,22 @@ public class AddCategoryDialog {
 
             if (hasError) return; // Stop here - keep dialog open so admin can fix errors
 
-            // All validation passed - now check if a category with this name already exists
-            // We query Firestore for any category document where categoryName equals our name
-            // This runs BEFORE uploading the image so we don't waste a Cloudinary upload
+            // Check if a category with this name already exists in Firestore
+            // This runs BEFORE uploading so we don't waste a Cloudinary upload on a duplicate
             db.collection("categories")
-                    .whereEqualTo("categoryName", name) // Search for matching English name
+                    .whereEqualTo("categoryName", name)
                     .get()
                     .addOnSuccessListener(snapshot -> {
                         if (!snapshot.isEmpty()) {
-                            // snapshot.isEmpty() = false means we found at least one match
-                            // A category with this name already exists - show error and stop
+                            // Found a duplicate - show error and stop
                             etName.setError("A category with this name already exists");
                             Toast.makeText(activity, "Category already exists!", Toast.LENGTH_SHORT).show();
                         } else {
-                            // No duplicate found - safe to upload image and save to Firestore
-                            uploadAndSave(name, nameHebrew);
+                            // No duplicate found - upload image and save for ALL types
+                            uploadAndSave(name, nameHebrew, selectedType);
                         }
                     })
                     .addOnFailureListener(e ->
-                            // Something went wrong with the Firestore query - show error
                             Toast.makeText(activity, "Error checking duplicates", Toast.LENGTH_SHORT).show());
         });
     }
@@ -142,7 +160,6 @@ public class AddCategoryDialog {
 
     private void showSelectedImageOptions(Uri uri) {
         // Shows when admin taps on the image preview inside the dialog
-        // Options: Change (pick different image) or Delete (remove image)
         new AlertDialog.Builder(activity)
                 .setTitle("Image Options")
                 .setItems(new String[]{"🔄 Change", "🗑️ Delete"}, (dialog, which) -> {
@@ -155,13 +172,15 @@ public class AddCategoryDialog {
                         btnAddImage.setVisibility(View.VISIBLE); // Show Add Image button again
                     }
                 })
-                .setNegativeButton("Cancel", null) // null = just close, keep image as is
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
     // ==================== UPLOAD AND SAVE ====================
 
-    private void uploadAndSave(String name, String nameHebrew) {
+    private void uploadAndSave(String name, String nameHebrew, CategoryType type) {
+        // Upload image to Cloudinary first then save category to Firestore
+        // All types now go through this method since all types have images
         Toast.makeText(activity, "Uploading...", Toast.LENGTH_SHORT).show();
 
         MediaManager.get().upload(selectedImageUri)
@@ -173,18 +192,9 @@ public class AddCategoryDialog {
 
                     @Override
                     public void onSuccess(String id, Map result) {
-                        // Upload finished - get the HTTPS URL of the uploaded image
+                        // Upload finished - get the HTTPS Cloudinary URL
                         String url = (String) result.get("secure_url");
-                        // Create new Category - 0 words because it's brand new
-                        Category category = new Category(null, name, nameHebrew, url, 0);
-                        // Save to Firestore - add() auto-generates a document ID
-                        db.collection("categories").add(category)
-                                .addOnSuccessListener(r -> {
-                                    Toast.makeText(activity, "Category added! 🎉", Toast.LENGTH_SHORT).show();
-                                    if (openDialog != null) openDialog.dismiss(); // Close the dialog
-                                    if (listener != null) listener.onCategoryAdded(); // Notify LearnActivity
-                                })
-                                .addOnFailureListener(e -> Toast.makeText(activity, "Error saving category", Toast.LENGTH_SHORT).show());
+                        saveToFirestore(name, nameHebrew, url, type); // Save with image URL
                     }
 
                     @Override
@@ -193,5 +203,20 @@ public class AddCategoryDialog {
                         Toast.makeText(activity, "Upload failed: " + e.getDescription(), Toast.LENGTH_SHORT).show();
                     }
                 }).dispatch(); // dispatch() actually starts the upload
+    }
+
+    // ==================== SAVE TO FIRESTORE ====================
+
+    private void saveToFirestore(String name, String nameHebrew, String imageUrl, CategoryType type) {
+        // type.name() converts the enum to a String e.g. CategoryType.WORDS → "WORDS"
+        // We save it as a String because Firestore doesn't understand Java enums directly
+        Category category = new Category(null, name, nameHebrew, imageUrl, 0, type.name());
+        db.collection("categories").add(category) // add() auto-generates a document ID
+                .addOnSuccessListener(r -> {
+                    Toast.makeText(activity, "Category added! 🎉", Toast.LENGTH_SHORT).show();
+                    if (openDialog != null) openDialog.dismiss(); // Close the dialog
+                    if (listener != null) listener.onCategoryAdded(); // Notify LearnActivity
+                })
+                .addOnFailureListener(e -> Toast.makeText(activity, "Error saving category", Toast.LENGTH_SHORT).show());
     }
 }

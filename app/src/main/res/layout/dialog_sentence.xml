@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout for the Add/Edit Sentence dialog -->
+<!-- Sentences only have an English sentence and Hebrew translation - no image, no example sentence -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#1A237E">
+
+    <!-- English sentence input -->
+    <EditText
+        android:id="@+id/etSentenceEnglish"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="English sentence"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Hebrew translation input -->
+    <EditText
+        android:id="@+id/etSentenceHebrew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="תרגום לעברית"
+        android:textColorHint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+</LinearLayout>

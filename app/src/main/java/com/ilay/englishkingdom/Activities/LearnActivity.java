@@ -235,6 +235,7 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
             Intent intent = new Intent(this, WordsActivity.class);
             intent.putExtra("categoryId", category.getIdFS()); // So WordsActivity knows which words to load
             intent.putExtra("categoryName", category.getCategoryName()); // For display at the top
+            intent.putExtra("categoryType", category.getCategoryType()); // "WORDS"/"LETTERS"/"SENTENCES"
             startActivity(intent);
         }
     }
