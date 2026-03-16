@@ -141,15 +141,17 @@ public class HomeActivity extends AppCompatActivity {
         popupMenu.setOnMenuItemClickListener(item -> { // רץ כשלוחצים על פריט כלשהו בתפריט
             int id = item.getItemId(); // קבלת ה-ID של הפריט שנלחץ
 
-            if (id == R.id.menu_profile) { // נלחץ פרופיל
-                // TODO: מעבר למסך הפרופיל
-                return true; // true אומר שטיפלנו בלחיצה הזו
-
-            } else if (id == R.id.menu_how_to_play) { // נלחץ "איך לשחק"
-                // TODO: מעבר למסך "איך לשחק"
+            if (id == R.id.menu_profile) {
+                // Open ProfileActivity
+                startActivity(new Intent(HomeActivity.this, ProfileActivity.class));
                 return true;
 
-            } else if (id == R.id.menu_logout) { // נלחץ התנתקות
+            } else if (id == R.id.menu_how_to_play) {
+                // Open HowToPlayActivity
+                startActivity(new Intent(HomeActivity.this, HowToPlayActivity.class));
+                return true;
+
+            } else if (id == R.id.menu_logout) {
                 logoutUser();
                 return true;
             }

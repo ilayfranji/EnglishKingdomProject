@@ -179,7 +179,7 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
         }
 
         // Flashcard dialog works for all types - no changes needed
-        flashcardDialog = new FlashcardDialog(this, categoryId, () -> {});
+        flashcardDialog = new FlashcardDialog(this, categoryId, wordList, () -> {});
 
         tvBack.setOnClickListener(v -> finish());
         tvEditMode.setOnClickListener(v -> enterEditMode());

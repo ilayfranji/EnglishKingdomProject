@@ -17,66 +17,67 @@ import com.google.firebase.firestore.SetOptions;
 import com.ilay.englishkingdom.Models.Word;
 import com.ilay.englishkingdom.R;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class FlashcardDialog {
     // This class shows a flashcard popup when a user taps a word card
     // Front: image + English + Hebrew + example sentence
     // Back: two buttons - I know this / Still learning
-    // After tapping a button it updates the user's progress in Firestore
 
     public interface OnStatusChangedListener {
-        // Called after the user taps either button so WordsActivity can refresh the list
-        void onStatusChanged();
+        void onStatusChanged(); // Called after user taps either button
     }
 
     private final Activity activity; // Needed to inflate the dialog view
     private final FirebaseFirestore db; // Our database connection
     private final String categoryId; // Which category this word belongs to
+    private final List<Word> wordList; // The full list of words in this category
+    // We need wordList to know the total number of words when saving progress
+    // Without this totalWords would always be saved as 0
     private final OnStatusChangedListener listener; // Who to notify after status changes
 
-    public FlashcardDialog(Activity activity, String categoryId, OnStatusChangedListener listener) {
+    public FlashcardDialog(Activity activity, String categoryId,
+                           List<Word> wordList, OnStatusChangedListener listener) {
         this.activity = activity;
         this.categoryId = categoryId;
+        this.wordList = wordList; // Save reference - used in markWord() to get total count
         this.listener = listener;
         this.db = FirebaseFirestore.getInstance();
     }
 
     public void show(Word word) {
-        // Inflate = read the XML layout file and build the View from it
+        // Inflate = read dialog_flashcard.xml and build the View from it
         View view = activity.getLayoutInflater().inflate(R.layout.dialog_flashcard, null);
 
-        // Connect variables to views inside the dialog layout
-        ImageView imgWord = view.findViewById(R.id.imgFlashcardWord); // The word image
-        TextView tvWordEnglish = view.findViewById(R.id.tvFlashcardEnglish); // English word
-        TextView tvWordHebrew = view.findViewById(R.id.tvFlashcardHebrew); // Hebrew translation
-        TextView tvExampleSentence = view.findViewById(R.id.tvFlashcardExample); // Example sentence
-        Button btnKnow = view.findViewById(R.id.btnKnow); // ✅ I know this button
-        Button btnStillLearning = view.findViewById(R.id.btnStillLearning); // ❌ Still learning button
+        ImageView imgWord = view.findViewById(R.id.imgFlashcardWord);
+        TextView tvWordEnglish = view.findViewById(R.id.tvFlashcardEnglish);
+        TextView tvWordHebrew = view.findViewById(R.id.tvFlashcardHebrew);
+        TextView tvExampleSentence = view.findViewById(R.id.tvFlashcardExample);
+        Button btnKnow = view.findViewById(R.id.btnKnow);
+        Button btnStillLearning = view.findViewById(R.id.btnStillLearning);
 
-        // Fill the views with the word's data
-        tvWordEnglish.setText(word.getWordEnglish()); // Set English word
-        tvWordHebrew.setText(word.getWordHebrew()); // Set Hebrew translation
-        tvExampleSentence.setText(word.getExampleSentence()); // Set example sentence
-
-        // Load word image from Cloudinary URL using Glide
+        // Fill views with word data
+        tvWordEnglish.setText(word.getWordEnglish());
+        tvWordHebrew.setText(word.getWordHebrew());
+        tvExampleSentence.setText(word.getExampleSentence());
         Glide.with(activity).load(word.getImage()).into(imgWord);
 
-        // Build the dialog - no built in buttons, we use our own buttons inside the layout
         AlertDialog dialog = new AlertDialog.Builder(activity)
                 .setView(view)
                 .create();
 
-        // ✅ I know this button - marks the word as learned
+        // ✅ I know this - marks word as learned
         btnKnow.setOnClickListener(v -> {
             markWord(word.getIdFS(), true); // true = learned
-            dialog.dismiss(); // Close the flashcard
+            dialog.dismiss();
         });
 
-        // ❌ Still learning button - marks the word as not learned
+        // ❌ Still learning - marks word as not learned
         btnStillLearning.setOnClickListener(v -> {
             markWord(word.getIdFS(), false); // false = not learned
-            dialog.dismiss(); // Close the flashcard
+            dialog.dismiss();
         });
 
         dialog.show();
@@ -88,48 +89,48 @@ public class FlashcardDialog {
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // First read the current progress document to get the learnedWords array
-        // Path: users/[userId]/progress/[categoryId]
+        // Read current progress document to get the existing learnedWords array
         db.collection("users").document(userId)
                 .collection("progress").document(categoryId)
                 .get()
                 .addOnSuccessListener(document -> {
 
-                    // Read the current learnedWords array - list of wordIds the user has learned
-                    // If document doesn't exist yet, start with an empty list
-                    java.util.List<String> learnedWords = new java.util.ArrayList<>();
+                    // Read current learnedWords array - start empty if document doesn't exist yet
+                    List<String> learnedWords = new ArrayList<>();
                     if (document.exists() && document.get("learnedWords") != null) {
                         // Firestore returns arrays as List<Object> so we cast each item to String
-                        java.util.List<Object> raw = (java.util.List<Object>) document.get("learnedWords");
+                        List<Object> raw = (List<Object>) document.get("learnedWords");
                         for (Object item : raw) {
-                            learnedWords.add((String) item); // Add each wordId to our list
+                            learnedWords.add((String) item);
                         }
                     }
 
                     if (learned) {
-                        // User tapped ✅ - add this wordId to learned list if not already there
+                        // User tapped ✅ - add wordId if not already in the list
                         // We check first to avoid counting the same word twice
                         if (!learnedWords.contains(wordId)) {
-                            learnedWords.add(wordId); // Add wordId to the learned list
+                            learnedWords.add(wordId);
                         }
                         Toast.makeText(activity, "Great job! ⭐", Toast.LENGTH_SHORT).show();
                     } else {
-                        // User tapped ❌ - remove this wordId from learned list if it's there
-                        learnedWords.remove(wordId); // Remove wordId from the learned list
+                        // User tapped ❌ - remove wordId from the list if it's there
+                        learnedWords.remove(wordId);
                         Toast.makeText(activity, "Keep practicing! 💪", Toast.LENGTH_SHORT).show();
                     }
 
-                    // Build the updated progress data to save back to Firestore
+                    // Build updated progress data to save back to Firestore
                     HashMap<String, Object> progress = new HashMap<>();
-                    progress.put("learnedWords", learnedWords); // The updated list of learned wordIds
-                    progress.put("wordsLearned", learnedWords.size()); // Count = size of the list
+                    progress.put("learnedWords", learnedWords); // Updated list of learned wordIds
+                    progress.put("wordsLearned", learnedWords.size()); // Count = size of list
+                    progress.put("totalWords", wordList.size()); // Total words in this category
+                    // wordList.size() is correct here because we pass wordList from WordsActivity
+                    // This is what ProfileActivity reads to calculate the overall progress percentage
 
                     // SetOptions.merge() updates only these fields without deleting other fields
                     db.collection("users").document(userId)
                             .collection("progress").document(categoryId)
                             .set(progress, SetOptions.merge())
                             .addOnSuccessListener(v -> {
-                                // Notify WordsActivity to refresh the list so checkmarks update
                                 if (listener != null) listener.onStatusChanged();
                             });
                 });

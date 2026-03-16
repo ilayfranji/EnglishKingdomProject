@@ -66,6 +66,18 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <!-- מסך פרופיל -->
+        <activity
+            android:name=".Activities.ProfileActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <!-- מסך מדריך איך לשחק -->
+        <activity
+            android:name=".Activities.HowToPlayActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <!-- FileProvider - מאפשר לאפליקציה שלנו לשתף קבצים עם אפליקציית המצלמה בצורה מאובטחת -->
         <provider
             android:name="androidx.core.content.FileProvider"

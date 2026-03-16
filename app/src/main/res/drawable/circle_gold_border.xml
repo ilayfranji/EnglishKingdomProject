@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Golden circle border for the profile picture -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <!-- Gold border color -->
+    <stroke
+        android:width="3dp"
+        android:color="#FFD700" />
+    <!-- Dark blue background inside the circle -->
+    <solid android:color="#1A237E" />
+</shape>
