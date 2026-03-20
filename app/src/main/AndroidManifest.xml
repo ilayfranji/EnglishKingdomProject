@@ -1,20 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- מאפשר לאפליקציה גישה לאינטרנט (נחוץ בשביל הפיירבייס והקלאודינארי) -->
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- ההרשאה הישנה שמאפשרת לאפליקציה לגשת לקבצים ותמונות במכשירים עם אנדרואיד 12 ומטה -->
-    <!-- ההרשאה הזו תפעל רק עד גרסה 12 (API 32), כי בגרסאות חדשות יותר (13 ומעלה) היא כבר לא תקפה והוחלפה ב-READ_MEDIA_IMAGES. -->
+
+    <!-- ==================== PERMISSIONS ==================== -->
+
+    <!-- Allows the app to access the internet - needed for Firebase and Cloudinary -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Allows access to images on Android 12 and below -->
+    <!-- maxSdkVersion=32 means this only applies up to Android 12 -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" /> <!-- גוגל ביטלה את ההרשאה הכללית לכל הקבצים (READ_EXTERNAL_STORAGE) והחליפה אותה בהרשאות ספציפיות כדי לשמור על פרטיות המשתמש -->
-    <!-- ההרשאה החדשה שמאפשרת לאפליקציה לגשת רק לתמונות במכשירים עם אנדרואיד 13 ומעלה -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <!-- מאפשר לאפליקציה לקבל גישה פיזית למצלמה של המכשיר כדי שהמשתמש יוכל לצלם תמונות -->
-    <uses-permission android:name="android.permission.CAMERA" /> <!-- מדווח למערכת אנדרואיד באילו רכיבי חומרה האפליקציה מתכננת להשתמש -->
-    <!-- מגדירה שהמצלמה היא תכונה לא חובה, כך שגם מכשירים ללא מצלמה יוכלו להוריד את האפליקציה -->
-    <!-- ללא השורה הזאת מכשירים ללא מצלמה בטלפון לא יוכלו להוריד את האפליקציה -->
+        android:maxSdkVersion="32" />
+
+    <!-- Allows access to images on Android 13 and above -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Allows the app to use the phone's camera -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Allows the app to send notifications - required on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Allows the app to reschedule alarms after phone restart -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Allows the app to schedule exact alarms for the daily reminder -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Camera is optional - app still works on devices without a camera -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
+
+    <!-- ==================== APPLICATION ==================== -->
 
     <application
         android:name=".AppInitializer"
@@ -27,58 +46,100 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EnglishKingdom">
 
-        <!-- מסך הלמידה -->
-        <activity
-            android:name=".Activities.LearnActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="false"
-            android:screenOrientation="portrait" /> <!-- מגדיר את המסך הזה (Splash) כמסך היחיד שדרכו נכנסים לאפליקציה, ולכן הוא ייפתח ראשון בכל פעם -->
+        <!-- ==================== ACTIVITIES ==================== -->
+
+        <!-- Splash screen - the first screen shown when the app opens -->
         <activity
             android:name=".Activities.SplashActivity"
             android:exported="true"
             android:screenOrientation="portrait">
-
-            <!-- רכיב המגדיר למערכת אנדרואיד כיצד ומתי להפעיל את המסך (Activity) הספציפי הזה -->
             <intent-filter>
-
-                <!-- מגדיר את המסך הזה כנקודת הכניסה הראשית והראשונה שתיפתח כשהאפליקציה מופעלת -->
+                <!-- Marks this as the entry point of the app -->
                 <action android:name="android.intent.action.MAIN" />
-                <!-- הגדרת המסך הזה כנקודת הכניסה של האפליקציה שמופיעה כאייקון בתפריט המכשיר -->
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity> <!-- מסך הלוג אין - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
+        </activity>
+
+        <!-- Login screen -->
         <activity
             android:name=".Activities.LoginActivity"
             android:exported="false"
-            android:screenOrientation="portrait" /> <!-- מסך ההירשמות - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
+            android:screenOrientation="portrait" />
+
+        <!-- Register screen -->
         <activity
             android:name=".Activities.RegisterActivity"
             android:exported="false"
-            android:screenOrientation="portrait" /> <!-- מסך הבית - exported=false פירושו שרק האפליקציה שלנו יכולה לפתוח מסך זה -->
+            android:screenOrientation="portrait" />
+
+        <!-- Home screen -->
         <activity
             android:name=".Activities.HomeActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
-        <!-- מסך המילים -->
+        <!-- Learn screen - configChanges prevents restart when camera opens -->
+        <activity
+            android:name=".Activities.LearnActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Words screen - shows words inside a category -->
         <activity
             android:name=".Activities.WordsActivity"
-            android:screenOrientation="portrait"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
-        <!-- מסך פרופיל -->
+        <!-- Profile screen - shows user stats and kingdom card -->
         <activity
             android:name=".Activities.ProfileActivity"
-            android:screenOrientation="portrait"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
-        <!-- מסך מדריך איך לשחק -->
+        <!-- How to Play screen - explains how to use the app -->
         <activity
             android:name=".Activities.HowToPlayActivity"
-            android:screenOrientation="portrait"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Practice screen - lets user pick Trivia or Word Search -->
+        <activity
+            android:name=".Activities.PracticeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Trivia game screen -->
+        <activity
+            android:name=".Activities.TriviaActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Word Search game screen -->
+        <activity
+            android:name=".Activities.WordSearchActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- ==================== RECEIVERS ==================== -->
+
+        <!-- ReminderReceiver - wakes up at 9:00 AM and sends notification if user hasn't opened app -->
+        <receiver
+            android:name=".Receivers.ReminderReceiver"
             android:exported="false" />
 
-        <!-- FileProvider - מאפשר לאפליקציה שלנו לשתף קבצים עם אפליקציית המצלמה בצורה מאובטחת -->
+        <!-- BootReceiver - reschedules the daily alarm after phone restart -->
+        <receiver
+            android:name=".Receivers.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ==================== PROVIDERS ==================== -->
+
+        <!-- FileProvider - lets us safely share camera photos with the camera app -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -88,6 +149,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
     </application>
 
 </manifest>

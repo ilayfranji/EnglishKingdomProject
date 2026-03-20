@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Practice screen - shows two game cards for the user to pick from -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1B5E"
+    android:fitsSystemWindows="true">
+
+    <!-- Back arrow -->
+    <TextView
+        android:id="@+id/tvBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← Back"
+        android:textColor="#FFD700"
+        android:textSize="16sp"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Screen title -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🎮 Practice"
+        android:textColor="#FFD700"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose a game to test your knowledge!"
+        android:textColor="#B0BEC5"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
+
+    <!-- Trivia card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardTrivia"
+        android:layout_width="0dp"
+        android:layout_height="180dp"
+        app:cardCornerRadius="20dp"
+        app:cardBackgroundColor="#1A237E"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Trivia emoji -->
+            <TextView
+                android:id="@+id/tvTriviaEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🧠"
+                android:textSize="52sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="24dp" />
+
+            <!-- Trivia title -->
+            <TextView
+                android:id="@+id/tvTriviaTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Trivia"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFD700"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tvTriviaEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="40dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+            <!-- Trivia description -->
+            <TextView
+                android:id="@+id/tvTriviaDesc"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="10 questions - pick the correct\nHebrew translation!"
+                android:textSize="13sp"
+                android:textColor="#B0BEC5"
+                app:layout_constraintTop_toBottomOf="@id/tvTriviaTitle"
+                app:layout_constraintStart_toEndOf="@id/tvTriviaEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Word Search card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardWordSearch"
+        android:layout_width="0dp"
+        android:layout_height="180dp"
+        app:cardCornerRadius="20dp"
+        app:cardBackgroundColor="#1A237E"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/cardTrivia"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Word Search emoji -->
+            <TextView
+                android:id="@+id/tvWordSearchEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔍"
+                android:textSize="52sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="24dp" />
+
+            <!-- Word Search title -->
+            <TextView
+                android:id="@+id/tvWordSearchTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Word Search"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFD700"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tvWordSearchEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="40dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+            <!-- Word Search description -->
+            <TextView
+                android:id="@+id/tvWordSearchDesc"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Find hidden words in the grid\nhorizontally, vertically and diagonally!"
+                android:textSize="13sp"
+                android:textColor="#B0BEC5"
+                app:layout_constraintTop_toBottomOf="@id/tvWordSearchTitle"
+                app:layout_constraintStart_toEndOf="@id/tvWordSearchEmoji"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

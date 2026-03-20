@@ -2,6 +2,8 @@ package com.ilay.englishkingdom.Activities;
 
 import android.content.Intent; // משמש לניווט בין מסכים
 import android.content.SharedPreferences; // משמש לניקוי נתוני "זכור אותי" בהתנתקות
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle; // משמש בעת יצירת ה-Activity
 import android.view.View; // משמש לרפרנס של אלמנטי ממשק משתמש (UI)
 import android.widget.PopupMenu; // משמש עבור תפריט הפופ-אפ (המבורגר)
@@ -9,12 +11,20 @@ import android.widget.TextView; // משמש עבור תיבות טקסט
 
 import androidx.appcompat.app.AppCompatActivity; // מחלקת הבסיס לכל המסכים
 import androidx.cardview.widget.CardView; // משמש עבור תצוגות כרטיס (CardViews)
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.security.crypto.EncryptedSharedPreferences; // משמש להצפנת האחסון המקומי שלנו
 import androidx.security.crypto.MasterKey; // משמש ליצירת מפתח ההצפנה
 
 import com.google.firebase.auth.FirebaseAuth; // משמש לקבלת המשתמש הנוכחי והתנתקות
 import com.google.firebase.firestore.FirebaseFirestore; // משמש לקבלת נתוני משתמש מ-Firestore
 import com.ilay.englishkingdom.R; // משמש לרפרנס של משאבי ה-XML שלנו
+import android.app.AlarmManager; // Used to schedule the daily alarm
+import android.app.PendingIntent; // Used to tell AlarmManager which receiver to wake up
+import android.content.Context; // Used to get system services
+import com.ilay.englishkingdom.Receivers.ReminderReceiver; // Our reminder receiver
+
+import java.util.Calendar;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -72,6 +82,8 @@ public class HomeActivity extends AppCompatActivity {
 
         loadUserName(); // טעינת שם המשתמש מ-Firestore
         showRandomQuote(); // הצגת ציטוט מוטיבציה אקראי
+        scheduleReminder();// Schedule the daily 9:00 AM reminder notification
+        askNotificationPermission(); // Ask for notification permission on Android 13+
 
         // לחיצה על כפתור התפריט - הצגת תפריט הפופ-אפ
         tvMenu.setOnClickListener(new View.OnClickListener() {
@@ -92,11 +104,12 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // לחיצה על כרטיס התרגול - TODO: ניווט למסך התרגול
+        // Practice card click - opens the Practice screen where user can pick Trivia or Word Search
         cardPractice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: מעבר למסך התרגול (נבנה זאת בהמשך)
+                // Start PracticeActivity when the Practice card is tapped
+                startActivity(new Intent(HomeActivity.this, PracticeActivity.class));
             }
         });
     }
@@ -175,5 +188,63 @@ public class HomeActivity extends AppCompatActivity {
         Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
         startActivity(intent);
         finish(); // סגירת HomeActivity כדי שהמשתמש לא יוכל ללחוץ "חזור" כדי לחזור
+    }
+
+    private void scheduleReminder() {
+        // This schedules the daily 9:00 AM alarm when the app opens
+        // If the alarm is already scheduled, setRepeating just updates it - no duplicates
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        // Create intent pointing to ReminderReceiver - this is what fires at 9:00 AM
+        Intent intent = new Intent(this, ReminderReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                0, // Request code - 0 is fine since we only have one alarm
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        // Set the time to 9:00 AM
+        Calendar calendar = Calendar.getInstance(); // Start with current date and time
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // Change hour to 9
+        calendar.set(Calendar.MINUTE, 0); // Change minute to 0
+        calendar.set(Calendar.SECOND, 0); // Change second to 0
+
+        // If 9:00 AM already passed today, move to tomorrow
+        // For example if it's 10:00 AM we don't want to fire immediately
+        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1); // Move forward 1 day
+        }
+
+        // Schedule the alarm to repeat every 24 hours starting at 9:00 AM
+        // RTC_WAKEUP = wake up the phone even if screen is off
+        // INTERVAL_DAY = exactly 24 hours
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(), // When to fire the first time
+                AlarmManager.INTERVAL_DAY, // How often to repeat
+                pendingIntent
+        );
+    }
+
+    private void askNotificationPermission() {
+        // On Android 13+ (API 33+) we must explicitly ask the user for notification permission
+        // On older versions notifications are allowed by default - no need to ask
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+            // Check if permission is already granted
+            if (ContextCompat.checkSelfPermission(this,
+                    android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                // Permission not granted yet - ask the user
+                // Android shows a system popup "Allow English Kingdom to send notifications?"
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        200); // 200 = our request code for notification permission
+            }
+        }
+        // On Android 12 and below we don't need to ask - notifications work automatically
     }
 }

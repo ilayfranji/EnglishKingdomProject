@@ -46,6 +46,9 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvStreak; // Streak counter
     private ProgressBar progressOverall; // Overall progress bar
     private TextView tvProgressPercent; // Progress percentage text
+    private TextView tvTriviaBestScore; // Trivia best score
+    private TextView tvTriviaBestTime; // Trivia best time
+    private TextView tvWordSearchBestTime; // Word Search best time
 
     // ==================== FIREBASE ====================
 
@@ -78,10 +81,19 @@ public class ProfileActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // If no user is logged in something went wrong - close this screen
-        if (mAuth.getCurrentUser() == null) {
-            finish();
-            return;
+        boolean isGuest = mAuth.getCurrentUser() == null;
+
+        if (isGuest) {
+            // Show a non-dismissible dialog telling the guest they can't access the profile
+            // setCancelable(false) means tapping outside the dialog does nothing
+            // The only option is to tap Exit which closes the profile screen
+            new AlertDialog.Builder(this)
+                    .setTitle("👑 Profile")
+                    .setMessage("You are logged in as a guest.\n\nGuests cannot save progress, earn titles, track streaks, or store game stats.\n\nPlease register for a free account to access your Kingdom Card!")
+                    .setPositiveButton("Exit", (dialog, which) -> finish()) // Close profile screen
+                    .setCancelable(false) // Cannot be dismissed by tapping outside or pressing back
+                    .show();
+            return; // Don't load anything else
         }
 
         userId = mAuth.getCurrentUser().getUid(); // Save user ID for all Firestore calls
@@ -98,6 +110,9 @@ public class ProfileActivity extends AppCompatActivity {
         tvStreak = findViewById(R.id.tvStreak);
         progressOverall = findViewById(R.id.progressOverall);
         tvProgressPercent = findViewById(R.id.tvProgressPercent);
+        tvTriviaBestScore = findViewById(R.id.tvTriviaBestScore);
+        tvTriviaBestTime = findViewById(R.id.tvTriviaBestTime);
+        tvWordSearchBestTime = findViewById(R.id.tvWordSearchBestTime);
 
         // Set up ImagePickerHelper - when photo is picked upload it and update profile
         imagePicker = new ImagePickerHelper(this,
@@ -109,6 +124,8 @@ public class ProfileActivity extends AppCompatActivity {
         loadUserData();
         loadTotalWordsLearned(); // Real time listener - updates automatically
         updateStreak();
+        loadGameStats(); // Load trivia and word search best stats
+
 
         // Click listeners
         tvBack.setOnClickListener(v -> finish());
@@ -207,47 +224,6 @@ public class ProfileActivity extends AppCompatActivity {
                                     tvProgressPercent.setText("0%");
                                 }
                             });
-                });
-    }
-    private void fetchTotalWordsFromCategories(int totalLearned) {
-        // This runs only when totalWords is missing from progress documents
-        // It counts words directly from the categories collection
-        // This fixes the case where the progress bar shows 0% even though words exist
-        db.collection("categories").get()
-                .addOnSuccessListener(categories -> {
-                    // We need to count words across ALL categories
-                    // Each category has a wordCount field
-                    int[] totalAvailable = {0}; // Array so we can modify inside lambda
-                    int[] categoriesChecked = {0}; // Track how many categories we've processed
-                    int totalCategories = categories.size();
-
-                    if (totalCategories == 0) {
-                        // No categories at all - show 0%
-                        progressOverall.setProgress(0);
-                        tvProgressPercent.setText("0%");
-                        return;
-                    }
-
-                    for (QueryDocumentSnapshot categoryDoc : categories) {
-                        // Read wordCount from each category document
-                        if (categoryDoc.getLong("wordCount") != null) {
-                            totalAvailable[0] += categoryDoc.getLong("wordCount").intValue();
-                        }
-                        categoriesChecked[0]++;
-
-                        // When we've checked all categories update the bar
-                        if (categoriesChecked[0] == totalCategories) {
-                            if (totalAvailable[0] > 0) {
-                                int percent = (totalLearned * 100) / totalAvailable[0];
-                                progressOverall.setMax(100);
-                                progressOverall.setProgress(percent);
-                                tvProgressPercent.setText(percent + "%");
-                            } else {
-                                progressOverall.setProgress(0);
-                                tvProgressPercent.setText("0%");
-                            }
-                        }
-                    }
                 });
     }
 
@@ -416,5 +392,35 @@ public class ProfileActivity extends AppCompatActivity {
                                 "Upload failed: " + e.getDescription(), Toast.LENGTH_SHORT).show();
                     }
                 }).dispatch();
+    }
+
+    private void loadGameStats() {
+        // Load game stats from Firestore in real time
+        // So if user plays a game and comes back to profile, stats update automatically
+        db.collection("users").document(userId)
+                .addSnapshotListener((document, error) -> {
+                    if (error != null || document == null || !document.exists()) return;
+
+                    // Read trivia best score - show "-" if not played yet
+                    if (document.getLong("triviaBestScore") != null) {
+                        tvTriviaBestScore.setText(document.getLong("triviaBestScore") + "/10");
+                    } else {
+                        tvTriviaBestScore.setText("-"); // Never played trivia yet
+                    }
+
+                    // Read trivia best time - show "-" if not played yet
+                    if (document.getString("triviaBestTimeFormatted") != null) {
+                        tvTriviaBestTime.setText(document.getString("triviaBestTimeFormatted"));
+                    } else {
+                        tvTriviaBestTime.setText("-"); // Never played trivia yet
+                    }
+
+                    // Read word search best time - show "-" if not played yet
+                    if (document.getString("wordSearchBestTimeFormatted") != null) {
+                        tvWordSearchBestTime.setText(document.getString("wordSearchBestTimeFormatted"));
+                    } else {
+                        tvWordSearchBestTime.setText("-"); // Never played word search yet
+                    }
+                });
     }
 }
