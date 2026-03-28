@@ -2,6 +2,8 @@ package com.ilay.englishkingdom.Utils;
 
 import android.app.Activity;
 import android.content.pm.PackageManager; // משמש לבדיקה אם ההרשאה ניתנה
+import android.os.Build;
+
 import androidx.core.app.ActivityCompat; // משמש לבקשת הרשאות
 import androidx.core.content.ContextCompat; // משמש לבדיקת סטטוס ההרשאה
 
@@ -73,5 +75,24 @@ public class PermissionManager {
                     new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                     GALLERY_PERMISSION_CODE);
         }
+    }
+    public static void askNotificationPermission(Activity activity){
+        // On Android 13+ (API 33+) we must explicitly ask the user for notification permission
+        // On older versions notifications are allowed by default - no need to ask
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+            // Check if permission is already granted
+            if (ContextCompat.checkSelfPermission(activity,
+                    android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                // Permission not granted yet - ask the user
+                // Android shows a system popup "Allow English Kingdom to send notifications?"
+                ActivityCompat.requestPermissions(activity,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        200); // 200 = our request code for notification permission
+            }
+        }
+        // On Android 12 and below we don't need to ask - notifications work automatically
     }
 }
