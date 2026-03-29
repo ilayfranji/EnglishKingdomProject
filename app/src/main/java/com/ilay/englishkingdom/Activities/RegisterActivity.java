@@ -135,7 +135,7 @@ public class RegisterActivity extends AppCompatActivity {
         // "שינוי" = פתיחת הבחירה מחדש, "מחיקה" = הסרת התמונה וחזרה לאוואטר ברירת המחדל
         new AlertDialog.Builder(this)
                 .setTitle("Profile Photo")
-                .setItems(new String[]{"🔄 Change Photo", "🗑️ Delete Photo"}, (dialog, which) -> {
+                .setItems(new String[]{"Change Photo", "Delete Photo"}, (dialog, which) -> {
                     if (which == 0) { // נלחץ "שנה תמונה"
                         imagePicker.show(); // פתיחת בחירת מצלמה/גלריה שוב
                     } else { // נלחץ "מחק תמונה"
@@ -315,7 +315,7 @@ public class RegisterActivity extends AppCompatActivity {
         db.collection("users").document(userId).set(user)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(this, "Account created! Please verify your email 📧", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Account created! Please verify your email", Toast.LENGTH_LONG).show();
                         finish(); // סגירת ה-RegisterActivity וחזרה ל-LoginActivity
                     } else {
                         Toast.makeText(this, "A Firebase error occurred, please try again later", Toast.LENGTH_LONG).show();

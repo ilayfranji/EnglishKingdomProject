@@ -346,7 +346,7 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
         db.collection("categories").document(categoryId)
                 .collection("words").document(wordId).delete()
                 .addOnSuccessListener(v -> {
-                    Toast.makeText(this, "Deleted! 🗑️", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Deleted!", Toast.LENGTH_SHORT).show();
 
                     // Step 2 - recount remaining items and update wordCount in the category
                     db.collection("categories").document(categoryId)

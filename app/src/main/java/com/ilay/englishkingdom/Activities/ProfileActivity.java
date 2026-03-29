@@ -88,7 +88,7 @@ public class ProfileActivity extends AppCompatActivity {
             // setCancelable(false) means tapping outside the dialog does nothing
             // The only option is to tap Exit which closes the profile screen
             new AlertDialog.Builder(this)
-                    .setTitle("👑 Profile")
+                    .setTitle("Profile")
                     .setMessage("You are logged in as a guest.\n\nGuests cannot save progress, earn titles, track streaks, or store game stats.\n\nPlease register for a free account to access your Kingdom Card!")
                     .setPositiveButton("Exit", (dialog, which) -> finish()) // Close profile screen
                     .setCancelable(false) // Cannot be dismissed by tapping outside or pressing back
@@ -234,15 +234,15 @@ public class ProfileActivity extends AppCompatActivity {
         // Each range gives a different title and emoji
         String title;
         if (totalWords <= 20) {
-            title = "🌱 Apprentice"; // Just starting out - 0 to 20 words
+            title = "Apprentice"; // Just starting out - 0 to 20 words
         } else if (totalWords <= 50) {
-            title = "⚔️ Knight"; // Getting somewhere - 21 to 50 words
+            title = "Knight"; // Getting somewhere - 21 to 50 words
         } else if (totalWords <= 100) {
-            title = "🛡️ Warrior"; // Halfway there - 51 to 100 words
+            title = "Warrior"; // Halfway there - 51 to 100 words
         } else if (totalWords <= 200) {
-            title = "👑 Master"; // Almost at the top - 101 to 200 words
+            title = "Master"; // Almost at the top - 101 to 200 words
         } else {
-            title = "🔥 Legend"; // Mastered it all - 200+ words
+            title = "Legend"; // Mastered it all - 200+ words
         }
         tvTitle2.setText(title);
     }
@@ -351,7 +351,7 @@ public class ProfileActivity extends AppCompatActivity {
                     .update("firstName", firstName, "lastName", lastName)
                     .addOnSuccessListener(aVoid -> {
                         tvName.setText(firstName + " " + lastName); // Update name on screen
-                        Toast.makeText(this, "Name updated! ✅", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Name updated!", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     })
                     .addOnFailureListener(e ->
@@ -382,7 +382,7 @@ public class ProfileActivity extends AppCompatActivity {
                                     Glide.with(ProfileActivity.this)
                                             .load(url).circleCrop().into(imgProfile);
                                     Toast.makeText(ProfileActivity.this,
-                                            "Photo updated! ✅", Toast.LENGTH_SHORT).show();
+                                            "Photo updated!", Toast.LENGTH_SHORT).show();
                                 });
                     }
 

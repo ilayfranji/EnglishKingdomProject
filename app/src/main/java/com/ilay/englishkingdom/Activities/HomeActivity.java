@@ -126,7 +126,7 @@ public class HomeActivity extends AppCompatActivity {
         // Reads the user's first name from Firestore and shows it in the welcome message
         if (mAuth.getCurrentUser() == null) {
             // Guest user - show generic welcome message
-            tvWelcome.setText("Welcome, Guest! 👋");
+            tvWelcome.setText("Welcome, Guest!");
             return;
         }
 
@@ -136,13 +136,13 @@ public class HomeActivity extends AppCompatActivity {
                 .addOnSuccessListener(document -> {
                     if (document.exists()) {
                         String firstName = document.getString("firstName");
-                        tvWelcome.setText("Welcome, " + firstName + "! 👋"); // Personalized welcome
+                        tvWelcome.setText("Welcome, " + firstName + "!"); // Personalized welcome
                     } else {
-                        tvWelcome.setText("Welcome! 👋"); // Document missing - show generic welcome
+                        tvWelcome.setText("Welcome!"); // Document missing - show generic welcome
                     }
                 })
                 .addOnFailureListener(e -> {
-                    tvWelcome.setText("Welcome! 👋"); // Firestore failed - show generic welcome
+                    tvWelcome.setText("Welcome!"); // Firestore failed - show generic welcome
                 });
     }
 

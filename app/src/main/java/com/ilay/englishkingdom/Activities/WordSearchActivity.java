@@ -427,7 +427,7 @@ public class WordSearchActivity extends AppCompatActivity
         tvFoundCount.setText("Found: " + foundWords.size() + "/" + wordsToFind.size());
 
         // Show a short congratulations message
-        Toast.makeText(this, "✅ Found: " + word.toUpperCase(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Found: " + word.toUpperCase(), Toast.LENGTH_SHORT).show();
 
         // Check if all words have been found
         if (foundWords.size() == wordsToFind.size()) {
@@ -442,7 +442,7 @@ public class WordSearchActivity extends AppCompatActivity
         saveBestTime(); // Save best time to Firestore before showing the dialog
 
         new AlertDialog.Builder(this)
-                .setTitle("🎉 You found all the words!")
+                .setTitle("You found all the words!")
                 .setMessage("Amazing! You found all " + wordsToFind.size() + " words!"
                         + "\nYour time: " + formatTime(elapsedTime)) // Show finishing time
                 .setPositiveButton("Play Again", (dialog, which) -> resetGame()) // Start new game
@@ -477,7 +477,7 @@ public class WordSearchActivity extends AppCompatActivity
 
                         db.collection("users").document(userId).update(updates)
                                 .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best time! 🏆", Toast.LENGTH_SHORT).show());
+                                        Toast.makeText(this, "New best time!", Toast.LENGTH_SHORT).show());
                     }
                 });
     }

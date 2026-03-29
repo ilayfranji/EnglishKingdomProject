@@ -97,8 +97,8 @@ public class ReminderReceiver extends BroadcastReceiver {
         // Build the notification using NotificationCompat which works on all Android versions
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher) // The small icon shown in the status bar
-                .setContentTitle("English Kingdom 👑") // The bold title of the notification
-                .setContentText("You haven't practiced today yet! 📚 Don't break your streak!") // The message
+                .setContentTitle("English Kingdom") // The bold title of the notification
+                .setContentText("You haven't practiced today yet! Don't break your streak!") // The message
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Normal priority
                 .setContentIntent(pendingIntent) // Open app when tapped
                 .setAutoCancel(true); // Dismiss notification when user taps it

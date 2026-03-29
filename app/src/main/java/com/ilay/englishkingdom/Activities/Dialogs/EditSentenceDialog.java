@@ -86,7 +86,7 @@ public class EditSentenceDialog {
                     .collection("words").document(currentSentence.getIdFS())
                     .update("wordEnglish", sentenceEnglish, "wordHebrew", sentenceHebrew)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(activity, "Sentence updated! ✅", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Sentence updated!", Toast.LENGTH_SHORT).show();
                         if (openDialog != null) openDialog.dismiss();
                         if (listener != null) listener.onSentenceEdited();
                     })

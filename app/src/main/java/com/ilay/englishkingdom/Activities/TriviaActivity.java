@@ -325,13 +325,13 @@ public class TriviaActivity extends AppCompatActivity {
 
         String message;
         if (score == questionWords.size()) {
-            message = "🔥 Perfect score! You're a Legend!";
+            message = "Perfect score! You're a Legend!";
         } else if (score >= questionWords.size() * 0.7) {
-            message = "⭐ Great job! Keep it up!";
+            message = "Great job! Keep it up!";
         } else if (score >= questionWords.size() * 0.5) {
-            message = "👍 Not bad! Keep practicing!";
+            message = "Not bad! Keep practicing!";
         } else {
-            message = "📚 Keep studying! You'll get better!";
+            message = "Keep studying! You'll get better!";
         }
 
         new AlertDialog.Builder(this)
@@ -388,7 +388,7 @@ public class TriviaActivity extends AppCompatActivity {
 
                         db.collection("users").document(userId).update(updates)
                                 .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best! 🏆", Toast.LENGTH_SHORT).show());
+                                        Toast.makeText(this, "New best!", Toast.LENGTH_SHORT).show());
                     }
                 });
     }

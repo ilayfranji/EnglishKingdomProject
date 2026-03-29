@@ -263,7 +263,7 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
     private void deleteCategoryFromFirestore(String categoryId) {
         // Permanently deletes the category document from Firestore
         db.collection("categories").document(categoryId).delete()
-                .addOnSuccessListener(v -> Toast.makeText(this, "Category deleted! 🗑️", Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(v -> Toast.makeText(this, "Category deleted!", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Error deleting category", Toast.LENGTH_SHORT).show());
     }
 }

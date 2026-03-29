@@ -181,7 +181,7 @@ public class LoginActivity extends AppCompatActivity {
                                                 .addOnSuccessListener(authResult -> {
                                                     authResult.getUser().sendEmailVerification(); // שליחה חוזרת של אימייל האימות
                                                     mAuth.signOut(); // ניתוק מיידי לאחר השליחה
-                                                    Toast.makeText(LoginActivity.this, "Verification email sent! Check your inbox 📧", Toast.LENGTH_LONG).show();
+                                                    Toast.makeText(LoginActivity.this, "Verification email sent! Check your inbox", Toast.LENGTH_LONG).show();
                                                 });
                                     })
                                     .setNegativeButton("OK", null) // סגירת ההודעה הקופצת
@@ -236,7 +236,7 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> { // המתנה לסיום הפעולה ב-Firebase
                     if (task.isSuccessful()) { // אם האימייל נשלח בהצלחה
-                        Toast.makeText(LoginActivity.this, "Reset email sent! Check your inbox 📧", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, "Reset email sent! Check your inbox", Toast.LENGTH_LONG).show();
                     } else { // אם משהו השתבש
                         Toast.makeText(LoginActivity.this, "Error sending reset email, please try again", Toast.LENGTH_LONG).show();
                     }

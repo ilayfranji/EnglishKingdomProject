@@ -25,7 +25,7 @@ import java.util.List; // The List interface
 public class FlashcardDialog {
     // This class shows a flashcard popup when a user taps a word card
     // Shows: image + English word + Hebrew translation + example sentence
-    // Logged in users see: ✅ I Know This and ❌ Still Learning buttons
+    // Logged in users see: I Know This and Still Learning buttons
     // Guests see: a message saying they need to log in to track progress
 
     public interface OnStatusChangedListener {
@@ -95,13 +95,13 @@ public class FlashcardDialog {
         } else {
             // Logged in user - show buttons normally so they can mark words
 
-            // ✅ I Know This - marks this word as learned for this user
+            // I Know This - marks this word as learned for this user
             btnKnow.setOnClickListener(v -> {
                 markWord(word.getIdFS(), true); // true = learned
                 dialog.dismiss(); // Close the flashcard
             });
 
-            // ❌ Still Learning - removes this word from learned list if it was there
+            // Still Learning - removes this word from learned list if it was there
             btnStillLearning.setOnClickListener(v -> {
                 markWord(word.getIdFS(), false); // false = not learned
                 dialog.dismiss(); // Close the flashcard
@@ -137,16 +137,16 @@ public class FlashcardDialog {
                     }
 
                     if (learned) {
-                        // User tapped ✅ I Know This - add wordId to learned list
+                        // User tapped I Know This - add wordId to learned list
                         // We check first so we don't count the same word twice
                         if (!learnedWords.contains(wordId)) {
                             learnedWords.add(wordId);
                         }
-                        Toast.makeText(activity, "Great job! ⭐", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Great job!", Toast.LENGTH_SHORT).show();
                     } else {
-                        // User tapped ❌ Still Learning - remove wordId from learned list
+                        // User tapped  Still Learning - remove wordId from learned list
                         learnedWords.remove(wordId);
-                        Toast.makeText(activity, "Keep practicing! 💪", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Keep practicing!", Toast.LENGTH_SHORT).show();
                     }
 
                     // Build the updated progress data to save back to Firestore

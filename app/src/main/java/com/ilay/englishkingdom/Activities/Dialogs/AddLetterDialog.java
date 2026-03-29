@@ -115,7 +115,7 @@ public class AddLetterDialog {
                                 db.collection("categories").document(categoryId)
                                         .update("wordCount", totalWords)
                                         .addOnSuccessListener(v -> {
-                                            Toast.makeText(activity, "Letter added! 🎉", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(activity, "Letter added!", Toast.LENGTH_SHORT).show();
                                             if (openDialog != null) openDialog.dismiss();
                                             if (listener != null) listener.onLetterAdded();
                                         });

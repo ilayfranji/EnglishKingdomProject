@@ -62,7 +62,7 @@ public class ImagePickerHelper {
         // נקרא בכל פעם שהמנהל לוחץ על "הוסף תמונה" או "שנה תמונה"
         new AlertDialog.Builder(activity)
                 .setTitle("Choose Image Source")
-                .setItems(new String[]{"📷 Camera", "🖼️ Gallery"}, (dialog, which) -> {
+                .setItems(new String[]{"Camera", "Gallery"}, (dialog, which) -> {
                     if (which == 0) { // אינדקס 0 = נלחצה מצלמה
                         if (PermissionManager.hasCameraPermission(activity)) {
                             // הרשאה כבר ניתנה - הפעל מצלמה מיד

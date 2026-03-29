@@ -207,7 +207,7 @@ public class EditCategoryDialog {
         // Change = pick a new image, Delete = remove image entirely
         new AlertDialog.Builder(activity)
                 .setTitle("Image Options")
-                .setItems(new String[]{"🔄 Change", "🗑️ Delete"}, (dialog, which) -> {
+                .setItems(new String[]{"Change", "Delete"}, (dialog, which) -> {
                     if (which == 0) { // Change tapped
                         imagePicker.show(); // Open camera/gallery picker
                     } else { // Delete tapped
@@ -265,7 +265,7 @@ public class EditCategoryDialog {
                         "categoryType", type.name()     // Update type as String
                 )
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(activity, "Category updated! ✅", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Category updated!", Toast.LENGTH_SHORT).show();
                     if (listener != null) listener.onCategoryEdited(); // Notify LearnActivity
                 })
                 .addOnFailureListener(e -> Toast.makeText(activity,

@@ -127,7 +127,7 @@ public class EditWordDialog {
         // Shows when admin taps on the image in the edit dialog
         new AlertDialog.Builder(activity)
                 .setTitle("Image Options")
-                .setItems(new String[]{"🔄 Change", "🗑️ Delete"}, (dialog, which) -> {
+                .setItems(new String[]{"Change", "Delete"}, (dialog, which) -> {
                     if (which == 0) { // Change tapped
                         imagePicker.show(); // Open picker to pick a new image
                     } else { // Delete tapped
@@ -176,7 +176,7 @@ public class EditWordDialog {
                         "exampleSentence", exampleSentence,
                         "image", imageUrl)
                 .addOnSuccessListener(v -> {
-                    Toast.makeText(activity, "Word updated! ✅", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Word updated!", Toast.LENGTH_SHORT).show();
                     if (listener != null) listener.onWordEdited();
                 })
                 .addOnFailureListener(e -> Toast.makeText(activity, "Error updating word", Toast.LENGTH_SHORT).show());

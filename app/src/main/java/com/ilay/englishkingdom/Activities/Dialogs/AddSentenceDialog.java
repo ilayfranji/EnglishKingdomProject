@@ -113,7 +113,7 @@ public class AddSentenceDialog {
                                 db.collection("categories").document(categoryId)
                                         .update("wordCount", totalWords)
                                         .addOnSuccessListener(v -> {
-                                            Toast.makeText(activity, "Sentence added! 🎉", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(activity, "Sentence added!", Toast.LENGTH_SHORT).show();
                                             if (openDialog != null) openDialog.dismiss();
                                             if (listener != null) listener.onSentenceAdded();
                                         });

@@ -162,7 +162,7 @@ public class AddCategoryDialog {
         // Shows when admin taps on the image preview inside the dialog
         new AlertDialog.Builder(activity)
                 .setTitle("Image Options")
-                .setItems(new String[]{"🔄 Change", "🗑️ Delete"}, (dialog, which) -> {
+                .setItems(new String[]{"Change", "Delete"}, (dialog, which) -> {
                     if (which == 0) { // Change tapped
                         imagePicker.show(); // Open camera/gallery picker again
                     } else { // Delete tapped
@@ -213,7 +213,7 @@ public class AddCategoryDialog {
         Category category = new Category(null, name, nameHebrew, imageUrl, 0, type.name());
         db.collection("categories").add(category) // add() auto-generates a document ID
                 .addOnSuccessListener(r -> {
-                    Toast.makeText(activity, "Category added! 🎉", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Category added!", Toast.LENGTH_SHORT).show();
                     if (openDialog != null) openDialog.dismiss(); // Close the dialog
                     if (listener != null) listener.onCategoryAdded(); // Notify LearnActivity
                 })

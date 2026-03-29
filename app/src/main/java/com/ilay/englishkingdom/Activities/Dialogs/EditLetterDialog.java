@@ -86,7 +86,7 @@ public class EditLetterDialog {
                     .collection("words").document(currentLetter.getIdFS())
                     .update("wordEnglish", letterName, "wordHebrew", explanation)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(activity, "Letter updated! ✅", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Letter updated!", Toast.LENGTH_SHORT).show();
                         if (openDialog != null) openDialog.dismiss();
                         if (listener != null) listener.onLetterEdited();
                     })

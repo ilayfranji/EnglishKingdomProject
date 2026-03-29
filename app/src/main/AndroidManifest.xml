@@ -137,7 +137,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- ==================== PROVIDERS ==================== -->
 
         <!-- FileProvider - lets us safely share camera photos with the camera app -->
         <provider
