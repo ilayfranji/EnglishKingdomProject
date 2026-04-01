@@ -246,7 +246,7 @@ public class LoginActivity extends AppCompatActivity {
     private void showGuestWarning() { // מתודה זו מציגה הודעת אזהרה לפני המשך כמשתמש אורח
         new AlertDialog.Builder(this) // יצירת הודעה קופצת חדשה
                 .setTitle("Continue as Guest") // קביעת כותרת ההודעה
-                .setMessage("As a guest you can access the Learn section and Practice games, but your records will not be saved.") // הודעת האזהרה
+                .setMessage("As a guest you can access the Learn section and Practice games, but your records, your daily streak, titles, your progress and your games history will not be saved.") // הודעת האזהרה
                 .setPositiveButton("Continue", (dialog, which) -> { // כפתור "המשך" - רץ בעת לחיצה
                     goToHome(); // מעבר למסך הבית כאורח
                 })

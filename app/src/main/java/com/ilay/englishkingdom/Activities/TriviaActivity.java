@@ -23,6 +23,8 @@ import java.util.ArrayList; // Used to store the word list
 import java.util.Collections; // Used to shuffle lists randomly
 import java.util.List; // The List interface
 import java.util.Locale; // Used for string formatting
+import java.text.SimpleDateFormat; // Used to format the current date and time
+import java.util.Date; // Used to get the current date and time
 
 public class TriviaActivity extends AppCompatActivity {
 
@@ -320,8 +322,8 @@ public class TriviaActivity extends AppCompatActivity {
     // ==================== RESULTS ====================
 
     private void showResults() {
-        // Save best score and best time to Firestore
-        saveBestStats();
+        saveBestStats(); // Save best score and time if this game was better
+        saveGameHistory(); // Save this game to the history
 
         String message;
         if (score == questionWords.size()) {
@@ -405,5 +407,36 @@ public class TriviaActivity extends AppCompatActivity {
         questionWords = new ArrayList<>(allWords.subList(0, count));
         startTimer(); // Restart the timer
         showQuestion();
+    }
+
+    // ==================== SAVE GAME HISTORY ====================
+
+    private void saveGameHistory() {
+        // Save this trivia game to the history so the user can see it later
+        // We only save for logged in users - guests have no history
+        if (mAuth.getCurrentUser() == null) return;
+
+        String userId = mAuth.getCurrentUser().getUid();
+
+        // Get the current date and time when the game ended
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        Date now = new Date();
+        String date = dateFormat.format(now); // e.g. "28/03/2026"
+        String time = timeFormat.format(now); // e.g. "17:45"
+
+        // Build the game history entry
+        java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();
+        historyEntry.put("type", "TRIVIA"); // So we know which game this was
+        historyEntry.put("date", date); // Date the game was played
+        historyEntry.put("time", time); // Time the game was played
+        historyEntry.put("score", score + "/" + questionWords.size()); // e.g. "7/10"
+        historyEntry.put("duration", formatTime(elapsedTime)); // e.g. "0:45:230"
+        historyEntry.put("timestamp", System.currentTimeMillis()); // Raw number for sorting
+
+        // Save under users/[userId]/gameHistory/ with an auto-generated document ID
+        db.collection("users").document(userId)
+                .collection("gameHistory")
+                .add(historyEntry); // Silent save - no toast needed for history
     }
 }

@@ -1,5 +1,6 @@
 package com.ilay.englishkingdom.Activities;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -49,6 +50,7 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvTriviaBestScore; // Trivia best score
     private TextView tvTriviaBestTime; // Trivia best time
     private TextView tvWordSearchBestTime; // Word Search best time
+    private TextView btnViewHistory; // Button to open the game history screen
 
     // ==================== FIREBASE ====================
 
@@ -85,15 +87,20 @@ public class ProfileActivity extends AppCompatActivity {
 
         if (isGuest) {
             // Show a non-dismissible dialog telling the guest they can't access the profile
-            // setCancelable(false) means tapping outside the dialog does nothing
-            // The only option is to tap Exit which closes the profile screen
+            // The guest has two options: go to Register or exit back to the previous screen
+            // setCancelable(false) means tapping outside or pressing back does nothing
             new AlertDialog.Builder(this)
                     .setTitle("Profile")
-                    .setMessage("You are logged in as a guest.\n\nGuests cannot save progress, earn titles, track streaks, or store game stats.\n\nPlease register for a free account to access your Kingdom Card!")
-                    .setPositiveButton("Exit", (dialog, which) -> finish()) // Close profile screen
-                    .setCancelable(false) // Cannot be dismissed by tapping outside or pressing back
+                    .setMessage("You are logged in as a guest.\n\nGuests cannot save progress, earn titles, track streaks, or store game stats.\n\nRegister a free account to access your Kingdom Card!")
+                    .setPositiveButton("Register", (dialog, which) -> {
+                        // Take the guest directly to the registration screen
+                        startActivity(new Intent(this, RegisterActivity.class));
+                        finish(); // Close profile so they don't come back to it after registering
+                    })
+                    .setNegativeButton("Exit", (dialog, which) -> finish()) // Just go back
+                    .setCancelable(false) // Cannot be dismissed by tapping outside
                     .show();
-            return; // Don't load anything else
+            return; // Don't load anything else for guests
         }
 
         userId = mAuth.getCurrentUser().getUid(); // Save user ID for all Firestore calls
@@ -113,6 +120,8 @@ public class ProfileActivity extends AppCompatActivity {
         tvTriviaBestScore = findViewById(R.id.tvTriviaBestScore);
         tvTriviaBestTime = findViewById(R.id.tvTriviaBestTime);
         tvWordSearchBestTime = findViewById(R.id.tvWordSearchBestTime);
+        btnViewHistory = findViewById(R.id.btnViewHistory);
+
 
         // Set up ImagePickerHelper - when photo is picked upload it and update profile
         imagePicker = new ImagePickerHelper(this,
@@ -132,6 +141,8 @@ public class ProfileActivity extends AppCompatActivity {
         tvChangePhoto.setOnClickListener(v -> imagePicker.show()); // Open camera/gallery picker
         imgProfile.setOnClickListener(v -> imagePicker.show()); // Tapping photo also opens picker
         tvEditName.setOnClickListener(v -> showEditNameDialog()); // Open edit name dialog
+        btnViewHistory.setOnClickListener(v -> startActivity(new Intent(this, GameHistoryActivity.class)));// Open GameHistoryActivity when the button is tapped
+
     }
 
     // ==================== PERMISSION RESULT ====================

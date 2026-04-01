@@ -121,6 +121,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- Game history screen - shows all past Trivia and Word Search games -->
+        <activity
+            android:name=".Activities.GameHistoryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <!-- ==================== RECEIVERS ==================== -->
 
         <!-- ReminderReceiver - wakes up at 9:00 AM and sends notification if user hasn't opened app -->

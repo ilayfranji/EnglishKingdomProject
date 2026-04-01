@@ -344,7 +344,6 @@
                             android:textColor="#B0BEC5"
                             android:textSize="14sp"
                             android:layout_weight="1" />
-
                         <!-- Shows "-" until user plays Word Search for the first time -->
                         <TextView
                             android:id="@+id/tvWordSearchBestTime"
@@ -356,6 +355,17 @@
                             android:textStyle="bold" />
 
                     </LinearLayout>
+                    <!-- Button to open the full game history screen -->
+                    <!-- Only visible for logged in users - guests never reach this code -->
+                    <Button
+                        android:id="@+id/btnViewHistory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="View Game History"
+                        android:textColor="#1A237E"
+                        android:backgroundTint="#FFD700"
+                        android:textStyle="bold"
+                        android:layout_marginTop="16dp" />
 
                 </LinearLayout>
 
