@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Practice screen - shows two game cards for the user to pick from -->
+<!-- Practice screen - shows game cards for the user to pick from -->
+<!-- Each card has an info button that explains how to play in Hebrew -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -47,7 +48,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
 
-    <!-- Trivia card -->
+    <!-- Trivia card - tapping shows Classic vs Speed mode selection -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardTrivia"
         android:layout_width="0dp"
@@ -89,24 +90,37 @@
                 android:textColor="#FFD700"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/tvTriviaEmoji"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnTriviaInfo"
                 android:layout_marginTop="40dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp" />
+                android:layout_marginEnd="8dp" />
 
-            <!-- Trivia description -->
+            <!-- Trivia description - mentions both modes -->
             <TextView
                 android:id="@+id/tvTriviaDesc"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="10 questions - pick the correct\nHebrew translation!"
+                android:text="Classic or Speed mode - pick\nthe correct Hebrew translation!"
                 android:textSize="13sp"
                 android:textColor="#B0BEC5"
                 app:layout_constraintTop_toBottomOf="@id/tvTriviaTitle"
                 app:layout_constraintStart_toEndOf="@id/tvTriviaEmoji"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnTriviaInfo"
                 android:layout_marginTop="4dp"
                 android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp" />
+
+            <!-- Info button for Trivia - shows how to play in Hebrew -->
+            <TextView
+                android:id="@+id/btnTriviaInfo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:text="ℹ️"
+                android:textSize="20sp"
+                android:gravity="center"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_marginEnd="16dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -155,24 +169,37 @@
                 android:textColor="#FFD700"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/tvWordSearchEmoji"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnWordSearchInfo"
                 android:layout_marginTop="40dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp" />
+                android:layout_marginEnd="8dp" />
 
             <!-- Word Search description -->
             <TextView
                 android:id="@+id/tvWordSearchDesc"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Find hidden words in the grid\nhorizontally, vertically and diagonally!"
+                android:text="Find hidden words in the grid\nhorizontally and vertically!"
                 android:textSize="13sp"
                 android:textColor="#B0BEC5"
                 app:layout_constraintTop_toBottomOf="@id/tvWordSearchTitle"
                 app:layout_constraintStart_toEndOf="@id/tvWordSearchEmoji"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnWordSearchInfo"
                 android:layout_marginTop="4dp"
                 android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp" />
+
+            <!-- Info button for Word Search - shows how to play in Hebrew -->
+            <TextView
+                android:id="@+id/btnWordSearchInfo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:text="ℹ️"
+                android:textSize="20sp"
+                android:gravity="center"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_marginEnd="16dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

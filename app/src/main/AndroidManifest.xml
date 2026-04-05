@@ -127,6 +127,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- Speed Trivia game screen - answer as many questions as possible in 60 seconds -->
+        <activity
+            android:name=".Activities.SpeedTriviaActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <!-- ==================== RECEIVERS ==================== -->
 
         <!-- ReminderReceiver - wakes up at 9:00 AM and sends notification if user hasn't opened app -->

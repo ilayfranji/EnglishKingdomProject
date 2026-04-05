@@ -49,6 +49,7 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvProgressPercent; // Progress percentage text
     private TextView tvTriviaBestScore; // Trivia best score
     private TextView tvTriviaBestTime; // Trivia best time
+    private TextView tvSpeedTriviaBestScore; // Speed Trivia best score
     private TextView tvWordSearchBestTime; // Word Search best time
     private TextView btnViewHistory; // Button to open the game history screen
 
@@ -121,6 +122,7 @@ public class ProfileActivity extends AppCompatActivity {
         tvTriviaBestTime = findViewById(R.id.tvTriviaBestTime);
         tvWordSearchBestTime = findViewById(R.id.tvWordSearchBestTime);
         btnViewHistory = findViewById(R.id.btnViewHistory);
+        tvSpeedTriviaBestScore = findViewById(R.id.tvSpeedTriviaBestScore);
 
 
         // Set up ImagePickerHelper - when photo is picked upload it and update profile
@@ -431,6 +433,12 @@ public class ProfileActivity extends AppCompatActivity {
                         tvWordSearchBestTime.setText(document.getString("wordSearchBestTimeFormatted"));
                     } else {
                         tvWordSearchBestTime.setText("-"); // Never played word search yet
+                    }
+                    // Read speed trivia best score - show "-" if not played yet
+                    if (document.getLong("speedTriviaBestScore") != null) {
+                        tvSpeedTriviaBestScore.setText(String.valueOf(document.getLong("speedTriviaBestScore")));
+                    } else {
+                        tvSpeedTriviaBestScore.setText("-"); // Never played speed trivia yet
                     }
                 });
     }

@@ -1,77 +1,76 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Bundle;
-import android.util.Patterns;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.content.Intent; // Used to navigate to HomeActivity when continuing as guest
+import android.content.pm.PackageManager; // Used for permission checking
+import android.net.Uri; // Used to store the selected profile picture URI
+import android.os.Bundle; // Used when creating the activity
+import android.util.Patterns; // Used to validate email format
+import android.widget.Button; // Used for the register and guest buttons
+import android.widget.EditText; // Used for the text input fields
+import android.widget.ImageView; // Used for the profile picture
+import android.widget.TextView; // Used for the login link
+import android.widget.Toast; // Used to show short messages
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher; // Used to launch gallery and camera
+import androidx.activity.result.contract.ActivityResultContracts; // Provides gallery and camera contracts
+import androidx.appcompat.app.AlertDialog; // Used for the photo options and guest warning dialogs
+import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
 
-import com.bumptech.glide.Glide;
-import com.cloudinary.android.MediaManager;
-import com.cloudinary.android.callback.ErrorInfo;
-import com.cloudinary.android.callback.UploadCallback;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthUserCollisionException;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper;
-import com.ilay.englishkingdom.Models.User;
-import com.ilay.englishkingdom.Models.UserRole;
-import com.ilay.englishkingdom.R;
+import com.bumptech.glide.Glide; // Used to load and show the selected profile picture
+import com.cloudinary.android.MediaManager; // Used to upload the profile picture to Cloudinary
+import com.cloudinary.android.callback.ErrorInfo; // Used to get the error details if upload fails
+import com.cloudinary.android.callback.UploadCallback; // Used to listen for upload result
+import com.google.firebase.auth.FirebaseAuth; // Used to create the Firebase account
+import com.google.firebase.auth.FirebaseAuthUserCollisionException; // Used to detect duplicate email
+import com.google.firebase.auth.FirebaseUser; // Used to get the newly created user
+import com.google.firebase.firestore.FirebaseFirestore; // Used to save user data to Firestore
+import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper; // Handles camera/gallery/permissions
+import com.ilay.englishkingdom.Models.User; // Our User data model
+import com.ilay.englishkingdom.Models.UserRole; // Used to set the user's role to USER
+import com.ilay.englishkingdom.R; // Used to reference XML resources
 
-import java.util.Map;
+import java.util.Map; // Used to read the Cloudinary upload result
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // ==================== רכיבי ממשק משתמש (UI) ====================
+    // ==================== UI ELEMENTS ====================
 
-    private EditText etFirstName; // שדה קלט לשם פרטי
-    private EditText etLastName; // שדה קלט לשם משפחה
-    private EditText etEmail; // שדה קלט לאימייל
-    private EditText etPassword; // שדה קלט לסיסמה
-    private EditText etConfirmPassword; // שדה קלט לאימות סיסמה
-    private Button btnRegister; // כפתור הרשמה
-    private TextView tvLogin; // קישור "כבר יש לך חשבון? התחבר"
-    private ImageView imgProfilePicture; // תמונת הפרופיל העגולה (אוואטר)
+    private EditText etFirstName; // First name input field
+    private EditText etLastName; // Last name input field
+    private EditText etEmail; // Email input field
+    private EditText etPassword; // Password input field
+    private EditText etConfirmPassword; // Confirm password input field
+    private Button btnRegister; // Register button
+    private Button btnGuest; // Continue as guest button - same warning as login screen
+    private TextView tvLogin; // "Already have an account? Login" link
+    private ImageView imgProfilePicture; // Profile picture circle - tapping opens picker
 
-    // ==================== פיירבייס (FIREBASE) ====================
+    // ==================== FIREBASE ====================
 
-    private FirebaseAuth mAuth; // החיבור שלנו לשירות האימות של פיירבייס
-    private FirebaseFirestore db; // החיבור שלנו לבסיס הנתונים פיירסטור
+    private FirebaseAuth mAuth; // Used to create the Firebase auth account
+    private FirebaseFirestore db; // Used to save user data to Firestore
 
-    // ==================== טיפול בתמונות ====================
+    // ==================== IMAGE HANDLING ====================
 
-    // ImagePickerHelper מטפל בכל הלוגיקה של מצלמה/גלריה/הרשאות
-    // אותו הלפר שבו אנו משתמשים ב-LearnActivity - כותבים את הלוגיקה פעם אחת ומשתמשים שוב
-    private ImagePickerHelper imagePicker;
+    private ImagePickerHelper imagePicker; // Handles all camera/gallery/permission logic
+    private Uri selectedImageUri = null; // The URI of the picked image - null means no image yet
 
-    private Uri selectedImageUri = null; // ה-URI של התמונה שהמשתמש בחר - null אומר שאין תמונה
+    // ==================== ACTIVITY RESULT LAUNCHERS ====================
 
-    // ==================== משגרי תוצאות אקטיביטי (ACTIVITY RESULT LAUNCHERS) ====================
+    // These must live here in the Activity - Android doesn't allow them in helper classes
+    // We pass them into ImagePickerHelper so it can launch gallery and camera
 
-    // אלו חייבים להימצא כאן בתוך ה-Activity - אנדרואיד לא מאפשר ליצור
-    // אותם בתוך מחלקות עזר. אנו מעבירים אותם לתוך ה-ImagePickerHelper.
-
-    // משגר גלריה - פותח גלריה, התוצאה חוזרת לכאן ומועברת ל-ImagePickerHelper
+    // Gallery launcher - opens gallery and waits for user to pick an image
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
-            uri -> imagePicker.onGalleryResult(uri)); // העברת התוצאה ל-ImagePickerHelper
+            uri -> imagePicker.onGalleryResult(uri)); // Forward result to ImagePickerHelper
 
-    // משגר מצלמה - פותח מצלמה, התוצאה חוזרת לכאן ומועברת ל-ImagePickerHelper
+    // Camera launcher - opens camera and waits for user to take a photo
     private final ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
-            success -> imagePicker.onCameraResult(success)); // העברת התוצאה ל-ImagePickerHelper
+            success -> imagePicker.onCameraResult(success)); // Forward result to ImagePickerHelper
 
-    // ==================== מחזור חיים (LIFECYCLE) ====================
+    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,100 +80,120 @@ public class RegisterActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // חיבור כל משתנה Java לרכיב ה-XML שלו
+        // Connect each variable to its XML view
         etFirstName = findViewById(R.id.etFirstName);
         etLastName = findViewById(R.id.etLastName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnRegister = findViewById(R.id.btnRegister);
+        btnGuest = findViewById(R.id.btnGuest);
         tvLogin = findViewById(R.id.tvLogin);
         imgProfilePicture = findViewById(R.id.imgProfilePicture);
 
-        // יצירת ImagePickerHelper - כאשר תמונה נבחרת, ה-callback הזה רץ
-        // אנו מעדכנים את selectedImageUri וטוענים את התמונה לתוך העיגול של האוואטר
+        // Set up ImagePickerHelper - when a photo is picked this callback runs
+        // We save the URI and load the image into the profile picture circle
         imagePicker = new ImagePickerHelper(this,
                 (uri, fromGallery) -> {
-                    // זה רץ לאחר שהמשתמש בוחר או מצלם תמונה
-                    selectedImageUri = uri; // שמירת ה-URI כדי שנוכל להעלות אותו במהלך ההרשמה
-                    // circleCrop() הופך את התמונה לעגולה כדי להתאים לעיצוב האוואטר שלנו
-                    Glide.with(this).load(uri).circleCrop().into(imgProfilePicture);
+                    selectedImageUri = uri; // Save so we can upload it during registration
+                    Glide.with(this).load(uri).circleCrop().into(imgProfilePicture); // Show it
                 },
                 galleryLauncher,
                 cameraLauncher);
 
-        // לחיצה על האוואטר פותחת אפשרויות שונות בהתאם לשאלה האם תמונה כבר נבחרה
+        // Tapping the profile picture opens different options depending on
+        // whether a photo has already been picked or not
         imgProfilePicture.setOnClickListener(v -> {
             if (selectedImageUri != null) {
-                // תמונה כבר נבחרה - הצגת אפשרויות שינוי/מחיקה
-                showPhotoOptionsDialog();
+                showPhotoOptionsDialog(); // Photo already picked - show change/delete options
             } else {
-                // עדיין אין תמונה - הצגת בחירת מצלמה/גלריה ישירות
-                imagePicker.show();
+                imagePicker.show(); // No photo yet - open camera/gallery picker directly
             }
         });
 
-        btnRegister.setOnClickListener(v -> registerUser()); // אימות והרשמה בעת לחיצה
-        tvLogin.setOnClickListener(v -> finish()); // סגירת ה-RegisterActivity וחזרה להתחברות
+        btnRegister.setOnClickListener(v -> registerUser()); // Validate and register
+
+        // Go back to LoginActivity when "Already have an account?" is tapped
+        tvLogin.setOnClickListener(v -> finish());
+
+        // Show the same guest warning dialog that appears on the login screen
+        // If user confirms they want to continue as guest, go straight to HomeActivity
+        btnGuest.setOnClickListener(v -> showGuestWarning());
     }
 
-    // ==================== תוצאת בקשת הרשאות ====================
+    // ==================== PERMISSION RESULT ====================
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // העברת תוצאת ההרשאה ל-ImagePickerHelper
-        // ה-ImagePickerHelper ביקש את ההרשאה ולכן הוא יודע מה לעשות עם התוצאה
+        // Forward the permission result to ImagePickerHelper
+        // It requested the permission so it knows what to do with the result
         imagePicker.onPermissionResult(requestCode, grantResults);
     }
 
-    // ==================== אפשרויות תמונה ====================
+    // ==================== GUEST WARNING ====================
 
-    private void showPhotoOptionsDialog() {
-        // מוצג כאשר המשתמש לוחץ על תמונת פרופיל שכבר נבחרה
-        // "שינוי" = פתיחת הבחירה מחדש, "מחיקה" = הסרת התמונה וחזרה לאוואטר ברירת המחדל
+    private void showGuestWarning() {
+        // Shows the exact same warning dialog as the one on the login screen
+        // This way the guest experience is consistent no matter which screen they're on
         new AlertDialog.Builder(this)
-                .setTitle("Profile Photo")
-                .setItems(new String[]{"Change Photo", "Delete Photo"}, (dialog, which) -> {
-                    if (which == 0) { // נלחץ "שנה תמונה"
-                        imagePicker.show(); // פתיחת בחירת מצלמה/גלריה שוב
-                    } else { // נלחץ "מחק תמונה"
-                        selectedImageUri = null; // ניקוי ה-URI של התמונה הנבחרת
-                        // החזרת האוואטר לאייקון ברירת המחדל האפור
-                        imgProfilePicture.setImageResource(R.drawable.ic_default_avatar);
-                    }
+                .setTitle("Continue as Guest?")
+                .setMessage("As a guest you can access the Learn section and Practice games, but your records, your daily streak, titles, your progress and your games history will not be saved.")
+                .setPositiveButton("Continue as Guest", (dialog, which) -> {
+                    // User accepted - go to HomeActivity as a guest
+                    // No Firebase sign in needed - getCurrentUser() will be null which means guest
+                    startActivity(new Intent(this, HomeActivity.class));
+                    finish(); // Close RegisterActivity so user can't go back here
                 })
-                .setNegativeButton("Cancel", null) // null = פשוט לסגור, לשמור על התמונה הנוכחית
+                .setNegativeButton("Cancel", null) // User changed their mind - just close the dialog
                 .show();
     }
 
-    // ==================== הרשמת משתמש ====================
+    // ==================== PHOTO OPTIONS ====================
+
+    private void showPhotoOptionsDialog() {
+        // Shows when user taps on a profile picture that's already been picked
+        // Change = open picker again, Delete = remove the photo and show default avatar
+        new AlertDialog.Builder(this)
+                .setTitle("Profile Photo")
+                .setItems(new String[]{"Change Photo", "Delete Photo"}, (dialog, which) -> {
+                    if (which == 0) { // Change tapped
+                        imagePicker.show(); // Open camera/gallery picker again
+                    } else { // Delete tapped
+                        selectedImageUri = null; // Clear the saved URI
+                        imgProfilePicture.setImageResource(R.drawable.ic_default_avatar); // Reset to default
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // ==================== REGISTER USER ====================
 
     private void registerUser() {
-        // קריאה וניקוי (trim) של כל שדות הקלט
-        // trim() מסיר רווחים מקריים בתחילת או בסוף המחרוזת
+        // Read and trim all input fields
+        // trim() removes accidental spaces at the start or end
         String firstName = etFirstName.getText().toString().trim();
         String lastName = etLastName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        boolean hasError = false; // אנו משתמשים בדגל זה כדי להציג את כל השגיאות בבת אחת במקום אחת-אחת
+        boolean hasError = false; // We use this flag to show ALL errors at once instead of one by one
 
-        // ---- אימות שם פרטי ----
+        // Validate first name
         if (firstName.isEmpty()) {
             etFirstName.setError("First name is required");
             hasError = true;
-        } else if (!firstName.matches("[a-zA-Z]+")) { // רק אותיות - ללא מספרים או סמלים
+        } else if (!firstName.matches("[a-zA-Z]+")) {
             etFirstName.setError("First name must contain letters only");
             hasError = true;
         } else if (!Character.isUpperCase(firstName.charAt(0))) {
-            // charAt(0) מקבל את התו הראשון - isUpperCase בודק אם זו אות גדולה
             etFirstName.setError("First name must start with a capital letter");
             hasError = true;
         }
 
-        // ---- אימות שם משפחה ----
+        // Validate last name
         if (lastName.isEmpty()) {
             etLastName.setError("Last name is required");
             hasError = true;
@@ -186,89 +205,84 @@ public class RegisterActivity extends AppCompatActivity {
             hasError = true;
         }
 
-        // ---- אימות אימייל ----
+        // Validate email
         if (email.isEmpty()) {
             etEmail.setError("Email is required");
             hasError = true;
         } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            // Patterns.EMAIL_ADDRESS הוא תבנית מובנית באנדרואיד לאימות פורמט אימייל
             etEmail.setError("Please enter a valid email");
             hasError = true;
         }
 
-        // ---- אימות סיסמה ----
+        // Validate password - Firebase requires at least 6 characters
         if (password.isEmpty()) {
             etPassword.setError("Password is required");
             hasError = true;
         } else if (password.length() < 6) {
-            // פיירבייס דורש סיסמאות באורך של 6 תווים לפחות
             etPassword.setError("Password must be at least 6 characters");
             hasError = true;
         }
 
-        // ---- אימות אישור סיסמה ----
+        // Validate confirm password
         if (confirmPassword.isEmpty()) {
             etConfirmPassword.setError("Please confirm your password");
             hasError = true;
         } else if (!password.equals(confirmPassword)) {
-            // .equals() משווה את תוכן הטקסט בפועל ולא את רפרנס האובייקט
             etConfirmPassword.setError("Passwords do not match");
             hasError = true;
         }
 
-        if (hasError) return; // עצור כאן - אל תירשם אם יש שגיאות כלשהן
+        if (hasError) return; // Stop here - don't register if there are any errors
 
-        // כל הבדיקות עברו - בדוק אם נבחרה תמונת פרופיל
+        // All validation passed - check if a profile picture was picked
         if (selectedImageUri != null) {
-            // נבחרה תמונת פרופיל - העלה אותה קודם ואז הירשם
-            uploadProfilePictureAndRegister(firstName, lastName, email, password);
+            uploadProfilePictureAndRegister(firstName, lastName, email, password); // Upload then register
         } else {
-            // אין תמונת פרופיל - הירשם ישירות עם מחרוזת ריקה
-            createFirebaseAccount(firstName, lastName, email, password, "");
+            createFirebaseAccount(firstName, lastName, email, password, ""); // Register without photo
         }
     }
 
-    // ==================== העלאת תמונת פרופיל ====================
+    // ==================== UPLOAD PROFILE PICTURE ====================
 
     private void uploadProfilePictureAndRegister(String firstName, String lastName,
                                                  String email, String password) {
         Toast.makeText(this, "Uploading profile picture...", Toast.LENGTH_SHORT).show();
 
         MediaManager.get().upload(selectedImageUri)
-                .option("upload_preset", "EnglishKingdom") // ה-Preset הלא-חתום שלנו ב-Cloudinary
+                .option("upload_preset", "EnglishKingdom") // Our unsigned Cloudinary preset
                 .callback(new UploadCallback() {
-                    @Override public void onStart(String id) {} // אין מה לעשות כשהעלאה מתחילה
-                    @Override public void onProgress(String id, long bytes, long total) {} // ניתן להוסיף כאן סרגל התקדמות
-                    @Override public void onReschedule(String id, ErrorInfo e) {} // אין מה לעשות אם יש תזמון מחדש
+                    @Override public void onStart(String id) {}
+                    @Override public void onProgress(String id, long bytes, long total) {}
+                    @Override public void onReschedule(String id, ErrorInfo e) {}
 
                     @Override
                     public void onSuccess(String id, Map result) {
-                        // ההעלאה הסתיימה - קבלת כתובת ה-HTTPS המאובטחת מ-Cloudinary
+                        // Upload finished - get the secure HTTPS URL from Cloudinary
                         String profilePictureUrl = (String) result.get("secure_url");
-                        // כעת צור את חשבון הפיירבייס עם כתובת ה-URL של התמונה
                         createFirebaseAccount(firstName, lastName, email, password, profilePictureUrl);
                     }
 
                     @Override
                     public void onError(String id, ErrorInfo e) {
-                        // העלאה נכשלה - עדיין בצע הרשמה אבל ללא תמונת פרופיל
-                        Toast.makeText(RegisterActivity.this, "Image upload failed, registering without photo.", Toast.LENGTH_LONG).show();
+                        // Upload failed - still register but without a profile picture
+                        Toast.makeText(RegisterActivity.this,
+                                "Image upload failed: " + e.getDescription(), Toast.LENGTH_LONG).show();
                         createFirebaseAccount(firstName, lastName, email, password, "");
                     }
-                }).dispatch(); // dispatch() מתחיל בפועל את ההעלאה
+                }).dispatch(); // dispatch() actually starts the upload
     }
 
-    // ==================== יצירת חשבון פיירבייס ====================
+    // ==================== CREATE FIREBASE ACCOUNT ====================
 
     private void createFirebaseAccount(String firstName, String lastName,
                                        String email, String password, String profilePictureUrl) {
-        // יוצר את חשבון ה-Firebase Authentication עם אימייל וסיסמה
+        // Creates the Firebase Authentication account with email and password
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) { // החשבון נוצר בהצלחה
-                        FirebaseUser user = mAuth.getCurrentUser(); // קבלת המשתמש שזה עתה נוצר
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser(); // Get the newly created user
 
-                        // שליחת אימייל אימות - המשתמש חייב לאמת לפני שיוכל להתחבר
+                        // Send a verification email - user must verify before logging in
                         user.sendEmailVerification()
                                 .addOnCompleteListener(emailTask -> {
                                     if (!emailTask.isSuccessful()) {
@@ -278,12 +292,12 @@ public class RegisterActivity extends AppCompatActivity {
 
                         saveUserToFirestore(user.getUid(), firstName, lastName, email, profilePictureUrl);
 
-                    } else { // יצירת החשבון נכשלה - בדוק מה השתבש
+                    } else {
                         Exception exception = task.getException();
                         if (exception instanceof FirebaseAuthUserCollisionException) {
-                            // האימייל כבר רשום - הצג שגיאה בשדה האימייל
+                            // Email already registered - show error on the email field
                             etEmail.setError("This email is already registered, please login instead");
-                            etEmail.requestFocus(); // העברת הסמן לשדה האימייל כדי שהמשתמש יראה את השגיאה
+                            etEmail.requestFocus();
                         } else if (exception != null && exception.getMessage() != null
                                 && exception.getMessage().contains("network")) {
                             Toast.makeText(this, "No internet connection", Toast.LENGTH_LONG).show();
@@ -294,29 +308,28 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    // ==================== שמירת משתמש ב-FIRESTORE ====================
+    // ==================== SAVE USER TO FIRESTORE ====================
 
     private void saveUserToFirestore(String userId, String firstName, String lastName,
                                      String email, String profilePictureUrl) {
-        // יצירת אובייקט User - נקי יותר משימוש ב-HashMap גולמי
-        // שדות מחלקת ה-User ממופים ישירות לשדות המסמך ב-Firestore
+        // Create a User object - cleaner than using a raw HashMap
         User user = new User(
-                userId,                     // idFS - זהה ל-UID של Firebase Auth
-                firstName,                  // שם פרטי
-                lastName,                   // שם משפחה
-                email,                      // אימייל
-                UserRole.USER.name(),       // תפקיד - תמיד USER ברישום עצמי
-                profilePictureUrl,          // תמונת פרופיל - URL מ-Cloudinary או מחרוזת ריקה
-                System.currentTimeMillis()  // createdAt - זמן נוכחי במילישניות
+                userId,                    // idFS - same as Firebase Auth UID
+                firstName,
+                lastName,
+                email,
+                UserRole.USER.name(),      // Role is always USER when self-registering
+                profilePictureUrl,         // Cloudinary URL or empty string if no photo
+                System.currentTimeMillis() // createdAt - current time in milliseconds
         );
 
-        // שימוש ב-UID של Firebase Auth כמזהה המסמך (Document ID)
-        // זה מקל על מציאת נתוני משתמש מאוחר יותר באמצעות ה-UID בלבד
+        // Use the Firebase Auth UID as the Firestore document ID
+        // This makes it easy to find user data later using just the UID
         db.collection("users").document(userId).set(user)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(this, "Account created! Please verify your email", Toast.LENGTH_LONG).show();
-                        finish(); // סגירת ה-RegisterActivity וחזרה ל-LoginActivity
+                        finish(); // Close RegisterActivity and go back to LoginActivity
                     } else {
                         Toast.makeText(this, "A Firebase error occurred, please try again later", Toast.LENGTH_LONG).show();
                     }

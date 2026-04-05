@@ -322,6 +322,34 @@
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
+
+
+                    </LinearLayout>
+                    <!-- Speed Trivia best score row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚡ Speed Trivia best score"
+                            android:textColor="#B0BEC5"
+                            android:textSize="14sp"
+                            android:layout_weight="1" />
+
+                        <!-- Shows "-" until user plays Speed Trivia for the first time -->
+                        <TextView
+                            android:id="@+id/tvSpeedTriviaBestScore"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="#FFD700"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
                     </LinearLayout>
 
                     <!-- Divider line between Trivia and Word Search sections -->

@@ -1,184 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<!-- Registration screen - user fills in their details to create an account -->
+<!-- We wrap everything in a ScrollView so the screen is scrollable on small phones -->
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A237E"
-    tools:context=".Activities.RegisterActivity">
+    android:background="#1A237E">
 
-    <!-- סמל הכתר -->
-    <TextView
-        android:id="@+id/tvCrown"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="👑"
-        android:textSize="50sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="40dp"/>
+        android:paddingBottom="32dp">
 
-    <!-- שם האפליקציה -->
-    <TextView
-        android:id="@+id/tvAppName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="English Kingdom"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#FFD700"
-        android:fontFamily="serif"
-        app:layout_constraintTop_toBottomOf="@id/tvCrown"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
+        <!-- Crown emoji at the top -->
+        <TextView
+            android:id="@+id/tvCrown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👑"
+            android:textSize="50sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="40dp" />
 
-    <!-- כותרת המסך -->
-    <TextView
-        android:id="@+id/tvRegisterTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Create Account"
-        android:textSize="22sp"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/tvAppName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        <!-- App name -->
+        <TextView
+            android:id="@+id/tvAppName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="English Kingdom"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="serif"
+            app:layout_constraintTop_toBottomOf="@id/tvCrown"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
 
-    <!-- תמונת פרופיל של משתמש, אם לא בחר כלום, תהיה דיפולט אם בחר יכול לשנות אותה אחר כך או למחוק -->
-    <ImageView
-        android:id="@+id/imgProfilePicture"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        android:src="@drawable/ic_default_avatar"
-        android:scaleType="centerCrop"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvRegisterTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <!-- Screen title -->
+        <TextView
+            android:id="@+id/tvRegisterTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Account"
+            android:textSize="22sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/tvAppName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
 
-    <!-- שדה הכנסת שם פרטי -->
-    <EditText
-        android:id="@+id/etFirstName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="First Name"
-        android:textColorHint="#B0BEC5"
-        android:textColor="#FFFFFF"
-        android:inputType="textPersonName"
-        android:background="@drawable/input_background"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/imgProfilePicture"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+        <!-- Profile picture - tapping opens camera/gallery picker -->
+        <ImageView
+            android:id="@+id/imgProfilePicture"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:src="@drawable/ic_default_avatar"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tvRegisterTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- שדה הכנסת שם משפחה -->
-    <EditText
-        android:id="@+id/etLastName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Last Name"
-        android:textColorHint="#B0BEC5"
-        android:textColor="#FFFFFF"
-        android:inputType="textPersonName"
-        android:background="@drawable/input_background"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/etFirstName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+        <!-- First name input -->
+        <EditText
+            android:id="@+id/etFirstName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="First Name"
+            android:textColorHint="#B0BEC5"
+            android:textColor="#FFFFFF"
+            android:inputType="textPersonName"
+            android:background="@drawable/input_background"
+            android:padding="12dp"
+            app:layout_constraintTop_toBottomOf="@id/imgProfilePicture"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
 
-    <!-- שדה הכנסת אימייל -->
-    <EditText
-        android:id="@+id/etEmail"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:textColorHint="#B0BEC5"
-        android:textColor="#FFFFFF"
-        android:inputType="textEmailAddress"
-        android:background="@drawable/input_background"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/etLastName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+        <!-- Last name input -->
+        <EditText
+            android:id="@+id/etLastName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Last Name"
+            android:textColorHint="#B0BEC5"
+            android:textColor="#FFFFFF"
+            android:inputType="textPersonName"
+            android:background="@drawable/input_background"
+            android:padding="12dp"
+            app:layout_constraintTop_toBottomOf="@id/etFirstName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
 
-    <!--שדה הכנסת סיסמה -->
-    <EditText
-        android:id="@+id/etPassword"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:textColorHint="#B0BEC5"
-        android:textColor="#FFFFFF"
-        android:inputType="textPassword"
-        android:background="@drawable/input_background"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/etEmail"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+        <!-- Email input -->
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Email"
+            android:textColorHint="#B0BEC5"
+            android:textColor="#FFFFFF"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/input_background"
+            android:padding="12dp"
+            app:layout_constraintTop_toBottomOf="@id/etLastName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
 
-    <!-- שדה אימות סיסמה -->
-    <EditText
-        android:id="@+id/etConfirmPassword"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Confirm Password"
-        android:textColorHint="#B0BEC5"
-        android:textColor="#FFFFFF"
-        android:inputType="textPassword"
-        android:background="@drawable/input_background"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/etPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+        <!-- Password input -->
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:textColorHint="#B0BEC5"
+            android:textColor="#FFFFFF"
+            android:inputType="textPassword"
+            android:background="@drawable/input_background"
+            android:padding="12dp"
+            app:layout_constraintTop_toBottomOf="@id/etEmail"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
 
-    <!-- כפתור הרשמה -->
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Create Account"
-        android:textColor="#1A237E"
-        android:backgroundTint="#FFD700"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/etConfirmPassword"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
+        <!-- Confirm password input -->
+        <EditText
+            android:id="@+id/etConfirmPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Confirm Password"
+            android:textColorHint="#B0BEC5"
+            android:textColor="#FFFFFF"
+            android:inputType="textPassword"
+            android:background="@drawable/input_background"
+            android:padding="12dp"
+            app:layout_constraintTop_toBottomOf="@id/etPassword"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
 
-    <!-- חזרה למסך הלוג אין מי שיש לו כבר משתמש -->
-    <TextView
-        android:id="@+id/tvLogin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Already have an account? Login"
-        android:textColor="#B0BEC5"
-        android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/btnRegister"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        <!-- Register button - gold color to stand out -->
+        <Button
+            android:id="@+id/btnRegister"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Create Account"
+            android:textColor="#1A237E"
+            android:backgroundTint="#FFD700"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            app:layout_constraintTop_toBottomOf="@id/etConfirmPassword"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Already have an account - go back to login -->
+        <TextView
+            android:id="@+id/tvLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already have an account? Login"
+            android:textColor="#B0BEC5"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/btnRegister"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <!-- Divider line between login link and guest button -->
+
+        <!-- Guest button - same warning as on the login screen -->
+        <Button
+            android:id="@+id/btnGuest"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="#283593"
+            android:text="Continue as Guest"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:layout_editor_absoluteY="742dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

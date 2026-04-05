@@ -75,6 +75,7 @@ public class GameHistoryActivity extends AppCompatActivity {
 
                     boolean hasTrivia = false; // Track if we found any trivia games
                     boolean hasWordSearch = false; // Track if we found any word search games
+                    boolean hasSpeedTrivia=false; // Track if we found any speed trivia games
 
                     // Loop through every history entry and create a card for it
                     for (QueryDocumentSnapshot doc : snapshots) {
@@ -99,7 +100,16 @@ public class GameHistoryActivity extends AppCompatActivity {
                                     doc.getString("duration")
                             );
                             hasWordSearch = true;
+                        } else if ("SPEEDTRIVIA".equals(type)) {
+                            // This is a Speed Trivia game entry - add it to the speed trivia section
+                            addSpeedTriviaCard(
+                                    doc.getString("date"),
+                                    doc.getString("time"),
+                                    doc.getString("score")
+                            );
+                            hasSpeedTrivia = true;
                         }
+
                     }
 
                     // If no trivia games found show a placeholder message
@@ -121,12 +131,22 @@ public class GameHistoryActivity extends AppCompatActivity {
                         empty.setPadding(8, 8, 8, 8);
                         wordSearchContainer.addView(empty);
                     }
+                    // If no speed trivia games found show a placeholder message
+                    if (!hasSpeedTrivia) {
+                        TextView empty = new TextView(this);
+                        empty.setText("No spped trivia games played yet.");
+                        empty.setTextColor(0xFFB0BEC5); // Grey color
+                        empty.setTextSize(13);
+                        empty.setPadding(8, 8, 8, 8);
+                        triviaContainer.addView(empty);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     // Something went wrong reading from Firestore
                     tvLoading.setText("Error loading history. Please try again.");
                 });
     }
+
 
     // ==================== ADD TRIVIA CARD ====================
 
@@ -226,4 +246,5 @@ public class GameHistoryActivity extends AppCompatActivity {
         card.addView(inner);
         wordSearchContainer.addView(card);
     }
+
 }
