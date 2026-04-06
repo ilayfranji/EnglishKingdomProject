@@ -47,6 +47,11 @@ public class SpeedTriviaActivity extends AppCompatActivity {
     // ==================== GAME DATA ====================
 
     private List<Word> allWords = new ArrayList<>(); // All words loaded from Firestore
+    private List<Word> remainingWords = new ArrayList<>();
+    // This list starts as a copy of allWords shuffled once
+// We take one word at a time from the front of this list
+// When the list is empty we reshuffle allWords and refill it
+// This guarantees no word repeats until every single word has been shown at least once
     private int score = 0; // How many correct answers so far this game
     private String correctAnswer = ""; // The correct Hebrew answer for the current question
     private boolean gameRunning = false; // true = game is in progress, false = game is over
@@ -182,13 +187,16 @@ public class SpeedTriviaActivity extends AppCompatActivity {
     // ==================== GAME START ====================
 
     private void startGame() {
-        // Need at least 3 words to have 3 answer choices
         if (allWords.size() < 3) {
             tvLoading.setText("Not enough words! Please add at least 3 words first.");
             return;
         }
 
-        Collections.shuffle(allWords); // Shuffle for randomness
+        // Fill remainingWords with all words shuffled
+        // Questions will be taken from this list one by one
+        // ensuring no repeats until all words have been shown
+        remainingWords = new ArrayList<>(allWords);
+        Collections.shuffle(remainingWords);
 
         // Hide loading and show the game elements
         tvLoading.setVisibility(View.GONE);
@@ -197,10 +205,10 @@ public class SpeedTriviaActivity extends AppCompatActivity {
         btnAnswer2.setVisibility(View.VISIBLE);
         btnAnswer3.setVisibility(View.VISIBLE);
 
-        gameRunning = true; // Mark game as running
+        gameRunning = true;
 
         // Start the 60 second countdown
-        countdownHandler.postDelayed(countdownRunnable, 1000); // First tick after 1 second
+        countdownHandler.postDelayed(countdownRunnable, 1000);
 
         showNextQuestion(); // Show the first question
     }
@@ -213,12 +221,18 @@ public class SpeedTriviaActivity extends AppCompatActivity {
 
         waitingForNext = false; // We're no longer waiting - show the question now
 
-        // Pick a random word from the list for this question
-        // We shuffle the whole list and always take the first word
-        // This means questions are completely random and can repeat - which is fine for speed mode
-        Collections.shuffle(allWords);
-        Word word = allWords.get(0); // Take the first word after shuffling
-        correctAnswer = word.getWordHebrew(); // Save the correct answer
+        // If remainingWords is empty it means we showed every word at least once
+        // Reshuffle allWords and refill remainingWords for another round
+        // This way words never repeat until all words have been shown
+        if (remainingWords.isEmpty()) {
+            remainingWords = new ArrayList<>(allWords); // Copy all words into remaining
+            Collections.shuffle(remainingWords); // Shuffle so order is random each round
+        }
+
+        // Take the first word from the remaining list and remove it
+        // This ensures we don't show this word again until all others have been shown
+        Word word = remainingWords.remove(0); // remove(0) takes and removes the first item
+        correctAnswer = word.getWordHebrew(); // Save the correct Hebrew answer
 
         // Show the English word
         tvQuestion.setText(word.getWordEnglish());
@@ -416,21 +430,21 @@ public class SpeedTriviaActivity extends AppCompatActivity {
     // ==================== RESET GAME ====================
 
     private void resetGame() {
-        // Reset everything and start a fresh game
         score = 0;
         secondsLeft = 60;
         waitingForNext = false;
         tvScore.setText("Score: 0");
         tvTimer.setText("60");
-        tvTimer.setTextColor(Color.parseColor("#FFD700")); // Reset timer color back to gold
+        tvTimer.setTextColor(Color.parseColor("#FFD700"));
 
-        Collections.shuffle(allWords); // Shuffle for a fresh game
+        // Refill and reshuffle remainingWords for the fresh game
+        remainingWords = new ArrayList<>(allWords);
+        Collections.shuffle(remainingWords);
 
-        gameRunning = true; // Mark game as running again
+        gameRunning = true;
 
-        // Restart the countdown
         countdownHandler.postDelayed(countdownRunnable, 1000);
 
-        showNextQuestion(); // Show first question
+        showNextQuestion();
     }
 }

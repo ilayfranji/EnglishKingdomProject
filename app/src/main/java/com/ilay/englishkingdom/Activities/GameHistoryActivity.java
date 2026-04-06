@@ -11,7 +11,7 @@ import androidx.cardview.widget.CardView; // Used to show each game entry as a c
 
 import com.google.firebase.auth.FirebaseAuth; // Used to get the current user
 import com.google.firebase.firestore.FirebaseFirestore; // Used to read game history from Firestore
-import com.google.firebase.firestore.Query; // Used to sort history by timestamp
+import com.google.firebase.firestore.Query; // Used to sort history by timestamp newest first
 import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single history entry
 import com.ilay.englishkingdom.R; // Used to reference XML resources
 
@@ -22,7 +22,8 @@ public class GameHistoryActivity extends AppCompatActivity {
     private TextView tvBack; // Back arrow to go back to ProfileActivity
     private TextView tvLoading; // Shows "Loading..." while fetching from Firestore
     private ScrollView scrollView; // The scrollable container - hidden until data is loaded
-    private LinearLayout triviaContainer; // Where Trivia game cards get added
+    private LinearLayout triviaContainer; // Where Classic Trivia game cards get added
+    private LinearLayout speedTriviaContainer; // Where Speed Trivia game cards get added
     private LinearLayout wordSearchContainer; // Where Word Search game cards get added
 
     // ==================== FIREBASE ====================
@@ -44,11 +45,12 @@ public class GameHistoryActivity extends AppCompatActivity {
         tvLoading = findViewById(R.id.tvLoading);
         scrollView = findViewById(R.id.scrollView);
         triviaContainer = findViewById(R.id.triviaContainer);
+        speedTriviaContainer = findViewById(R.id.speedTriviaContainer);
         wordSearchContainer = findViewById(R.id.wordSearchContainer);
 
-        tvBack.setOnClickListener(v -> finish()); // Go back to ProfileActivity
+        tvBack.setOnClickListener(v -> finish());
 
-        // If somehow a guest got here close immediately
+        // If somehow a guest got here close immediately - guests have no history
         if (mAuth.getCurrentUser() == null) {
             finish();
             return;
@@ -62,189 +64,194 @@ public class GameHistoryActivity extends AppCompatActivity {
     private void loadHistory() {
         String userId = mAuth.getCurrentUser().getUid();
 
-        // Fetch all game history documents sorted by timestamp
-        // orderBy("timestamp", DESCENDING) means newest games appear first
+        // Fetch all game history sorted by timestamp newest first
+        // so the most recent games always appear at the top
         db.collection("users").document(userId)
                 .collection("gameHistory")
-                .orderBy("timestamp", Query.Direction.DESCENDING) // Newest first
+                .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshots -> {
-                    // Hide loading text and show the scrollable content
+                    // Hide loading and show the scrollable content
                     tvLoading.setVisibility(View.GONE);
                     scrollView.setVisibility(View.VISIBLE);
 
-                    boolean hasTrivia = false; // Track if we found any trivia games
-                    boolean hasWordSearch = false; // Track if we found any word search games
-                    boolean hasSpeedTrivia=false; // Track if we found any speed trivia games
+                    // These track whether we found any games of each type
+                    // If we didn't find any we show a placeholder message instead
+                    boolean hasTrivia = false;
+                    boolean hasSpeedTrivia = false;
+                    boolean hasWordSearch = false;
 
                     // Loop through every history entry and create a card for it
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        String type = doc.getString("type"); // "TRIVIA" or "WORDSEARCH"
+                        String type = doc.getString("type"); // "TRIVIA", "SPEEDTRIVIA" or "WORDSEARCH"
 
                         if ("TRIVIA".equals(type)) {
-                            // This is a Trivia game entry - add it to the trivia section
+                            // Classic Trivia game - add card to the trivia section
                             addTriviaCard(
-                                    doc.getString("date"), // e.g. "28/03/2026"
-                                    doc.getString("time"), // e.g. "17:45"
-                                    doc.getString("score"), // e.g. "7/10"
-                                    doc.getString("duration") // e.g. "0:45:230"
+                                    doc.getString("date"),
+                                    doc.getString("time"),
+                                    doc.getString("score"),
+                                    doc.getString("duration")
                             );
                             hasTrivia = true;
 
-                        } else if ("WORDSEARCH".equals(type)) {
-                            // This is a Word Search game entry - add it to the word search section
-                            addWordSearchCard(
-                                    doc.getString("date"),
-                                    doc.getString("time"),
-                                    doc.getString("wordsFound"), // e.g. "8/11"
-                                    doc.getString("duration")
-                            );
-                            hasWordSearch = true;
                         } else if ("SPEEDTRIVIA".equals(type)) {
-                            // This is a Speed Trivia game entry - add it to the speed trivia section
+                            // Speed Trivia game - add card to the speed trivia section
                             addSpeedTriviaCard(
                                     doc.getString("date"),
                                     doc.getString("time"),
                                     doc.getString("score")
+                                    // No duration for speed trivia - it's always 60 seconds
                             );
                             hasSpeedTrivia = true;
+
+                        } else if ("WORDSEARCH".equals(type)) {
+                            // Word Search game - add card to the word search section
+                            addWordSearchCard(
+                                    doc.getString("date"),
+                                    doc.getString("time"),
+                                    doc.getString("wordsFound"),
+                                    doc.getString("duration")
+                            );
+                            hasWordSearch = true;
                         }
-
                     }
 
-                    // If no trivia games found show a placeholder message
+                    // Show placeholder messages for game types with no history yet
                     if (!hasTrivia) {
-                        TextView empty = new TextView(this);
-                        empty.setText("No trivia games played yet.");
-                        empty.setTextColor(0xFFB0BEC5); // Grey color
-                        empty.setTextSize(13);
-                        empty.setPadding(8, 8, 8, 8);
-                        triviaContainer.addView(empty);
+                        addEmptyMessage(triviaContainer, "No classic trivia games played yet.");
                     }
-
-                    // If no word search games found show a placeholder message
-                    if (!hasWordSearch) {
-                        TextView empty = new TextView(this);
-                        empty.setText("No word search games played yet.");
-                        empty.setTextColor(0xFFB0BEC5); // Grey color
-                        empty.setTextSize(13);
-                        empty.setPadding(8, 8, 8, 8);
-                        wordSearchContainer.addView(empty);
-                    }
-                    // If no speed trivia games found show a placeholder message
                     if (!hasSpeedTrivia) {
-                        TextView empty = new TextView(this);
-                        empty.setText("No spped trivia games played yet.");
-                        empty.setTextColor(0xFFB0BEC5); // Grey color
-                        empty.setTextSize(13);
-                        empty.setPadding(8, 8, 8, 8);
-                        triviaContainer.addView(empty);
+                        addEmptyMessage(speedTriviaContainer, "No speed trivia games played yet.");
+                    }
+                    if (!hasWordSearch) {
+                        addEmptyMessage(wordSearchContainer, "No word search games played yet.");
                     }
                 })
-                .addOnFailureListener(e -> {
-                    // Something went wrong reading from Firestore
-                    tvLoading.setText("Error loading history. Please try again.");
-                });
+                .addOnFailureListener(e ->
+                        tvLoading.setText("Error loading history. Please try again."));
     }
 
+    // ==================== EMPTY MESSAGE ====================
 
-    // ==================== ADD TRIVIA CARD ====================
+    private void addEmptyMessage(LinearLayout container, String message) {
+        // Adds a grey placeholder message to a container when no games of that type exist yet
+        // We use a helper method to avoid repeating this code 3 times
+        TextView empty = new TextView(this);
+        empty.setText(message);
+        empty.setTextColor(0xFFB0BEC5); // Grey color
+        empty.setTextSize(13);
+        empty.setPadding(8, 8, 8, 8);
+        container.addView(empty);
+    }
+
+    // ==================== ADD CLASSIC TRIVIA CARD ====================
 
     private void addTriviaCard(String date, String time, String score, String duration) {
-        // Creates a card showing one Trivia game's results and adds it to the trivia section
+        // Creates a card showing one Classic Trivia game's results
+        CardView card = createCard(); // Create the base card
 
-        // Create the card
-        CardView card = new CardView(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        cardParams.setMargins(0, 0, 0, 12); // Bottom margin between cards
-        card.setLayoutParams(cardParams);
-        card.setRadius(12); // Rounded corners
-        card.setCardBackgroundColor(0xFF1A237E); // Dark blue background
-        card.setCardElevation(4); // Small shadow
+        LinearLayout inner = createInnerLayout(); // Create the inner layout
 
-        // Create the inner layout that holds all the text
-        LinearLayout inner = new LinearLayout(this);
-        inner.setOrientation(LinearLayout.VERTICAL); // Stack items vertically
-        inner.setPadding(16, 12, 16, 12); // Padding inside the card
+        // Date and time row e.g. "📅 28/03/2026  🕐 17:45"
+        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
+
+        // Score row e.g. "Score: 7/10" in gold bold text
+        inner.addView(createBoldGoldText("Score: " + score));
+
+        // Duration row e.g. "⏱ Time: 0:45:230"
+        inner.addView(createSmallText("⏱ Time: " + duration));
+
+        card.addView(inner);
+        triviaContainer.addView(card); // Add card to the trivia section
+    }
+
+    // ==================== ADD SPEED TRIVIA CARD ====================
+
+    private void addSpeedTriviaCard(String date, String time, String score) {
+        // Creates a card showing one Speed Trivia game's results
+        // Speed Trivia doesn't show duration because it's always 60 seconds
+        CardView card = createCard();
+
+        LinearLayout inner = createInnerLayout();
 
         // Date and time row
-        TextView tvDateTime = new TextView(this);
-        tvDateTime.setText("📅 " + date + "  🕐 " + time); // e.g. "📅 28/03/2026  🕐 17:45"
-        tvDateTime.setTextColor(0xFFB0BEC5); // Grey color
-        tvDateTime.setTextSize(12);
+        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
 
-        // Score row
-        TextView tvScore = new TextView(this);
-        tvScore.setText("Score: " + score); // e.g. "Score: 7/10"
-        tvScore.setTextColor(0xFFFFD700); // Gold color
-        tvScore.setTextSize(15);
-        tvScore.setTypeface(null, android.graphics.Typeface.BOLD); // Bold text
+        // Score row - shows how many questions were answered correctly
+        inner.addView(createBoldGoldText("Correct answers: " + score));
 
-        // Duration row
-        TextView tvDuration = new TextView(this);
-        tvDuration.setText("⏱ Time: " + duration); // e.g. "⏱ Time: 0:45:230"
-        tvDuration.setTextColor(0xFFB0BEC5); // Grey color
-        tvDuration.setTextSize(12);
+        // Fixed duration - speed trivia is always 60 seconds
+        inner.addView(createSmallText("⏱ Duration: 60 seconds"));
 
-        // Add all text views to the inner layout
-        inner.addView(tvDateTime);
-        inner.addView(tvScore);
-        inner.addView(tvDuration);
-
-        // Add the inner layout to the card
         card.addView(inner);
-
-        // Add the card to the trivia section
-        triviaContainer.addView(card);
+        speedTriviaContainer.addView(card); // Add card to the speed trivia section
     }
 
     // ==================== ADD WORD SEARCH CARD ====================
 
     private void addWordSearchCard(String date, String time, String wordsFound, String duration) {
-        // Creates a card showing one Word Search game's results and adds it to the word search section
-        // Same structure as addTriviaCard but shows wordsFound instead of score
+        // Creates a card showing one Word Search game's results
+        CardView card = createCard();
 
+        LinearLayout inner = createInnerLayout();
+
+        // Date and time row
+        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
+
+        // Words found row e.g. "Words found: 8/11"
+        inner.addView(createBoldGoldText("Words found: " + wordsFound));
+
+        // Duration row
+        inner.addView(createSmallText("⏱ Time: " + duration));
+
+        card.addView(inner);
+        wordSearchContainer.addView(card); // Add card to the word search section
+    }
+
+    // ==================== CARD HELPERS ====================
+
+    // These helper methods create the card and text views so we don't repeat
+    // the same styling code inside every addTriviaCard/addSpeedTriviaCard/addWordSearchCard method
+
+    private CardView createCard() {
+        // Creates a styled dark blue card with rounded corners and a small shadow
         CardView card = new CardView(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        cardParams.setMargins(0, 0, 0, 12);
-        card.setLayoutParams(cardParams);
-        card.setRadius(12);
-        card.setCardBackgroundColor(0xFF1A237E); // Dark blue background
-        card.setCardElevation(4);
+        params.setMargins(0, 0, 0, 12); // 12px bottom margin between cards
+        card.setLayoutParams(params);
+        card.setRadius(12); // Rounded corners
+        card.setCardBackgroundColor(0xFF1A237E); // Dark blue
+        card.setCardElevation(4); // Small shadow
+        return card;
+    }
 
+    private LinearLayout createInnerLayout() {
+        // Creates a vertical LinearLayout with padding to hold the card's text views
         LinearLayout inner = new LinearLayout(this);
         inner.setOrientation(LinearLayout.VERTICAL);
         inner.setPadding(16, 12, 16, 12);
-
-        // Date and time row
-        TextView tvDateTime = new TextView(this);
-        tvDateTime.setText("📅 " + date + "  🕐 " + time);
-        tvDateTime.setTextColor(0xFFB0BEC5);
-        tvDateTime.setTextSize(12);
-
-        // Words found row
-        TextView tvWords = new TextView(this);
-        tvWords.setText("Words found: " + wordsFound); // e.g. "Words found: 8/11"
-        tvWords.setTextColor(0xFFFFD700); // Gold color
-        tvWords.setTextSize(15);
-        tvWords.setTypeface(null, android.graphics.Typeface.BOLD);
-
-        // Duration row
-        TextView tvDuration = new TextView(this);
-        tvDuration.setText("⏱ Time: " + duration);
-        tvDuration.setTextColor(0xFFB0BEC5);
-        tvDuration.setTextSize(12);
-
-        inner.addView(tvDateTime);
-        inner.addView(tvWords);
-        inner.addView(tvDuration);
-
-        card.addView(inner);
-        wordSearchContainer.addView(card);
+        return inner;
     }
 
+    private TextView createSmallText(String text) {
+        // Creates a small grey text view - used for date, time and duration
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextColor(0xFFB0BEC5); // Grey color
+        tv.setTextSize(12);
+        return tv;
+    }
+
+    private TextView createBoldGoldText(String text) {
+        // Creates a bold gold text view - used for the main result (score/words found)
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextColor(0xFFFFD700); // Gold color
+        tv.setTextSize(15);
+        tv.setTypeface(null, android.graphics.Typeface.BOLD); // Bold
+        return tv;
+    }
 }
