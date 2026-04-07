@@ -192,6 +192,7 @@ public class WordSearchActivity extends AppCompatActivity
     // ==================== GRID BUILDING ====================
 
     private void buildGrid(List<String> allWords) {
+        // אם אין מילים אז מציגים שגיאה
         if (allWords.isEmpty()) {
             tvLoading.setText("No words found! Please add some words first.");
             return;
