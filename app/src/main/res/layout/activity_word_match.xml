@@ -88,9 +88,11 @@
         app:layout_constraintBottom_toTopOf="@id/tvWordList"
         app:layout_constraintHeight_percent="0.50" >
         <LinearLayout
+            android:id="@+id/layout1"
             android:padding="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -114,7 +116,12 @@
             </LinearLayout>
 
         </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/white"/>
         <LinearLayout
+            android:id="@+id/layout2"
             android:layout_marginTop="4dp"
             android:padding="8dp"
             android:layout_width="match_parent"

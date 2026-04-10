@@ -133,6 +133,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- wordMatch activity-->
+        <activity
+            android:name=".Activities.WordMatchActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <!-- ==================== RECEIVERS ==================== -->
 
         <!-- ReminderReceiver - wakes up at 9:00 AM and sends notification if user hasn't opened app -->
