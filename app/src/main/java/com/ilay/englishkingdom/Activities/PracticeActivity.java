@@ -1,26 +1,28 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.content.Intent; // Used to open TriviaActivity, SpeedTriviaActivity and WordSearchActivity
+import android.content.Intent; // Used to open TriviaActivity, SpeedTriviaActivity, WordSearchActivity and WordMatchActivity
 import android.os.Bundle; // Used when creating the activity
 import android.widget.TextView; // Used for the back button and info buttons
 
-import androidx.appcompat.app.AlertDialog; // Used for the mode selection dialog and info dialogs
+import androidx.appcompat.app.AlertDialog; // Used for mode selection and info dialogs
 import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
 import androidx.cardview.widget.CardView; // Used for the game cards
 
 import com.ilay.englishkingdom.R; // Used to reference XML resources
 
 public class PracticeActivity extends AppCompatActivity {
-    // This screen shows the available games
-    // Tapping the Trivia card shows a dialog to pick Classic or Speed mode
-    // Tapping the Word Search card opens the game directly
+    // This screen shows all available games
+    // Trivia card shows a mode selection dialog (Classic vs Speed)
+    // Word Search and Word Match cards open their games directly
     // Each card has an info button that explains how to play in Hebrew
 
     private TextView tvBack; // Back arrow to go back to HomeActivity
-    private CardView cardTrivia; // The Trivia game card - tapping shows mode selection
-    private CardView cardWordSearch; // The Word Search game card
-    private TextView btnTriviaInfo; // Info button next to Trivia card
-    private TextView btnWordSearchInfo; // Info button next to Word Search card
+    private CardView cardTrivia; // Trivia card - tapping shows Classic vs Speed selection
+    private CardView cardWordSearch; // Word Search card - opens game directly
+    private CardView cardWordMatch; // Word Match card - opens game directly
+    private TextView btnTriviaInfo; // Info button for Trivia
+    private TextView btnWordSearchInfo; // Info button for Word Search
+    private TextView btnWordMatchInfo; // Info button for Word Match
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,32 +32,34 @@ public class PracticeActivity extends AppCompatActivity {
         tvBack = findViewById(R.id.tvBack);
         cardTrivia = findViewById(R.id.cardTrivia);
         cardWordSearch = findViewById(R.id.cardWordSearch);
+        cardWordMatch = findViewById(R.id.cardWordMatch);
         btnTriviaInfo = findViewById(R.id.btnTriviaInfo);
         btnWordSearchInfo = findViewById(R.id.btnWordSearchInfo);
+        btnWordMatchInfo = findViewById(R.id.btnWordMatchInfo);
 
         tvBack.setOnClickListener(v -> finish()); // Go back to HomeActivity
 
-        // Tapping the Trivia card shows a dialog to pick Classic or Speed mode
-        // This way both modes are accessible from the same card without taking extra screen space
+        // Trivia card shows mode selection - Classic or Speed
         cardTrivia.setOnClickListener(v -> showTriviaModeDialog());
 
-        // Tapping the Word Search card opens the game directly - no mode selection needed
+        // Word Search opens directly
         cardWordSearch.setOnClickListener(v ->
                 startActivity(new Intent(this, WordSearchActivity.class)));
 
-        // Info button for Trivia - explains both modes in Hebrew
-        btnTriviaInfo.setOnClickListener(v -> showTriviaInfo());
+        // Word Match opens directly
+        cardWordMatch.setOnClickListener(v ->
+                startActivity(new Intent(this, WordMatchActivity.class)));
 
-        // Info button for Word Search - explains how to play in Hebrew
+        // Info buttons - show how to play in Hebrew
+        btnTriviaInfo.setOnClickListener(v -> showTriviaInfo());
         btnWordSearchInfo.setOnClickListener(v -> showWordSearchInfo());
+        btnWordMatchInfo.setOnClickListener(v -> showWordMatchInfo());
     }
 
     // ==================== TRIVIA MODE SELECTION ====================
 
     private void showTriviaModeDialog() {
-        // Shows a dialog with two options: Classic Trivia or Speed Trivia
-        // Classic = 10 questions, user taps Next between questions
-        // Speed = 1 minute, questions auto-advance after 0.5 seconds
+        // Shows a dialog letting the user pick between Classic and Speed Trivia
         new AlertDialog.Builder(this)
                 .setTitle("Choose Trivia Mode")
                 .setItems(new String[]{
@@ -63,23 +67,19 @@ public class PracticeActivity extends AppCompatActivity {
                         "⚡ Speed — 1 minute challenge"
                 }, (dialog, which) -> {
                     if (which == 0) {
-                        // Classic mode - open the regular TriviaActivity
-                        startActivity(new Intent(this, TriviaActivity.class));
+                        startActivity(new Intent(this, TriviaActivity.class)); // Classic mode
                     } else {
-                        // Speed mode - open SpeedTriviaActivity
-                        startActivity(new Intent(this, SpeedTriviaActivity.class));
+                        startActivity(new Intent(this, SpeedTriviaActivity.class)); // Speed mode
                     }
                 })
-                .setNegativeButton("Cancel", null) // User changed their mind - close dialog
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
     // ==================== INFO DIALOGS ====================
 
     private void showTriviaInfo() {
-        // Shows a dialog explaining both Trivia modes in Hebrew
-        // We stop the card click from also firing when the info button is tapped
-        // by not calling cardTrivia's click listener here
+        // Explains both Trivia modes in Hebrew
         new AlertDialog.Builder(this)
                 .setTitle("🧠 טריוויה - איך משחקים?")
                 .setMessage(
@@ -88,7 +88,7 @@ public class PracticeActivity extends AppCompatActivity {
                                 "המשחק מורכב מ-10 שאלות. בסוף המשחק יוצג לך הניקוד שלך והזמן שלקח לך.\n\n" +
                                 "מצב מהיר:\n" +
                                 "יש לך דקה אחת בלבד לענות על כמה שיותר שאלות. " +
-                                "לאחר כל תשובה המשחק מעביר אוטומטית לשאלה הבאה. " +
+                                "לאחר כל תשובה המשחק עובר אוטומטית לשאלה הבאה אחרי חצי שנייה. " +
                                 "הניקוד הגבוה ביותר שלך נשמר בפרופיל."
                 )
                 .setPositiveButton("הבנתי!", null)
@@ -96,7 +96,7 @@ public class PracticeActivity extends AppCompatActivity {
     }
 
     private void showWordSearchInfo() {
-        // Shows a dialog explaining Word Search in Hebrew
+        // Explains Word Search in Hebrew
         new AlertDialog.Builder(this)
                 .setTitle("🔍 חיפוש מילים - איך משחקים?")
                 .setMessage(
@@ -105,6 +105,21 @@ public class PracticeActivity extends AppCompatActivity {
                                 "כדי לסמן מילה - לחץ על האות הראשונה וגרור עד האות האחרונה. " +
                                 "מילה שנמצאה תצבע בירוק ותימחק מרשימת המילים למטה.\n\n" +
                                 "מצא את כל המילים כמה שיותר מהר!"
+                )
+                .setPositiveButton("הבנתי!", null)
+                .show();
+    }
+
+    private void showWordMatchInfo() {
+        // Explains Word Match in Hebrew
+        new AlertDialog.Builder(this)
+                .setTitle("🖼️ התאמת מילים - איך משחקים?")
+                .setMessage(
+                        "בכל שלב יוצגו לך שתי תמונות ורשימה של 6 מילים באנגלית.\n\n" +
+                                "עליך להתאים את המילה הנכונה לכל תמונה.\n\n" +
+                                "בחר מילה מהרשימה למטה ואז לחץ על התמונה שלדעתך מתאימה לה. " +
+                                "אם צדקת התמונה תיצבע בירוק, אם טעית - תיצבע באדום לרגע.\n\n" +
+                                "המשחק מורכב מ-3 שלבים. בכל שלב יש תמונות חדשות!"
                 )
                 .setPositiveButton("הבנתי!", null)
                 .show();

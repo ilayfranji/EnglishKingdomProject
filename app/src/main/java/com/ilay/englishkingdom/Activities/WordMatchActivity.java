@@ -84,7 +84,7 @@ public class WordMatchActivity extends AppCompatActivity {
             if(stage.isFirstWordSuccess())return;
             if(selectedWord.equalsIgnoreCase(stage.getFirstWord().first)) {
                 // success
-                Toast.makeText(this, "Correct! Advancing to next stage", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
                 inTransition = true;
                 layout1.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_green));
                 word1Text.setText(stage.getFirstWord().first);
