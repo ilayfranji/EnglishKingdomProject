@@ -33,7 +33,6 @@ import java.util.Map; // Used to read the Cloudinary upload result
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // ==================== UI ELEMENTS ====================
 
     private EditText etFirstName; // First name input field
     private EditText etLastName; // Last name input field
@@ -45,17 +44,14 @@ public class RegisterActivity extends AppCompatActivity {
     private TextView tvLogin; // "Already have an account? Login" link
     private ImageView imgProfilePicture; // Profile picture circle - tapping opens picker
 
-    // ==================== FIREBASE ====================
 
     private FirebaseAuth mAuth; // Used to create the Firebase auth account
     private FirebaseFirestore db; // Used to save user data to Firestore
 
-    // ==================== IMAGE HANDLING ====================
 
     private ImagePickerHelper imagePicker; // Handles all camera/gallery/permission logic
     private Uri selectedImageUri = null; // The URI of the picked image - null means no image yet
 
-    // ==================== ACTIVITY RESULT LAUNCHERS ====================
 
     // These must live here in the Activity - Android doesn't allow them in helper classes
     // We pass them into ImagePickerHelper so it can launch gallery and camera
@@ -69,8 +65,6 @@ public class RegisterActivity extends AppCompatActivity {
     private final ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
             success -> imagePicker.onCameraResult(success)); // Forward result to ImagePickerHelper
-
-    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,8 +115,6 @@ public class RegisterActivity extends AppCompatActivity {
         btnGuest.setOnClickListener(v -> showGuestWarning());
     }
 
-    // ==================== PERMISSION RESULT ====================
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -130,8 +122,6 @@ public class RegisterActivity extends AppCompatActivity {
         // It requested the permission so it knows what to do with the result
         imagePicker.onPermissionResult(requestCode, grantResults);
     }
-
-    // ==================== GUEST WARNING ====================
 
     private void showGuestWarning() {
         // Shows the exact same warning dialog as the one on the login screen
@@ -149,8 +139,6 @@ public class RegisterActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ==================== PHOTO OPTIONS ====================
-
     private void showPhotoOptionsDialog() {
         // Shows when user taps on a profile picture that's already been picked
         // Change = open picker again, Delete = remove the photo and show default avatar
@@ -167,9 +155,6 @@ public class RegisterActivity extends AppCompatActivity {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-
-    // ==================== REGISTER USER ====================
-
     private void registerUser() {
         // Read and trim all input fields
         // trim() removes accidental spaces at the start or end
@@ -241,9 +226,6 @@ public class RegisterActivity extends AppCompatActivity {
             createFirebaseAccount(firstName, lastName, email, password, ""); // Register without photo
         }
     }
-
-    // ==================== UPLOAD PROFILE PICTURE ====================
-
     private void uploadProfilePictureAndRegister(String firstName, String lastName,
                                                  String email, String password) {
         Toast.makeText(this, "Uploading profile picture...", Toast.LENGTH_SHORT).show();
@@ -271,9 +253,6 @@ public class RegisterActivity extends AppCompatActivity {
                     }
                 }).dispatch(); // dispatch() actually starts the upload
     }
-
-    // ==================== CREATE FIREBASE ACCOUNT ====================
-
     private void createFirebaseAccount(String firstName, String lastName,
                                        String email, String password, String profilePictureUrl) {
         // Creates the Firebase Authentication account with email and password
@@ -307,9 +286,6 @@ public class RegisterActivity extends AppCompatActivity {
                     }
                 });
     }
-
-    // ==================== SAVE USER TO FIRESTORE ====================
-
     private void saveUserToFirestore(String userId, String firstName, String lastName,
                                      String email, String profilePictureUrl) {
         // Create a User object - cleaner than using a raw HashMap
