@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Word Search game screen -->
+<!-- Word Match game screen - match words to pictures -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -8,7 +8,7 @@
     android:background="#0D1B5E"
     android:fitsSystemWindows="true">
 
-    <!-- Back arrow -->
+    <!-- Back arrow - asks for confirmation before leaving -->
     <TextView
         android:id="@+id/tvBack"
         android:layout_width="wrap_content"
@@ -20,7 +20,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Timer - counts up from 0:00:000 -->
+    <!-- Timer counts up from 0:00:000 just like Word Search -->
     <TextView
         android:id="@+id/tvTimer"
         android:layout_width="wrap_content"
@@ -34,12 +34,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Title -->
+    <!-- Screen title - Word Match not Word Search -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="🔍 Word Search"
+        android:text="🖼️ Word Match"
         android:textColor="#FFD700"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -47,19 +47,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Words found counter -->
+    <!-- Lives counter shown below the title -->
     <TextView
-        android:id="@+id/tvFoundCount"
+        android:id="@+id/tvLives"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Found: 0/0"
-        android:textColor="#B0BEC5"
-        android:textSize="14sp"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:text="Lives: 3/3"
+        android:textColor="#FFD700"
+        android:textSize="15sp"
+        android:paddingVertical="8dp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Loading text -->
+    <!-- Loading text shown while words are being fetched from Firestore -->
     <TextView
         android:id="@+id/tvLoading"
         android:layout_width="wrap_content"
@@ -72,27 +74,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
+    <!-- Main game area - contains both image+word rows and the info label -->
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/wordMatchLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_marginEnd="12dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintTop_toBottomOf="@id/tvLives"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/tvWordList"
-        app:layout_constraintHeight_percent="0.50" >
+        app:layout_constraintBottom_toTopOf="@id/tvWordList">
+
+        <!-- First image row - tapping tries to match the selected word -->
         <LinearLayout
             android:id="@+id/layout1"
             android:padding="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="16dp"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -101,25 +104,35 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
+                <!-- First picture -->
                 <ImageView
                     android:id="@+id/wordImage1"
-                    android:src="@drawable/check"
                     android:layout_width="150dp"
-                    android:layout_height="150dp"/>
+                    android:layout_height="150dp"
+                    android:scaleType="centerCrop" />
+
+                <!-- Word revealed here when user matches correctly -->
                 <TextView
                     android:id="@+id/wordText1"
                     android:textAlignment="center"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
-                    android:text="Word 1"/>
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:text="" />
+
             </LinearLayout>
 
         </LinearLayout>
+
+        <!-- Divider line between the two images -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/white"/>
+            android:background="@color/white" />
+
+        <!-- Second image row - tapping tries to match the selected word -->
         <LinearLayout
             android:id="@+id/layout2"
             android:layout_marginTop="4dp"
@@ -134,31 +147,42 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
+                <!-- Second picture -->
                 <ImageView
                     android:id="@+id/wordImage2"
-                    android:src="@drawable/check"
                     android:layout_width="150dp"
-                    android:layout_height="150dp"/>
+                    android:layout_height="150dp"
+                    android:scaleType="centerCrop" />
+
+                <!-- Word revealed here when user matches correctly -->
                 <TextView
                     android:id="@+id/wordText2"
                     android:textAlignment="center"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
-                    android:text="Word 1"/>
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:text="" />
+
             </LinearLayout>
 
         </LinearLayout>
 
+        <!-- Info label - tells user which word they selected or asks them to pick one -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/info"
             android:textColor="@color/white"
-            android:text="asdasdasd"/>
+            android:layout_marginTop="8dp"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:text="Pick a word from the word bank below" />
+
     </LinearLayout>
 
-    <!-- Scrollable word list shown below the grid -->
+    <!-- Scrollable word bank shown below the images -->
     <ScrollView
         android:id="@+id/tvWordList"
         android:layout_width="0dp"
@@ -169,7 +193,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp">
 
-        <!-- Word list container - words added programmatically -->
+        <!-- Word bank container - words added programmatically -->
         <LinearLayout
             android:id="@+id/wordListContainer"
             android:layout_width="match_parent"

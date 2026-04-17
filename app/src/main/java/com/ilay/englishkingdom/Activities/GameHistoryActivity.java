@@ -25,6 +25,7 @@ public class GameHistoryActivity extends AppCompatActivity {
     private LinearLayout triviaContainer; // Where Classic Trivia game cards get added
     private LinearLayout speedTriviaContainer; // Where Speed Trivia game cards get added
     private LinearLayout wordSearchContainer; // Where Word Search game cards get added
+    private LinearLayout wordMatchContainer;
 
     // ==================== FIREBASE ====================
 
@@ -47,6 +48,7 @@ public class GameHistoryActivity extends AppCompatActivity {
         triviaContainer = findViewById(R.id.triviaContainer);
         speedTriviaContainer = findViewById(R.id.speedTriviaContainer);
         wordSearchContainer = findViewById(R.id.wordSearchContainer);
+        wordMatchContainer = findViewById(R.id.wordMatchContainer);
 
         tvBack.setOnClickListener(v -> finish());
 
@@ -80,6 +82,7 @@ public class GameHistoryActivity extends AppCompatActivity {
                     boolean hasTrivia = false;
                     boolean hasSpeedTrivia = false;
                     boolean hasWordSearch = false;
+                    boolean hasWordMatch = false;
 
                     // Loop through every history entry and create a card for it
                     for (QueryDocumentSnapshot doc : snapshots) {
@@ -114,7 +117,20 @@ public class GameHistoryActivity extends AppCompatActivity {
                                     doc.getString("duration")
                             );
                             hasWordSearch = true;
-                        }
+
+                        }else if ("WORDMATCH".equals(type)) {
+                                // Word Match game entry - add to word match section
+                                addWordMatchCard(
+                                        doc.getString("date"),
+                                        doc.getString("time"),
+                                        doc.getString("result"),
+                                        doc.getString("stage"),
+                                        doc.getString("livesLeft"),
+                                        doc.getString("duration")
+                                );
+                                hasWordMatch = true;
+                            }
+
                     }
 
                     // Show placeholder messages for game types with no history yet
@@ -126,6 +142,9 @@ public class GameHistoryActivity extends AppCompatActivity {
                     }
                     if (!hasWordSearch) {
                         addEmptyMessage(wordSearchContainer, "No word search games played yet.");
+                    }
+                    if (!hasWordMatch) {
+                        addEmptyMessage(wordMatchContainer, "No word match games played yet.");
                     }
                 })
                 .addOnFailureListener(e ->
@@ -207,6 +226,22 @@ public class GameHistoryActivity extends AppCompatActivity {
 
         card.addView(inner);
         wordSearchContainer.addView(card); // Add card to the word search section
+    }
+
+    private void addWordMatchCard(String date, String time, String result,
+                                  String stage, String livesLeft, String duration) {
+        // Creates a card showing one Word Match game's results
+        CardView card = createCard();
+        LinearLayout inner = createInnerLayout();
+
+        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
+        inner.addView(createBoldGoldText(result)); // e.g. "Won 🎉" or "Lost 💔"
+        inner.addView(createSmallText("📍 Reached: " + stage));
+        inner.addView(createSmallText("❤️ Lives left: " + livesLeft));
+        inner.addView(createSmallText("⏱ Time: " + duration));
+
+        card.addView(inner);
+        wordMatchContainer.addView(card);
     }
 
     // ==================== CARD HELPERS ====================

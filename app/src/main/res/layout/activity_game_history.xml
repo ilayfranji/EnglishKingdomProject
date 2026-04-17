@@ -118,6 +118,24 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="24dp" />
 
+            <!-- Word Match section header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🖼️ Word Match Games"
+                android:textColor="#FFD700"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Word Match games added programmatically -->
+            <LinearLayout
+                android:id="@+id/wordMatchContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp" />
+
 
         </LinearLayout>
 
