@@ -5,6 +5,7 @@ import android.content.pm.PackageManager; // Used for permission checking
 import android.net.Uri; // Used to store the selected profile picture URI
 import android.os.Bundle; // Used when creating the activity
 import android.util.Patterns; // Used to validate email format
+import android.view.View;
 import android.widget.Button; // Used for the register and guest buttons
 import android.widget.EditText; // Used for the text input fields
 import android.widget.ImageView; // Used for the profile picture
@@ -113,6 +114,14 @@ public class RegisterActivity extends AppCompatActivity {
         // Show the same guest warning dialog that appears on the login screen
         // If user confirms they want to continue as guest, go straight to HomeActivity
         btnGuest.setOnClickListener(v -> showGuestWarning());
+
+        // Check if this screen was opened from the guest profile dialog
+        // If yes hide the guest button because it makes no sense to continue as guest
+        // from inside the registration flow that was triggered from the profile screen
+        boolean fromProfileDialog = getIntent().getBooleanExtra("fromProfileDialog", false);
+        if (fromProfileDialog) {
+            btnGuest.setVisibility(View.GONE); // Hide the guest button
+        }
     }
 
     @Override
@@ -255,59 +264,82 @@ public class RegisterActivity extends AppCompatActivity {
     }
     private void createFirebaseAccount(String firstName, String lastName,
                                        String email, String password, String profilePictureUrl) {
-        // Creates the Firebase Authentication account with email and password
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        FirebaseUser user = mAuth.getCurrentUser(); // Get the newly created user
+                        FirebaseUser user = mAuth.getCurrentUser();
 
-                        // Send a verification email - user must verify before logging in
+                        // Send verification email - user must verify before using the app
                         user.sendEmailVerification()
                                 .addOnCompleteListener(emailTask -> {
-                                    if (!emailTask.isSuccessful()) {
-                                        Toast.makeText(this, "Could not send verification email", Toast.LENGTH_LONG).show();
+                                    if (emailTask.isSuccessful()) {
+                                        // Email sent - save to Firestore then sign out and show message
+                                        saveUserToFirestore(user.getUid(), firstName, lastName,
+                                                email, profilePictureUrl);
+                                    } else {
+                                        Toast.makeText(this,
+                                                "Could not send verification email. Please try again.",
+                                                Toast.LENGTH_LONG).show();
                                     }
                                 });
-
-                        saveUserToFirestore(user.getUid(), firstName, lastName, email, profilePictureUrl);
 
                     } else {
                         Exception exception = task.getException();
                         if (exception instanceof FirebaseAuthUserCollisionException) {
-                            // Email already registered - show error on the email field
                             etEmail.setError("This email is already registered, please login instead");
                             etEmail.requestFocus();
                         } else if (exception != null && exception.getMessage() != null
                                 && exception.getMessage().contains("network")) {
                             Toast.makeText(this, "No internet connection", Toast.LENGTH_LONG).show();
                         } else {
-                            Toast.makeText(this, "A Firebase error occurred, please try again later", Toast.LENGTH_LONG).show();
+                            Toast.makeText(this,
+                                    "A Firebase error occurred, please try again later",
+                                    Toast.LENGTH_LONG).show();
                         }
                     }
                 });
     }
     private void saveUserToFirestore(String userId, String firstName, String lastName,
                                      String email, String profilePictureUrl) {
-        // Create a User object - cleaner than using a raw HashMap
         User user = new User(
-                userId,                    // idFS - same as Firebase Auth UID
+                userId,
                 firstName,
                 lastName,
                 email,
-                UserRole.USER.name(),      // Role is always USER when self-registering
-                profilePictureUrl,         // Cloudinary URL or empty string if no photo
-                System.currentTimeMillis() // createdAt - current time in milliseconds
+                UserRole.USER.name(),
+                profilePictureUrl,
+                System.currentTimeMillis()
         );
 
-        // Use the Firebase Auth UID as the Firestore document ID
-        // This makes it easy to find user data later using just the UID
         db.collection("users").document(userId).set(user)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(this, "Account created! Please verify your email", Toast.LENGTH_LONG).show();
-                        finish(); // Close RegisterActivity and go back to LoginActivity
+                        // Sign out immediately - user must verify email before logging in
+                        // This applies whether they came from the normal register screen
+                        // or from the profile dialog
+                        mAuth.signOut();
+
+                        // Show a dialog that explains they need to verify their email
+                        // We use a dialog instead of just a Toast so the message is very clear
+                        new AlertDialog.Builder(this)
+                                .setTitle("Verify Your Email !")
+                                .setMessage("A verification email has been sent to:\n" + email +
+                                        "\n\nPlease check your inbox and tap the verification link before logging in.\n\nOnce verified, open the app and log in normally!")
+                                .setPositiveButton("Got it!", (dialog, which) -> {
+                                    // Go back to LoginActivity
+                                    // Clear the back stack so user can't press back to register again
+                                    Intent intent = new Intent(this, LoginActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
+                                    finish();
+                                })
+                                .setCancelable(false) // User must read this message
+                                .show();
+
                     } else {
-                        Toast.makeText(this, "A Firebase error occurred, please try again later", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this,
+                                "A Firebase error occurred, please try again later",
+                                Toast.LENGTH_LONG).show();
                     }
                 });
     }

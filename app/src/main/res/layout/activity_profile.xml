@@ -49,14 +49,12 @@
             android:gravity="center_horizontal">
 
             <!-- Profile picture with golden frame -->
-            <!-- FrameLayout stacks the camera icon on top of the profile picture -->
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="8dp">
 
-                <!-- Profile picture - circular with gold border -->
                 <ImageView
                     android:id="@+id/imgProfile"
                     android:layout_width="120dp"
@@ -65,7 +63,7 @@
                     android:background="@drawable/circle_gold_border"
                     android:padding="3dp" />
 
-                <!-- Camera icon - tapping opens image picker to change photo -->
+                <!-- Camera icon - tapping opens image picker -->
                 <TextView
                     android:id="@+id/tvChangePhoto"
                     android:layout_width="36dp"
@@ -78,7 +76,7 @@
 
             </FrameLayout>
 
-            <!-- User name with edit pencil button -->
+            <!-- Name with edit button -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -86,7 +84,6 @@
                 android:gravity="center_vertical"
                 android:layout_marginTop="8dp">
 
-                <!-- Full name loaded from Firestore -->
                 <TextView
                     android:id="@+id/tvName"
                     android:layout_width="wrap_content"
@@ -96,7 +93,6 @@
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
-                <!-- Tapping this opens the edit name dialog -->
                 <TextView
                     android:id="@+id/tvEditName"
                     android:layout_width="wrap_content"
@@ -107,7 +103,7 @@
 
             </LinearLayout>
 
-            <!-- Email - view only, cannot be changed -->
+            <!-- Email - view only -->
             <TextView
                 android:id="@+id/tvEmail"
                 android:layout_width="wrap_content"
@@ -117,7 +113,7 @@
                 android:textSize="14sp"
                 android:layout_marginTop="4dp" />
 
-            <!-- Title badge - updates automatically based on total words learned -->
+            <!-- Title badge -->
             <TextView
                 android:id="@+id/tvTitle2"
                 android:layout_width="wrap_content"
@@ -145,7 +141,6 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Card title -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -155,13 +150,12 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Total words learned row -->
+                    <!-- Total words learned -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="12dp">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -169,8 +163,6 @@
                             android:textColor="#B0BEC5"
                             android:textSize="14sp"
                             android:layout_weight="1" />
-
-                        <!-- Updated in real time by loadTotalWordsLearned() -->
                         <TextView
                             android:id="@+id/tvTotalWords"
                             android:layout_width="wrap_content"
@@ -179,16 +171,14 @@
                             android:textColor="#FFD700"
                             android:textSize="16sp"
                             android:textStyle="bold" />
-
                     </LinearLayout>
 
-                    <!-- Day streak row -->
+                    <!-- Day streak -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="12dp">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -196,8 +186,6 @@
                             android:textColor="#B0BEC5"
                             android:textSize="14sp"
                             android:layout_weight="1" />
-
-                        <!-- Updated by updateStreak() -->
                         <TextView
                             android:id="@+id/tvStreak"
                             android:layout_width="wrap_content"
@@ -206,7 +194,6 @@
                             android:textColor="#FFD700"
                             android:textSize="16sp"
                             android:textStyle="bold" />
-
                     </LinearLayout>
 
                     <!-- Overall progress label -->
@@ -218,7 +205,7 @@
                         android:textSize="14sp"
                         android:layout_marginBottom="8dp" />
 
-                    <!-- Progress bar - fills based on learned/total words ratio -->
+                    <!-- Progress bar -->
                     <ProgressBar
                         android:id="@+id/progressOverall"
                         style="?android:attr/progressBarStyleHorizontal"
@@ -228,7 +215,7 @@
                         android:progressBackgroundTint="#283593"
                         android:max="100" />
 
-                    <!-- Progress percentage shown to the right of the bar -->
+                    <!-- Progress percentage -->
                     <TextView
                         android:id="@+id/tvProgressPercent"
                         android:layout_width="match_parent"
@@ -244,8 +231,6 @@
             </androidx.cardview.widget.CardView>
 
             <!-- ===== GAME STATS CARD ===== -->
-            <!-- Shows best scores and times for Trivia and Word Search -->
-            <!-- Loaded in real time by loadGameStats() in ProfileActivity -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -260,7 +245,6 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Card title -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -270,121 +254,206 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Trivia best score row -->
+                    <!-- Trivia section -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🧠 Trivia"
+                        android:textColor="#7986CB"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Trivia best score -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
+                        android:layout_marginBottom="6dp">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🧠 Trivia best score"
+                            android:text="Best score"
                             android:textColor="#B0BEC5"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:layout_weight="1" />
-
-                        <!-- Shows "-" until user plays Trivia for the first time -->
                         <TextView
                             android:id="@+id/tvTriviaBestScore"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="-"
                             android:textColor="#FFD700"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
-
                     </LinearLayout>
 
-                    <!-- Trivia best time row -->
+                    <!-- Trivia best time -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="12dp">
-
+                        android:layout_marginBottom="16dp">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⏱️ Trivia best time"
+                            android:text="Best time"
                             android:textColor="#B0BEC5"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:layout_weight="1" />
-
-                        <!-- Shows "-" until user plays Trivia for the first time -->
                         <TextView
                             android:id="@+id/tvTriviaBestTime"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="-"
                             android:textColor="#FFD700"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
-
-
-
                     </LinearLayout>
-                    <!-- Speed Trivia best score row -->
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#283593"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Speed Trivia section -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ Speed Trivia"
+                        android:textColor="#7986CB"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Speed Trivia best score -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="4dp">
-
+                        android:layout_marginBottom="16dp">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⚡ Speed Trivia best score"
+                            android:text="Best score"
                             android:textColor="#B0BEC5"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:layout_weight="1" />
-
-                        <!-- Shows "-" until user plays Speed Trivia for the first time -->
                         <TextView
                             android:id="@+id/tvSpeedTriviaBestScore"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="-"
                             android:textColor="#FFD700"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
-
                     </LinearLayout>
 
-                    <!-- Divider line between Trivia and Word Search sections -->
+                    <!-- Divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="#283593"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="16dp" />
 
-                    <!-- Word Search best time row -->
+                    <!-- Word Search section -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔍 Word Search"
+                        android:textColor="#7986CB"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Word Search best time -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🔍 Word Search best time"
+                            android:text="Best time"
                             android:textColor="#B0BEC5"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:layout_weight="1" />
-                        <!-- Shows "-" until user plays Word Search for the first time -->
                         <TextView
                             android:id="@+id/tvWordSearchBestTime"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="-"
                             android:textColor="#FFD700"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
-
                     </LinearLayout>
-                    <!-- Button to open the full game history screen -->
-                    <!-- Only visible for logged in users - guests never reach this code -->
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#283593"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Word Match section -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🖼️ Word Match"
+                        android:textColor="#7986CB"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Word Match best time -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="6dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Best time (win)"
+                            android:textColor="#B0BEC5"
+                            android:textSize="13sp"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/tvWordMatchBestTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="#FFD700"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Word Match best lives -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Most lives remaining"
+                            android:textColor="#B0BEC5"
+                            android:textSize="13sp"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/tvWordMatchBestLives"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="#FFD700"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- View history button -->
                     <Button
                         android:id="@+id/btnViewHistory"
                         android:layout_width="match_parent"
@@ -393,14 +462,13 @@
                         android:textColor="#1A237E"
                         android:backgroundTint="#FFD700"
                         android:textStyle="bold"
-                        android:layout_marginTop="16dp" />
+                        android:layout_marginTop="8dp" />
 
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
 
             <!-- ===== TITLE LEVELS CARD ===== -->
-            <!-- Shows the user what title they can earn and how many words are needed -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -416,7 +484,6 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Card title -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -426,7 +493,6 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Each row shows a title and how many words are needed to earn it -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -434,7 +500,6 @@
                         android:textColor="#B0BEC5"
                         android:textSize="13sp"
                         android:layout_marginBottom="6dp" />
-
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -442,7 +507,6 @@
                         android:textColor="#B0BEC5"
                         android:textSize="13sp"
                         android:layout_marginBottom="6dp" />
-
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -450,7 +514,6 @@
                         android:textColor="#B0BEC5"
                         android:textSize="13sp"
                         android:layout_marginBottom="6dp" />
-
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -458,7 +521,6 @@
                         android:textColor="#B0BEC5"
                         android:textSize="13sp"
                         android:layout_marginBottom="6dp" />
-
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

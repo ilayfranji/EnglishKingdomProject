@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Game history screen - shows all past Trivia and Word Search games -->
+<!-- Game history screen - shows all past games separated by type -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -34,7 +34,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Loading text shown while fetching history from Firestore -->
+    <!-- Loading text shown while fetching from Firestore -->
     <TextView
         android:id="@+id/tvLoading"
         android:layout_width="wrap_content"
@@ -48,33 +48,47 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Scrollable content with both Trivia and Word Search history -->
+    <!-- Scrollable content - hidden until data is loaded -->
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:padding="16dp"
         android:visibility="gone"
-        android:id="@+id/scrollView"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <!-- Trivia section header -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- ===== CLASSIC TRIVIA ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🧠 Trivia Games"
-                android:textColor="#FFD700"
-                android:textSize="18sp"
-                android:textStyle="bold"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:layout_marginBottom="12dp"
-                android:layout_marginTop="8dp" />
+                android:layout_marginTop="8dp">
 
-            <!-- Trivia games will be added here programmatically -->
+                <!-- Colored left accent bar -->
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="24dp"
+                    android:background="#FFD700"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🧠 Classic Trivia"
+                    android:textColor="#FFD700"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/triviaContainer"
                 android:layout_width="match_parent"
@@ -82,17 +96,30 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="24dp" />
 
-            <!-- Speed Trivia section header -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- ===== SPEED TRIVIA ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="⚡ Speed Trivia Games"
-                android:textColor="#FFD700"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
 
-            <!-- Speed Trivia games added programmatically -->
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="24dp"
+                    android:background="#FFD700"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Speed Trivia"
+                    android:textColor="#FFD700"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/speedTriviaContainer"
                 android:layout_width="match_parent"
@@ -100,17 +127,30 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="24dp" />
 
-            <!-- Word Search section header -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- ===== WORD SEARCH ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🔍 Word Search Games"
-                android:textColor="#FFD700"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
 
-            <!-- Word Search games will be added here programmatically -->
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="24dp"
+                    android:background="#FFD700"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔍 Word Search"
+                    android:textColor="#FFD700"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/wordSearchContainer"
                 android:layout_width="match_parent"
@@ -118,24 +158,36 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="24dp" />
 
-            <!-- Word Match section header -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- ===== WORD MATCH ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🖼️ Word Match Games"
-                android:textColor="#FFD700"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
 
-            <!-- Word Match games added programmatically -->
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="24dp"
+                    android:background="#FFD700"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🖼️ Word Match"
+                    android:textColor="#FFD700"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/wordMatchContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginBottom="24dp" />
-
 
         </LinearLayout>
 

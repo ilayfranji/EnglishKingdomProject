@@ -589,25 +589,69 @@ public class WordMatchActivity extends AppCompatActivity {
     // ==================== SAVE GAME HISTORY ====================
 
     private void saveGameHistory(boolean won) {
-        // Save this game to Firestore so it appears in the history screen
-        // Only save for logged in users - guests have no history
         if (mAuth.getCurrentUser() == null) return;
 
         String userId = mAuth.getCurrentUser().getUid();
 
         java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();
-        historyEntry.put("type", "WORDMATCH"); // So history screen knows which game this is
-        historyEntry.put("date", gameStartDate); // e.g. "28/03/2026"
-        historyEntry.put("time", gameStartTime); // e.g. "17:45"
-        historyEntry.put("result", won ? "Won 🎉" : "Lost 💔"); // Won or lost
-        historyEntry.put("stage", "Stage " + currentStage + "/3"); // How far they got
-        historyEntry.put("livesLeft", lives + "/" + MAX_LIVES); // Lives remaining
-        historyEntry.put("duration", formatTime(elapsedTime)); // How long the game took
-        historyEntry.put("timestamp", System.currentTimeMillis()); // For sorting by date
+        historyEntry.put("type", "WORDMATCH");
+        historyEntry.put("date", gameStartDate);
+        historyEntry.put("time", gameStartTime);
+        historyEntry.put("result", won ? "Won 🎉" : "Lost 💔");
+        historyEntry.put("stage", "Stage " + currentStage + "/3");
+        historyEntry.put("livesLeft", lives + "/" + MAX_LIVES);
+        historyEntry.put("duration", formatTime(elapsedTime));
+        historyEntry.put("timestamp", System.currentTimeMillis());
 
         db.collection("users").document(userId)
                 .collection("gameHistory")
-                .add(historyEntry); // Silent save - no toast needed
+                .add(historyEntry);
+
+        // Only save best stats if the user won
+        // Best time = fastest win, best lives = most lives remaining on a win
+        if (won) {
+            saveBestWordMatchStats(userId);
+        }
+    }
+
+    private void saveBestWordMatchStats(String userId) {
+        // Reads current best stats and only updates if this game was better
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(document -> {
+                    // Default best time to max value so any real time is better
+                    long currentBestTime = Long.MAX_VALUE;
+                    if (document.exists() && document.getLong("wordMatchBestTimeMs") != null) {
+                        currentBestTime = document.getLong("wordMatchBestTimeMs");
+                    }
+
+                    // Default best lives to 0 so any real lives count is better
+                    long currentBestLives = 0;
+                    if (document.exists() && document.getLong("wordMatchBestLives") != null) {
+                        currentBestLives = document.getLong("wordMatchBestLives");
+                    }
+
+                    java.util.HashMap<String, Object> updates = new java.util.HashMap<>();
+                    boolean shouldUpdate = false;
+
+                    // Update best time if this game was faster
+                    if (elapsedTime < currentBestTime) {
+                        updates.put("wordMatchBestTimeMs", elapsedTime); // Raw ms for comparison
+                        updates.put("wordMatchBestTime", formatTime(elapsedTime)); // Formatted for display
+                        shouldUpdate = true;
+                    }
+
+                    // Update best lives if this game had more lives remaining
+                    if (lives > currentBestLives) {
+                        updates.put("wordMatchBestLives", (long) lives);
+                        shouldUpdate = true;
+                    }
+
+                    if (shouldUpdate) {
+                        db.collection("users").document(userId).update(updates)
+                                .addOnSuccessListener(v ->
+                                        Toast.makeText(this, "New best! 🏆", Toast.LENGTH_SHORT).show());
+                    }
+                });
     }
 
     // ==================== RESET GAME ====================

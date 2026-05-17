@@ -1,36 +1,36 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.content.Intent; // Used to open GameHistoryActivity and RegisterActivity
+import android.net.Uri; // Used to store the selected profile picture URI
+import android.os.Bundle; // Used when creating the activity
+import android.view.View; // Used for the edit name dialog view
+import android.widget.EditText; // Used for the edit name dialog fields
+import android.widget.ImageView; // Used for the profile picture
+import android.widget.ProgressBar; // Used for the overall progress bar
+import android.widget.TextView; // Used for all text views
+import android.widget.Toast; // Used to show short messages
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher; // Used to launch gallery and camera
+import androidx.activity.result.contract.ActivityResultContracts; // Provides gallery and camera contracts
+import androidx.appcompat.app.AlertDialog; // Used for the guest dialog and edit name dialog
+import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
 
-import com.bumptech.glide.Glide;
-import com.cloudinary.android.MediaManager;
-import com.cloudinary.android.callback.ErrorInfo;
-import com.cloudinary.android.callback.UploadCallback;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper;
-import com.ilay.englishkingdom.R;
+import com.bumptech.glide.Glide; // Used to load the profile picture from Cloudinary
+import com.cloudinary.android.MediaManager; // Used to upload the profile picture
+import com.cloudinary.android.callback.ErrorInfo; // Used to get upload error details
+import com.cloudinary.android.callback.UploadCallback; // Used to listen for upload result
+import com.google.firebase.auth.FirebaseAuth; // Used to get the current user
+import com.google.firebase.firestore.FirebaseFirestore; // Used to read and write user data
+import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single Firestore document
+import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper; // Handles camera/gallery/permissions
+import com.ilay.englishkingdom.R; // Used to reference XML resources
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.text.SimpleDateFormat; // Used to format dates for streak calculation
+import java.util.Calendar; // Used to calculate yesterday's date
+import java.util.Date; // Used to get today's date
+import java.util.List; // Used for the learnedWords list
+import java.util.Locale; // Used for date formatting
+import java.util.Map; // Used to read Cloudinary upload result
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -42,22 +42,24 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvName; // Full name
     private TextView tvEditName; // Edit name pencil button
     private TextView tvEmail; // Email - view only
-    private TextView tvTitle2; // Title badge (Apprentice, Knight etc.)
-    private TextView tvTotalWords; // Total words learned number
+    private TextView tvTitle2; // Title badge
+    private TextView tvTotalWords; // Total words learned
     private TextView tvStreak; // Streak counter
     private ProgressBar progressOverall; // Overall progress bar
-    private TextView tvProgressPercent; // Progress percentage text
-    private TextView tvTriviaBestScore; // Trivia best score
-    private TextView tvTriviaBestTime; // Trivia best time
+    private TextView tvProgressPercent; // Progress percentage
+    private TextView tvTriviaBestScore; // Classic Trivia best score
+    private TextView tvTriviaBestTime; // Classic Trivia best time
     private TextView tvSpeedTriviaBestScore; // Speed Trivia best score
     private TextView tvWordSearchBestTime; // Word Search best time
-    private TextView btnViewHistory; // Button to open the game history screen
+    private TextView tvWordMatchBestTime; // Word Match best time (won games only)
+    private TextView tvWordMatchBestLives; // Word Match most lives remaining on a win
+    private TextView btnViewHistory; // Button to open game history screen
 
     // ==================== FIREBASE ====================
 
     private FirebaseFirestore db; // Our database connection
     private FirebaseAuth mAuth; // Our auth connection
-    private String userId; // Current user's ID - saved so we don't fetch it every time
+    private String userId; // Current user's ID
 
     // ==================== IMAGE PICKER ====================
 
@@ -65,7 +67,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     // ==================== ACTIVITY RESULT LAUNCHERS ====================
 
-    // These MUST live here in the Activity - passed into ImagePickerHelper
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> { if (imagePicker != null) imagePicker.onGalleryResult(uri); });
@@ -87,26 +88,29 @@ public class ProfileActivity extends AppCompatActivity {
         boolean isGuest = mAuth.getCurrentUser() == null;
 
         if (isGuest) {
-            // Show a non-dismissible dialog telling the guest they can't access the profile
-            // The guest has two options: go to Register or exit back to the previous screen
-            // setCancelable(false) means tapping outside or pressing back does nothing
+            // Guest user - show dialog with Register and Exit options
+            // We pass a flag to RegisterActivity so it knows it was opened from here
+            // and hides the "Continue as Guest" button which doesn't make sense in this flow
             new AlertDialog.Builder(this)
                     .setTitle("Profile")
                     .setMessage("You are logged in as a guest.\n\nGuests cannot save progress, earn titles, track streaks, or store game stats.\n\nRegister a free account to access your Kingdom Card!")
                     .setPositiveButton("Register", (dialog, which) -> {
-                        // Take the guest directly to the registration screen
-                        startActivity(new Intent(this, RegisterActivity.class));
-                        finish(); // Close profile so they don't come back to it after registering
+                        // Open RegisterActivity with a flag so it hides the guest button
+                        // and knows to send the user to HomeActivity after email verification
+                        Intent intent = new Intent(this, RegisterActivity.class);
+                        intent.putExtra("fromProfileDialog", true); // This flag hides the guest button
+                        startActivity(intent);
+                        finish(); // Close profile so user doesn't return here after registering
                     })
-                    .setNegativeButton("Exit", (dialog, which) -> finish()) // Just go back
-                    .setCancelable(false) // Cannot be dismissed by tapping outside
+                    .setNegativeButton("Exit", (dialog, which) -> finish())
+                    .setCancelable(false)
                     .show();
-            return; // Don't load anything else for guests
+            return;
         }
 
-        userId = mAuth.getCurrentUser().getUid(); // Save user ID for all Firestore calls
+        userId = mAuth.getCurrentUser().getUid();
 
-        // Connect each variable to its XML view
+        // Connect all variables to their XML views
         tvBack = findViewById(R.id.tvBack);
         imgProfile = findViewById(R.id.imgProfile);
         tvChangePhoto = findViewById(R.id.tvChangePhoto);
@@ -120,31 +124,31 @@ public class ProfileActivity extends AppCompatActivity {
         tvProgressPercent = findViewById(R.id.tvProgressPercent);
         tvTriviaBestScore = findViewById(R.id.tvTriviaBestScore);
         tvTriviaBestTime = findViewById(R.id.tvTriviaBestTime);
-        tvWordSearchBestTime = findViewById(R.id.tvWordSearchBestTime);
-        btnViewHistory = findViewById(R.id.btnViewHistory);
         tvSpeedTriviaBestScore = findViewById(R.id.tvSpeedTriviaBestScore);
+        tvWordSearchBestTime = findViewById(R.id.tvWordSearchBestTime);
+        tvWordMatchBestTime = findViewById(R.id.tvWordMatchBestTime);
+        tvWordMatchBestLives = findViewById(R.id.tvWordMatchBestLives);
+        btnViewHistory = findViewById(R.id.btnViewHistory);
 
-
-        // Set up ImagePickerHelper - when photo is picked upload it and update profile
+        // Set up ImagePickerHelper
         imagePicker = new ImagePickerHelper(this,
-                (uri, fromGallery) -> uploadProfilePicture(uri), // Upload when photo is picked
+                (uri, fromGallery) -> uploadProfilePicture(uri),
                 galleryLauncher,
                 cameraLauncher);
 
-        // Load all user data
+        // Load all data
         loadUserData();
-        loadTotalWordsLearned(); // Real time listener - updates automatically
+        loadTotalWordsLearned();
         updateStreak();
-        loadGameStats(); // Load trivia and word search best stats
-
+        loadGameStats();
 
         // Click listeners
         tvBack.setOnClickListener(v -> finish());
-        tvChangePhoto.setOnClickListener(v -> imagePicker.show()); // Open camera/gallery picker
-        imgProfile.setOnClickListener(v -> imagePicker.show()); // Tapping photo also opens picker
-        tvEditName.setOnClickListener(v -> showEditNameDialog()); // Open edit name dialog
-        btnViewHistory.setOnClickListener(v -> startActivity(new Intent(this, GameHistoryActivity.class)));// Open GameHistoryActivity when the button is tapped
-
+        tvChangePhoto.setOnClickListener(v -> imagePicker.show());
+        imgProfile.setOnClickListener(v -> imagePicker.show());
+        tvEditName.setOnClickListener(v -> showEditNameDialog());
+        btnViewHistory.setOnClickListener(v ->
+                startActivity(new Intent(this, GameHistoryActivity.class)));
     }
 
     // ==================== PERMISSION RESULT ====================
@@ -158,7 +162,6 @@ public class ProfileActivity extends AppCompatActivity {
     // ==================== LOAD USER DATA ====================
 
     private void loadUserData() {
-        // Fetch the user's profile data from Firestore once - name and email don't change often
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) return;
@@ -168,15 +171,11 @@ public class ProfileActivity extends AppCompatActivity {
                     String email = document.getString("email");
                     String profilePicture = document.getString("profilePicture");
 
-                    // Set name
                     if (firstName != null && lastName != null) {
                         tvName.setText(firstName + " " + lastName);
                     }
-
-                    // Set email
                     if (email != null) tvEmail.setText(email);
 
-                    // Load profile picture - circleCrop() makes it circular
                     if (profilePicture != null && !profilePicture.isEmpty()) {
                         Glide.with(this).load(profilePicture).circleCrop().into(imgProfile);
                     } else {
@@ -194,7 +193,6 @@ public class ProfileActivity extends AppCompatActivity {
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) return;
 
-                    // Count total learned words across all categories
                     int totalLearned = 0;
                     for (QueryDocumentSnapshot doc : snapshots) {
                         if (doc.get("learnedWords") != null) {
@@ -203,30 +201,19 @@ public class ProfileActivity extends AppCompatActivity {
                         }
                     }
 
-                    // Save in final variable so we can use it inside the lambda below
-                    // Java requires variables used inside lambdas to be final
                     final int finalTotalLearned = totalLearned;
-
-                    // Update total words text and title immediately
                     tvTotalWords.setText(String.valueOf(finalTotalLearned));
                     updateTitle(finalTotalLearned);
 
-                    // Fetch real total word count directly from categories collection
-                    // wordCount in each category is always accurate because we update it
-                    // every time a word is added or deleted
                     db.collection("categories").get()
                             .addOnSuccessListener(categories -> {
                                 int totalAvailable = 0;
-
                                 for (QueryDocumentSnapshot categoryDoc : categories) {
                                     if (categoryDoc.getLong("wordCount") != null) {
                                         totalAvailable += categoryDoc.getLong("wordCount").intValue();
                                     }
                                 }
 
-
-                                // Calculate percentage
-                                // formula: (learned / total) * 100
                                 if (totalAvailable > 0) {
                                     int percent = (finalTotalLearned * 100) / totalAvailable;
                                     progressOverall.setMax(100);
@@ -243,70 +230,49 @@ public class ProfileActivity extends AppCompatActivity {
     // ==================== UPDATE TITLE ====================
 
     private void updateTitle(int totalWords) {
-        // Set the title badge based on total words learned
-        // Each range gives a different title and emoji
         String title;
-        if (totalWords <= 20) {
-            title = "Apprentice"; // Just starting out - 0 to 20 words
-        } else if (totalWords <= 50) {
-            title = "Knight"; // Getting somewhere - 21 to 50 words
-        } else if (totalWords <= 100) {
-            title = "Warrior"; // Halfway there - 51 to 100 words
-        } else if (totalWords <= 200) {
-            title = "Master"; // Almost at the top - 101 to 200 words
-        } else {
-            title = "Legend"; // Mastered it all - 200+ words
-        }
+        if (totalWords <= 20) title = "Apprentice";
+        else if (totalWords <= 50) title = "Knight";
+        else if (totalWords <= 100) title = "Warrior";
+        else if (totalWords <= 200) title = "Master";
+        else title = "Legend";
         tvTitle2.setText(title);
     }
 
     // ==================== UPDATE STREAK ====================
 
     private void updateStreak() {
-        // Streak = how many days in a row the user opened the app
-        // We save lastOpenDate and currentStreak in the user's Firestore document
-        // Every time this screen opens we check if the user already opened today
-
-        // Get today's date as a string e.g. "2026-03-16"
-        // SimpleDateFormat formats a Date object into a readable string
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String today = sdf.format(new Date()); // Today's date
+        String today = sdf.format(new Date());
 
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) return;
 
-                    // Read saved streak data from Firestore
                     String lastOpenDate = document.getString("lastOpenDate");
                     long currentStreak = document.getLong("currentStreak") != null
                             ? document.getLong("currentStreak") : 0;
 
                     if (lastOpenDate == null) {
-                        // First time ever opening - start streak at 1
                         saveStreak(today, 1);
                         tvStreak.setText("1 day");
                         return;
                     }
 
                     if (lastOpenDate.equals(today)) {
-                        // Already opened today - just show current streak, don't change it
                         tvStreak.setText(currentStreak + " days");
                         return;
                     }
 
-                    // Check if last open was yesterday
-                    // Calendar lets us do date math - subtracting 1 day gives us yesterday
                     Calendar calendar = Calendar.getInstance();
-                    calendar.add(Calendar.DAY_OF_YEAR, -1); // Go back 1 day from today
-                    String yesterday = sdf.format(calendar.getTime()); // Format as string
+                    calendar.add(Calendar.DAY_OF_YEAR, -1);
+                    String yesterday = sdf.format(calendar.getTime());
 
                     if (lastOpenDate.equals(yesterday)) {
-                        // User opened yesterday - streak continues! Add 1 day
                         long newStreak = currentStreak + 1;
                         saveStreak(today, newStreak);
                         tvStreak.setText(newStreak + " days");
                     } else {
-                        // User missed at least one day - streak resets back to 1
                         saveStreak(today, 1);
                         tvStreak.setText("1 day");
                     }
@@ -314,8 +280,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void saveStreak(String date, long streak) {
-        // Save the updated streak and last open date to Firestore
-        // update() only changes these 2 fields - firstName, email etc. stay the same
         db.collection("users").document(userId)
                 .update("lastOpenDate", date, "currentStreak", streak);
     }
@@ -323,20 +287,18 @@ public class ProfileActivity extends AppCompatActivity {
     // ==================== EDIT NAME DIALOG ====================
 
     private void showEditNameDialog() {
-        // Shows a popup with two text fields to change first and last name
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_name, null);
         EditText etFirstName = dialogView.findViewById(R.id.etFirstName);
         EditText etLastName = dialogView.findViewById(R.id.etLastName);
 
-        // Pre-fill with current name by splitting "John Smith" into ["John", "Smith"]
         String[] nameParts = tvName.getText().toString().split(" ");
-        if (nameParts.length >= 1) etFirstName.setText(nameParts[0]); // First word = first name
-        if (nameParts.length >= 2) etLastName.setText(nameParts[1]); // Second word = last name
+        if (nameParts.length >= 1) etFirstName.setText(nameParts[0]);
+        if (nameParts.length >= 2) etLastName.setText(nameParts[1]);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Edit Name")
                 .setView(dialogView)
-                .setPositiveButton("Save", null) // null = handle click manually
+                .setPositiveButton("Save", null)
                 .setNegativeButton("Cancel", null)
                 .create();
 
@@ -347,23 +309,20 @@ public class ProfileActivity extends AppCompatActivity {
             String lastName = etLastName.getText().toString().trim();
             boolean hasError = false;
 
-            // Validate first name - letters only, must start with capital
             if (firstName.isEmpty()) { etFirstName.setError("Required"); hasError = true; }
             else if (!firstName.matches("[a-zA-Z]+")) { etFirstName.setError("Letters only"); hasError = true; }
             else if (!Character.isUpperCase(firstName.charAt(0))) { etFirstName.setError("Must start with capital"); hasError = true; }
 
-            // Validate last name - same rules
             if (lastName.isEmpty()) { etLastName.setError("Required"); hasError = true; }
             else if (!lastName.matches("[a-zA-Z]+")) { etLastName.setError("Letters only"); hasError = true; }
             else if (!Character.isUpperCase(lastName.charAt(0))) { etLastName.setError("Must start with capital"); hasError = true; }
 
-            if (hasError) return; // Stop - keep dialog open so user can fix errors
+            if (hasError) return;
 
-            // Save updated name to Firestore
             db.collection("users").document(userId)
                     .update("firstName", firstName, "lastName", lastName)
                     .addOnSuccessListener(aVoid -> {
-                        tvName.setText(firstName + " " + lastName); // Update name on screen
+                        tvName.setText(firstName + " " + lastName);
                         Toast.makeText(this, "Name updated!", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     })
@@ -378,7 +337,7 @@ public class ProfileActivity extends AppCompatActivity {
         Toast.makeText(this, "Uploading photo...", Toast.LENGTH_SHORT).show();
 
         MediaManager.get().upload(uri)
-                .option("upload_preset", "EnglishKingdom") // Our Cloudinary unsigned preset
+                .option("upload_preset", "EnglishKingdom")
                 .callback(new UploadCallback() {
                     @Override public void onStart(String id) {}
                     @Override public void onProgress(String id, long bytes, long total) {}
@@ -386,12 +345,10 @@ public class ProfileActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess(String id, Map result) {
-                        // Upload done - save new URL to Firestore and show on screen
                         String url = (String) result.get("secure_url");
                         db.collection("users").document(userId)
                                 .update("profilePicture", url)
                                 .addOnSuccessListener(aVoid -> {
-                                    // Load new photo into the ImageView as a circle
                                     Glide.with(ProfileActivity.this)
                                             .load(url).circleCrop().into(imgProfile);
                                     Toast.makeText(ProfileActivity.this,
@@ -407,39 +364,33 @@ public class ProfileActivity extends AppCompatActivity {
                 }).dispatch();
     }
 
+    // ==================== LOAD GAME STATS ====================
+
     private void loadGameStats() {
-        // Load game stats from Firestore in real time
-        // So if user plays a game and comes back to profile, stats update automatically
+        // Real time listener - updates immediately when user plays a game and comes back
         db.collection("users").document(userId)
                 .addSnapshotListener((document, error) -> {
                     if (error != null || document == null || !document.exists()) return;
 
-                    // Read trivia best score - show "-" if not played yet
-                    if (document.getLong("triviaBestScore") != null) {
-                        tvTriviaBestScore.setText(document.getLong("triviaBestScore") + "/10");
-                    } else {
-                        tvTriviaBestScore.setText("-"); // Never played trivia yet
-                    }
+                    // Classic Trivia
+                    tvTriviaBestScore.setText(document.getLong("triviaBestScore") != null
+                            ? document.getLong("triviaBestScore") + "/10" : "-");
+                    tvTriviaBestTime.setText(document.getString("triviaBestTimeFormatted") != null
+                            ? document.getString("triviaBestTimeFormatted") : "-");
 
-                    // Read trivia best time - show "-" if not played yet
-                    if (document.getString("triviaBestTimeFormatted") != null) {
-                        tvTriviaBestTime.setText(document.getString("triviaBestTimeFormatted"));
-                    } else {
-                        tvTriviaBestTime.setText("-"); // Never played trivia yet
-                    }
+                    // Speed Trivia
+                    tvSpeedTriviaBestScore.setText(document.getLong("speedTriviaBestScore") != null
+                            ? String.valueOf(document.getLong("speedTriviaBestScore")) : "-");
 
-                    // Read word search best time - show "-" if not played yet
-                    if (document.getString("wordSearchBestTimeFormatted") != null) {
-                        tvWordSearchBestTime.setText(document.getString("wordSearchBestTimeFormatted"));
-                    } else {
-                        tvWordSearchBestTime.setText("-"); // Never played word search yet
-                    }
-                    // Read speed trivia best score - show "-" if not played yet
-                    if (document.getLong("speedTriviaBestScore") != null) {
-                        tvSpeedTriviaBestScore.setText(String.valueOf(document.getLong("speedTriviaBestScore")));
-                    } else {
-                        tvSpeedTriviaBestScore.setText("-"); // Never played speed trivia yet
-                    }
+                    // Word Search
+                    tvWordSearchBestTime.setText(document.getString("wordSearchBestTimeFormatted") != null
+                            ? document.getString("wordSearchBestTimeFormatted") : "-");
+
+                    // Word Match - best time on a winning game and most lives remaining
+                    tvWordMatchBestTime.setText(document.getString("wordMatchBestTime") != null
+                            ? document.getString("wordMatchBestTime") : "-");
+                    tvWordMatchBestLives.setText(document.getLong("wordMatchBestLives") != null
+                            ? document.getLong("wordMatchBestLives") + "/3" : "-");
                 });
     }
 }
