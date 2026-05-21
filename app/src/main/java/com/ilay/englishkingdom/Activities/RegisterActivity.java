@@ -106,22 +106,39 @@ public class RegisterActivity extends AppCompatActivity {
             }
         });
 
+        // Check if this screen was opened from the guest profile dialog
+// This flag controls two things:
+// 1. Whether the guest button is hidden
+// 2. Where the "Already have an account" link goes
+        boolean fromProfileDialog = getIntent().getBooleanExtra("fromProfileDialog", false);
+        if (fromProfileDialog) {
+            btnGuest.setVisibility(View.GONE); // Hide guest button - doesn't make sense here
+        }
+
         btnRegister.setOnClickListener(v -> registerUser()); // Validate and register
 
-        // Go back to LoginActivity when "Already have an account?" is tapped
-        tvLogin.setOnClickListener(v -> finish());
+        // "Already have an account? Login" click
+        // If this screen was opened from the profile dialog we need to go to LoginActivity
+        // because finish() would take them back to ProfileActivity which doesn't make sense
+        // If opened normally finish() is fine because LoginActivity is already behind us
+        tvLogin.setOnClickListener(v -> {
+            if (fromProfileDialog) {
+                // Opened from guest profile dialog - go to LoginActivity directly
+                // FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK clears the entire back stack
+                // so the user starts fresh at LoginActivity with nothing behind it
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            } else {
+                // Opened normally from LoginActivity - just go back
+                finish();
+            }
+        });
 
         // Show the same guest warning dialog that appears on the login screen
         // If user confirms they want to continue as guest, go straight to HomeActivity
         btnGuest.setOnClickListener(v -> showGuestWarning());
-
-        // Check if this screen was opened from the guest profile dialog
-        // If yes hide the guest button because it makes no sense to continue as guest
-        // from inside the registration flow that was triggered from the profile screen
-        boolean fromProfileDialog = getIntent().getBooleanExtra("fromProfileDialog", false);
-        if (fromProfileDialog) {
-            btnGuest.setVisibility(View.GONE); // Hide the guest button
-        }
     }
 
     @Override

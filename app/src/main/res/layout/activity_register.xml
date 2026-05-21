@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Registration screen - user fills in their details to create an account -->
-<!-- We wrap everything in a ScrollView so the screen is scrollable on small phones -->
+<!-- Wrapped in ScrollView so the screen is scrollable on small phones -->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#1A237E">
@@ -157,7 +156,7 @@
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp" />
 
-        <!-- Register button - gold color to stand out -->
+        <!-- Register button - gold, appears right after the input fields -->
         <Button
             android:id="@+id/btnRegister"
             android:layout_width="0dp"
@@ -174,7 +173,37 @@
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp" />
 
-        <!-- Already have an account - go back to login -->
+        <!-- Divider line between register button and guest button -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#283593"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            app:layout_constraintTop_toBottomOf="@id/btnRegister"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Guest button - appears below the divider, above the login link -->
+        <!-- Hidden when this screen is opened from the profile dialog -->
+        <Button
+            android:id="@+id/btnGuest"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Continue as Guest"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#283593"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp" />
+
+        <!-- Already have an account - this is the LAST element at the bottom -->
         <TextView
             android:id="@+id/tvLogin"
             android:layout_width="wrap_content"
@@ -182,27 +211,10 @@
             android:text="Already have an account? Login"
             android:textColor="#B0BEC5"
             android:textSize="14sp"
-            app:layout_constraintTop_toBottomOf="@id/btnRegister"
+            app:layout_constraintTop_toBottomOf="@id/btnGuest"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="16dp" />
-
-        <!-- Divider line between login link and guest button -->
-
-        <!-- Guest button - same warning as on the login screen -->
-        <Button
-            android:id="@+id/btnGuest"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginEnd="32dp"
-            android:backgroundTint="#283593"
-            android:text="Continue as Guest"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            tools:layout_editor_absoluteY="742dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
