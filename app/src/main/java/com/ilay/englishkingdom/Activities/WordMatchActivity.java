@@ -176,7 +176,7 @@ public class WordMatchActivity extends AppCompatActivity {
                     gameOver(false); // No lives left - game over
                 } else {
                     Toast.makeText(this, "Not quite! " + lives + " " +
-                            (lives == 1 ? "life" : "lives") + " left 💪", Toast.LENGTH_SHORT).show();
+                            (lives == 1 ? "life" : "lives") + " left", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -223,7 +223,7 @@ public class WordMatchActivity extends AppCompatActivity {
                     gameOver(false);
                 } else {
                     Toast.makeText(this, "Not quite! " + lives + " " +
-                            (lives == 1 ? "life" : "lives") + " left 💪", Toast.LENGTH_SHORT).show();
+                            (lives == 1 ? "life" : "lives") + " left", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -297,13 +297,13 @@ public class WordMatchActivity extends AppCompatActivity {
 
         if (won) {
             // User completed all 3 stages without running out of lives
-            title = "You Won! 🎉";
+            title = "You Won!";
             message = "Amazing! You matched all the words correctly!\n\n" +
                     "Your time: " + formatTime(elapsedTime) + "\n" +
                     "Lives remaining: " + lives + "/" + MAX_LIVES;
         } else {
             // User made 3 mistakes and ran out of lives
-            title = "Game Over! 💔";
+            title = "Game Over!";
             message = "You ran out of lives this time, but don't give up!\n\n" +
                     "You made it to stage " + currentStage + " out of 3.\n" +
                     "Your time: " + formatTime(elapsedTime) + "\n\n" +
@@ -597,7 +597,7 @@ public class WordMatchActivity extends AppCompatActivity {
         historyEntry.put("type", "WORDMATCH");
         historyEntry.put("date", gameStartDate);
         historyEntry.put("time", gameStartTime);
-        historyEntry.put("result", won ? "Won 🎉" : "Lost 💔");
+        historyEntry.put("result", won ? "Won" : "Lost");
         historyEntry.put("stage", "Stage " + currentStage + "/3");
         historyEntry.put("livesLeft", lives + "/" + MAX_LIVES);
         historyEntry.put("duration", formatTime(elapsedTime));
@@ -649,7 +649,7 @@ public class WordMatchActivity extends AppCompatActivity {
                     if (shouldUpdate) {
                         db.collection("users").document(userId).update(updates)
                                 .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best! 🏆", Toast.LENGTH_SHORT).show());
+                                        Toast.makeText(this, "New best!", Toast.LENGTH_SHORT).show());
                     }
                 });
     }

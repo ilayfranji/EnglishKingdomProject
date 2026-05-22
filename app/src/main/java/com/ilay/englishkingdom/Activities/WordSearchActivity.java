@@ -99,10 +99,7 @@ public class WordSearchActivity extends AppCompatActivity
         gridView = findViewById(R.id.wordSearchGrid);
         wordListContainer = findViewById(R.id.wordListContainer);
 
-        tvBack.setOnClickListener(v -> {
-            stopTimer(); // Stop the timer when leaving so it doesn't keep running in background
-            finish();
-        });
+        tvBack.setOnClickListener(v -> showBackConfirmation());
 
         // Register this activity as the listener for when user selects letters
         gridView.setOnWordSelectedListener(this);
@@ -477,5 +474,30 @@ public class WordSearchActivity extends AppCompatActivity
         gridView.setVisibility(View.GONE);
         wordListContainer.removeAllViews();
         loadWords(); // Reload words and build a fresh grid
+    }
+
+    // ==================== BACK CONFIRMATION ====================
+
+    private void showBackConfirmation() {
+        // Pause the timer while the dialog is open
+        // so the user's time doesn't keep running while they decide
+        stopTimer();
+
+        new AlertDialog.Builder(this)
+                .setTitle("Leave Game?")
+                .setMessage("If you go back now your progress will be lost. Are you sure?")
+                .setPositiveButton("Leave", (dialog, which) -> {
+                    // User confirmed they want to leave - close the screen
+                    finish();
+                })
+                .setNegativeButton("Keep Playing", (dialog, which) -> {
+                    // User wants to keep playing - restart the timer from where it stopped
+                    // Adjusting startTime keeps elapsedTime accurate
+                    startTime = System.currentTimeMillis() - elapsedTime;
+                    timerRunning = true;
+                    timerHandler.post(timerRunnable);
+                })
+                .setCancelable(false)
+                .show();
     }
 }

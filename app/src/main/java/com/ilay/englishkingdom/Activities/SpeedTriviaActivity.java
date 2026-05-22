@@ -111,12 +111,7 @@ public class SpeedTriviaActivity extends AppCompatActivity {
         btnAnswer3 = findViewById(R.id.btnAnswer3);
         tvLoading = findViewById(R.id.tvLoading);
 
-        tvBack.setOnClickListener(v -> {
-            // Stop everything when leaving so nothing runs in the background
-            countdownHandler.removeCallbacks(countdownRunnable);
-            nextQuestionHandler.removeCallbacksAndMessages(null);
-            finish();
-        });
+        tvBack.setOnClickListener(v -> showBackConfirmation());
 
         loadWords(); // Load words from Firestore then start the game
     }
@@ -446,5 +441,32 @@ public class SpeedTriviaActivity extends AppCompatActivity {
         countdownHandler.postDelayed(countdownRunnable, 1000);
 
         showNextQuestion();
+    }
+
+    // ==================== BACK CONFIRMATION ====================
+
+    private void showBackConfirmation() {
+        // Stop both the countdown and the auto-advance handler while dialog is open
+        // so the game doesn't keep running while the user decides
+        countdownHandler.removeCallbacks(countdownRunnable);
+        nextQuestionHandler.removeCallbacksAndMessages(null);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Leave Game?")
+                .setMessage("If you go back now your progress will be lost. Are you sure?")
+                .setPositiveButton("Leave", (dialog, which) -> {
+                    // User confirmed - stop everything and close
+                    gameRunning = false;
+                    finish();
+                })
+                .setNegativeButton("Keep Playing", (dialog, which) -> {
+                    // User wants to stay - restart both handlers from where they stopped
+                    // We adjust startTime so the countdown continues from the correct second
+                    if (gameRunning) {
+                        countdownHandler.postDelayed(countdownRunnable, 1000);
+                    }
+                })
+                .setCancelable(false)
+                .show();
     }
 }

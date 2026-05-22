@@ -94,10 +94,7 @@ public class TriviaActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btnNext);
         tvLoading = findViewById(R.id.tvLoading);
 
-        tvBack.setOnClickListener(v -> {
-            stopTimer(); // Stop the timer when going back
-            finish();
-        });
+        tvBack.setOnClickListener(v -> showBackConfirmation());
 
         // Next button moves to the next question
         btnNext.setOnClickListener(v -> {
@@ -438,5 +435,30 @@ public class TriviaActivity extends AppCompatActivity {
         db.collection("users").document(userId)
                 .collection("gameHistory")
                 .add(historyEntry); // Silent save - no toast needed for history
+    }
+
+    // ==================== BACK CONFIRMATION ====================
+
+    private void showBackConfirmation() {
+        // Pause the timer while the dialog is open
+        // so the user's time doesn't keep running while they decide
+        stopTimer();
+
+        new AlertDialog.Builder(this)
+                .setTitle("Leave Game?")
+                .setMessage("If you go back now your progress will be lost. Are you sure?")
+                .setPositiveButton("Leave", (dialog, which) -> {
+                    // User confirmed they want to leave - close the screen
+                    finish();
+                })
+                .setNegativeButton("Keep Playing", (dialog, which) -> {
+                    // User wants to keep playing - restart the timer from where it stopped
+                    // We do this by adjusting startTime so elapsedTime stays correct
+                    startTime = System.currentTimeMillis() - elapsedTime;
+                    timerRunning = true;
+                    timerHandler.post(timerRunnable);
+                })
+                .setCancelable(false) // User must tap a button - can't dismiss by tapping outside
+                .show();
     }
 }
