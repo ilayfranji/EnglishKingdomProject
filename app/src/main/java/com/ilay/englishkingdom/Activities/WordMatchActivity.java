@@ -615,45 +615,68 @@ public class WordMatchActivity extends AppCompatActivity {
     }
 
     private void saveBestWordMatchStats(String userId) {
-        // Reads current best stats and only updates if this game was better
+        // Read current best stats from Firestore so we can compare
+        // We only update a field if this game was better than the previous best
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
-                    // Default best time to max value so any real time is better
+
+                    // ===== BEST STAGE =====
+                    // Read current best stage - default to 0 so any real stage is better
+                    long currentBestStage = 0;
+                    if (document.exists() && document.getLong("wordMatchBestStage") != null) {
+                        currentBestStage = document.getLong("wordMatchBestStage");
+                    }
+
+                    // ===== BEST TIME =====
+                    // Read current best time - default to max value so any real time is better
+                    // Lower time = faster = better
                     long currentBestTime = Long.MAX_VALUE;
                     if (document.exists() && document.getLong("wordMatchBestTimeMs") != null) {
                         currentBestTime = document.getLong("wordMatchBestTimeMs");
                     }
 
-                    // Default best lives to 0 so any real lives count is better
+                    // ===== BEST LIVES =====
+                    // Read current best lives remaining - default to 0 so any real count is better
+                    // More lives remaining = better performance
                     long currentBestLives = 0;
                     if (document.exists() && document.getLong("wordMatchBestLives") != null) {
                         currentBestLives = document.getLong("wordMatchBestLives");
                     }
 
+                    // Build the updates map with only the fields that improved
                     java.util.HashMap<String, Object> updates = new java.util.HashMap<>();
                     boolean shouldUpdate = false;
 
-                    // Update best time if this game was faster
-                    if (elapsedTime < currentBestTime) {
-                        updates.put("wordMatchBestTimeMs", elapsedTime); // Raw ms for comparison
-                        updates.put("wordMatchBestTime", formatTime(elapsedTime)); // Formatted for display
+                    // Update best stage if this game reached a higher stage
+                    // currentStage at win time is always 3 since winning means completing all 3
+                    // but we save it anyway in case we add more stages in the future
+                    if (currentStage > currentBestStage) {
+                        updates.put("wordMatchBestStage", (long) currentStage);
                         shouldUpdate = true;
                     }
 
-                    // Update best lives if this game had more lives remaining
+                    // Update best time if this game finished faster
+                    if (elapsedTime < currentBestTime) {
+                        updates.put("wordMatchBestTimeMs", elapsedTime); // Raw ms for future comparison
+                        updates.put("wordMatchBestTimeFormatted", formatTime(elapsedTime)); // e.g. "0:45:230" for display
+                        shouldUpdate = true;
+                    }
+
+                    // Update best lives if this game had more lives remaining at the end
                     if (lives > currentBestLives) {
                         updates.put("wordMatchBestLives", (long) lives);
                         shouldUpdate = true;
                     }
 
+                    // Only write to Firestore if at least one stat improved
+                    // This avoids unnecessary writes to the database
                     if (shouldUpdate) {
                         db.collection("users").document(userId).update(updates)
                                 .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best!", Toast.LENGTH_SHORT).show());
+                                        Toast.makeText(this, "New best! 🏆", Toast.LENGTH_SHORT).show());
                     }
                 });
     }
-
     // ==================== RESET GAME ====================
 
     private void resetGame() {

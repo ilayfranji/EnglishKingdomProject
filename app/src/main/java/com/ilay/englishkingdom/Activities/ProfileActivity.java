@@ -54,6 +54,8 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvWordMatchBestTime; // Word Match best time (won games only)
     private TextView tvWordMatchBestLives; // Word Match most lives remaining on a win
     private TextView btnViewHistory; // Button to open game history screen
+    // Add this with the other UI field declarations at the top
+    private TextView tvWordMatchBestStage; // Word Match best stage reached
 
     // ==================== FIREBASE ====================
 
@@ -129,6 +131,8 @@ public class ProfileActivity extends AppCompatActivity {
         tvWordMatchBestTime = findViewById(R.id.tvWordMatchBestTime);
         tvWordMatchBestLives = findViewById(R.id.tvWordMatchBestLives);
         btnViewHistory = findViewById(R.id.btnViewHistory);
+        tvWordMatchBestStage = findViewById(R.id.tvWordMatchBestStage);
+
 
         // Set up ImagePickerHelper
         imagePicker = new ImagePickerHelper(this,
@@ -386,11 +390,28 @@ public class ProfileActivity extends AppCompatActivity {
                     tvWordSearchBestTime.setText(document.getString("wordSearchBestTimeFormatted") != null
                             ? document.getString("wordSearchBestTimeFormatted") : "-");
 
-                    // Word Match - best time on a winning game and most lives remaining
-                    tvWordMatchBestTime.setText(document.getString("wordMatchBestTime") != null
-                            ? document.getString("wordMatchBestTime") : "-");
-                    tvWordMatchBestLives.setText(document.getLong("wordMatchBestLives") != null
-                            ? document.getLong("wordMatchBestLives") + "/3" : "-");
+                    // Word Match best stats - only saved on winning games
+                    // Best stage reached
+                    if (document.getLong("wordMatchBestStage") != null) {
+                        // Show e.g. "Stage 3/3"
+                        tvWordMatchBestStage.setText("Stage " + document.getLong("wordMatchBestStage") + "/3");
+                    } else {
+                        tvWordMatchBestStage.setText("-"); // Never won a word match game yet
+                    }
+
+                    // Best time on a winning game
+                    if (document.getString("wordMatchBestTimeFormatted") != null) {
+                        tvWordMatchBestTime.setText(document.getString("wordMatchBestTimeFormatted"));
+                    } else {
+                        tvWordMatchBestTime.setText("-");
+                    }
+
+                    // Most lives remaining on a winning game
+                    if (document.getLong("wordMatchBestLives") != null) {
+                        tvWordMatchBestLives.setText(document.getLong("wordMatchBestLives") + "/3");
+                    } else {
+                        tvWordMatchBestLives.setText("-");
+                    }
                 });
     }
 }

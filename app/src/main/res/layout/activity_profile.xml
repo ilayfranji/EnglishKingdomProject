@@ -407,6 +407,29 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
+                    <!-- Word Match best stage reached -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="6dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Best stage reached"
+                            android:textColor="#B0BEC5"
+                            android:textSize="13sp"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/tvWordMatchBestStage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="#FFD700"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
                     <!-- Word Match best time -->
                     <LinearLayout
                         android:layout_width="match_parent"
