@@ -217,32 +217,57 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-    private void resetPassword() { // מתודה זו שולחת אימייל לאיפוס סיסמה
-        String email = etEmail.getText().toString().trim(); // קבלת האימייל משדה הקלט
+    private void resetPassword() {
+        String email = etEmail.getText().toString().trim();
 
-        if (email.isEmpty()) { // אם שדה האימייל ריק
-            etEmail.setError("Please enter your email first"); // הצגת שגיאה מתחת לשדה האימייל
-            etEmail.requestFocus(); // העברת הסמן לשדה האימייל
-            return; // עצירת המתודה
+        if (email.isEmpty()) {
+            etEmail.setError("Please enter your email first");
+            etEmail.requestFocus();
+            return;
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // אם פורמט האימייל לא תקין
-            etEmail.setError("Please enter a valid email"); // הצגת שגיאה מתחת לשדה האימייל
-            etEmail.requestFocus(); // העברת הסמן לשדה האימייל
-            return; // עצירת המתודה
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Please enter a valid email");
+            etEmail.requestFocus();
+            return;
         }
 
-        // בקשה מ-Firebase לשלוח אימייל איפוס סיסמה למשתמש
-        mAuth.sendPasswordResetEmail(email)
-                .addOnCompleteListener(task -> { // המתנה לסיום הפעולה ב-Firebase
-                    if (task.isSuccessful()) { // אם האימייל נשלח בהצלחה
-                        Toast.makeText(LoginActivity.this, "Reset email sent! Check your inbox", Toast.LENGTH_LONG).show();
-                    } else { // אם משהו השתבש
-                        Toast.makeText(LoginActivity.this, "Error sending reset email, please try again", Toast.LENGTH_LONG).show();
+        // שלב א': חיבור ל-Firestore ובדיקה אם המייל קיים במאגר
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .whereEqualTo("email", email) // מחפש מסמך שבו שדה המייל שווה למייל שהוזן
+                .get()
+                .addOnCompleteListener(firestoreTask -> {
+                    if (firestoreTask.isSuccessful() && firestoreTask.getResult() != null) {
+
+                        // אם הרשימה ריקה - המשתמש לא קיים במסד הנתונים!
+                        if (firestoreTask.getResult().isEmpty()) {
+                            Toast.makeText(LoginActivity.this, "No account found. Please register first", Toast.LENGTH_SHORT).show();
+                            etEmail.requestFocus();
+                        } else {
+                            // שלב ב': המשתמש נמצא! עכשיו בטוח לשלוח את המייל לאיפוס
+                            performFirebaseReset(email);
+                        }
+
+                    } else {
+                        // שגיאת תקשורת כלשהי מול מסד הנתונים
+                        Toast.makeText(LoginActivity.this, "Database error, please try again", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
+    // מעביר את הלוגיקה המקורית שלך למתודה נפרדת שנקראת רק אחרי שהבדיקה עברה
+    private void performFirebaseReset(String email) {
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(LoginActivity.this, "Reset email sent! Check your inbox", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Error sending reset email, please try again", Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
     private void showGuestWarning() { // מתודה זו מציגה הודעת אזהרה לפני המשך כמשתמש אורח
         new AlertDialog.Builder(this) // יצירת הודעה קופצת חדשה
                 .setTitle("Continue as Guest") // קביעת כותרת ההודעה
