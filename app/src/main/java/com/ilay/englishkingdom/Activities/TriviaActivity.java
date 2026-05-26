@@ -1,34 +1,33 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.graphics.Color; // Used to color buttons green or red
-import android.os.Bundle; // Used when creating the activity
-import android.os.Handler; // Used to run the timer every millisecond
-import android.os.Looper; // Used with Handler to run on the main thread
-import android.view.View; // Used to show and hide UI elements
-import android.widget.Button; // Used for the answer buttons and next button
-import android.widget.TextView; // Used for question text, score and timer
-import android.widget.Toast; // Used to show short messages
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // Used to show the results popup at the end
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth; // Used to get the current logged in user
-import com.google.firebase.firestore.FirebaseFirestore; // Used to load words and save best stats
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single document
-import com.ilay.englishkingdom.Models.CategoryType; // Used to filter out LETTERS categories
-import com.ilay.englishkingdom.Models.Word; // Our Word data model
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.ilay.englishkingdom.Models.CategoryType;
+import com.ilay.englishkingdom.Models.Word;
+import com.ilay.englishkingdom.R;
 
-import java.util.ArrayList; // Used to store the word list
-import java.util.Collections; // Used to shuffle lists randomly
-import java.util.List; // The List interface
-import java.util.Locale; // Used for string formatting
-import java.text.SimpleDateFormat; // Used to format the current date and time
-import java.util.Date; // Used to get the current date and time
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class TriviaActivity extends AppCompatActivity {
 
-    // ==================== UI ELEMENTS ====================
 
     private TextView tvBack; // Back arrow
     private TextView tvQuestionCount; // Shows "Question 3/10"
@@ -41,7 +40,6 @@ public class TriviaActivity extends AppCompatActivity {
     private Button btnNext; // Next question button
     private TextView tvLoading; // Loading text shown while fetching words
 
-    // ==================== GAME DATA ====================
 
     private FirebaseFirestore db; // Our database connection
     private FirebaseAuth mAuth; // Used to get current user for saving stats
@@ -51,7 +49,6 @@ public class TriviaActivity extends AppCompatActivity {
     private int score = 0; // How many correct answers so far
     private String correctAnswer = ""; // The correct Hebrew answer for the current question
 
-    // ==================== TIMER ====================
 
     private Handler timerHandler = new Handler(Looper.getMainLooper()); // Runs timer on main thread
     private long startTime = 0; // When the timer started in milliseconds
@@ -71,7 +68,6 @@ public class TriviaActivity extends AppCompatActivity {
         }
     };
 
-    // ==================== CONSTANTS ====================
 
     private static final int TOTAL_QUESTIONS = 10; // Total questions per game
 
@@ -94,41 +90,39 @@ public class TriviaActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btnNext);
         tvLoading = findViewById(R.id.tvLoading);
 
-        tvBack.setOnClickListener(v -> showBackConfirmation());
+        tvBack.setOnClickListener(v -> showBackConfirmation());// כאשר לוחצים על הטקסט וויו "חזור" קורא למתודה showBackConfirmation()
 
-        // Next button moves to the next question
+        //  לחיצה על כפתור ה"Next"
         btnNext.setOnClickListener(v -> {
-            currentQuestion++; // Move to next question
+            currentQuestion++; // מגדיל ב-1 את מספר השאלה ומעביר לשאלה הבאה
             if (currentQuestion < questionWords.size()) {
-                showQuestion(); // Show next question
-            } else {
-                stopTimer(); // All questions done - stop the timer
-                showResults(); // Show results popup
+                showQuestion(); // אם עדיין מספר השאלה שמוצג קטן מעשר נציג את השאלה
+            } else { // אם הגענו לעשר שאלות
+                stopTimer(); // עוצרים את הטיימר
+                showResults(); // מציגים את תוצאות המשחק בדיאלוג
             }
         });
 
-        loadWords(); // Load all words from Firestore then start the game
+        loadWords(); // מביאים את כל המילים שיש באפליקציה מהפייר סטור לא מביאים אותיות
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopTimer(); // Always stop the timer when activity is destroyed to avoid memory leaks
+        stopTimer(); // עוצרים תמיד את הטיימר כשהפעילות נהרסת כדי למנוע דליפות זיכרון
     }
-
-    // ==================== TIMER METHODS ====================
 
     private void startTimer() {
         // Starts the timer from 0
         startTime = System.currentTimeMillis(); // Save the current time
         timerRunning = true;
-        timerHandler.post(timerRunnable); // Start running the timer runnable
+        timerHandler.post(timerRunnable); // מתחיל את הטיימר על ידי הפעולה run()
     }
 
     private void stopTimer() {
         // Stops the timer
         timerRunning = false;
-        timerHandler.removeCallbacks(timerRunnable); // Stop the timer runnable from running again
+        timerHandler.removeCallbacks(timerRunnable); // עוצר את הטיימר ואת פעולות הפובט דילייד העתידיות שלו
     }
 
     private String formatTime(long millis) {
@@ -137,10 +131,9 @@ public class TriviaActivity extends AppCompatActivity {
         long minutes = millis / 60000; // 1 minute = 60000ms
         long seconds = (millis % 60000) / 1000; // Remaining seconds
         long ms = millis % 1000; // Remaining milliseconds
-        return String.format(Locale.getDefault(), "%d:%02d:%03d", minutes, seconds, ms);
+        return String.format(Locale.getDefault(), "%d:%02d:%03d", minutes, seconds, ms);//מאפשר להציג את פורמט הטיימר ומתאים את המספרים בהתאם למיקום המכשיר בעולם
     }
 
-    // ==================== LOAD WORDS ====================
 
     private void loadWords() {
         // Load ALL categories except LETTERS from Firestore
@@ -151,12 +144,12 @@ public class TriviaActivity extends AppCompatActivity {
                     // Count valid categories (skip LETTERS)
                     for (QueryDocumentSnapshot categoryDoc : categories) {
                         String type = categoryDoc.getString("categoryType");
-                        if (type != null && type.equals(CategoryType.LETTERS.name())) continue;
-                        categoriesLeft[0]++;
+                        if (type != null && type.equals(CategoryType.LETTERS.name())) continue;//בודק אם הקטגוריה היא אותיות, אם כן הוא מדלג עליה
+                        categoriesLeft[0]++;// מונה את הקטגוריות שנשארו ועברו את התנאי
                     }
 
-                    if (categoriesLeft[0] == 0) {
-                        tvLoading.setText("No words found! Please add some words first.");
+                    if (categoriesLeft[0] == 0) {// אם אין לנו שום קטגוריה באפליקציה - אין מילים ולכן מוצגת הודעה טוסט להוסיף מילים קודם
+                        tvLoading.setText("No words found! Please add some words first");
                         return;
                     }
 
@@ -165,110 +158,107 @@ public class TriviaActivity extends AppCompatActivity {
                         String type = categoryDoc.getString("categoryType");
                         if (type != null && type.equals(CategoryType.LETTERS.name())) continue;
 
-                        String categoryId = categoryDoc.getId();
+                        String categoryId = categoryDoc.getId();// המזהה הייחודי של כל קטגוריה, העזרת זה אפשר לבצע פעולות על קטגוריה מסויימת
 
                         db.collection("categories").document(categoryId)
                                 .collection("words").get()
-                                .addOnSuccessListener(words -> {
+                                .addOnSuccessListener(words -> {// אם הצלחנו נעבור על כל המילים שבקטגוריה הזאת
                                     for (QueryDocumentSnapshot wordDoc : words) {
-                                        Word word = wordDoc.toObject(Word.class);
-                                        word.setIdFS(wordDoc.getId());
-                                        // Only add words that have both English and Hebrew
+                                        Word word = wordDoc.toObject(Word.class);// העברת כל הערכים שיש במאגר הנתונים לאובייקט "מילה" עם נתונים מתאימים
+                                        word.setIdFS(wordDoc.getId());// השמת המזהה הייחודי של המילה באובייקט ה"מילה" שיצרנו
+                                        // מוסיפים רק מילים שיש להן את במאגר הנתונים מילה באנגלית ומילה בעברית
                                         if (word.getWordEnglish() != null
                                                 && word.getWordHebrew() != null
                                                 && !word.getWordEnglish().isEmpty()
                                                 && !word.getWordHebrew().isEmpty()) {
-                                            allWords.add(word);
+                                            allWords.add(word);// מוסיפים לרשימת המילים את המילה לאחר שעברה את התנאי
                                         }
                                     }
 
-                                    categoriesLeft[0]--;
+                                    categoriesLeft[0]--;// כמה קטגוריות נשארו לי שעדיין לא נטענו כל המילים שלהן. בכל פעם שסיימנו סיבוב של הלולאה מורידים את מספר הקטגוריות באחד
 
                                     if (categoriesLeft[0] == 0) {
-                                        startGame(); // All categories loaded - start the game
+                                        startGame(); // כל הקטגוריות והמילים והעלו - אפשר להתחיל את המשחק
                                     }
                                 });
                     }
                 })
-                .addOnFailureListener(e ->
-                        tvLoading.setText("Error loading words. Please try again."));
+                .addOnFailureListener(e ->// אם לא הצלחנו נציג הודעה למשתמש שהייתה תקלה
+                        tvLoading.setText("Error loading words. Please try again"));
     }
 
-    // ==================== GAME LOGIC ====================
 
     private void startGame() {
-        // Need at least 3 words to have 3 answer choices
+        // צריכים לפחות 3 מילים כדי להתחיל את המשחק
         if (allWords.size() < 3) {
-            tvLoading.setText("Not enough words! Please add at least 3 words first.");
+            tvLoading.setText("Not enough words! Please add at least 3 words first");
             return;
         }
 
-        // Shuffle words so every game is different
+        // מערבב את הרשימה של כל המילים בטריוויה
         Collections.shuffle(allWords);
 
-        // Pick the first 10 words (or less if there aren't 10)
-        int count = Math.min(TOTAL_QUESTIONS, allWords.size());
-        questionWords = new ArrayList<>(allWords.subList(0, count));
+        int count = Math.min(TOTAL_QUESTIONS, allWords.size());// מספר השאלות שיופיעו במשחק טריוויה, לוקח ת המספר הקטן יותר (מבין מספר המילים ברשימה או 10)
+        questionWords = new ArrayList<>(allWords.subList(0, count));// יוצר מערך חדש בתוך questionWords של השאלות לפי המשתנה count
 
         // Hide loading, show game elements
-        tvLoading.setVisibility(View.GONE);
-        tvQuestion.setVisibility(View.VISIBLE);
-        btnAnswer1.setVisibility(View.VISIBLE);
-        btnAnswer2.setVisibility(View.VISIBLE);
-        btnAnswer3.setVisibility(View.VISIBLE);
+        tvLoading.setVisibility(View.GONE);// מעלים את טקסט ה"Loading..."
+        tvQuestion.setVisibility(View.VISIBLE);//מציג את השאלה
+        btnAnswer1.setVisibility(View.VISIBLE);// מציג תשובה 1
+        btnAnswer2.setVisibility(View.VISIBLE);// מציג תשובה 2
+        btnAnswer3.setVisibility(View.VISIBLE);//מציג תשובה 3
 
-        startTimer(); // Start the timer when the game begins
-        showQuestion(); // Show the first question
+        startTimer(); // מפעילים את הטיימר
+        showQuestion(); // מציגים שאלה
     }
 
     private void showQuestion() {
-        Word word = questionWords.get(currentQuestion);
-        correctAnswer = word.getWordHebrew(); // Save the correct answer
+        Word word = questionWords.get(currentQuestion);// הולך לרשימת השאלות, לוקח משם את השאלה הנוכחית ושם את זה בword
+        correctAnswer = word.getWordHebrew(); // שומרים את התשובה בעברית של המילה
 
-        // Update question counter
+        // מעדכנים את הטקסט וויו לפי מספר השאלה הנוכחית
         tvQuestionCount.setText("Question " + (currentQuestion + 1) + "/" + questionWords.size());
 
-        // Show the English word
+        // הצגת השאלה (המילה באנגלית)
         tvQuestion.setText(word.getWordEnglish());
 
-        resetButtons(); // Reset button colors and enable them
+        resetButtons(); // איפוס כפתורים
 
-        // Build 3 answer choices
-        List<String> answers = buildAnswers(word);
+        // בונה 3 אפשרויות תשובה
+        List<String> answers = buildAnswers(word);// בונה רשימה של תשובות לפי המתודה buildAnswers
         btnAnswer1.setText(answers.get(0));
         btnAnswer2.setText(answers.get(1));
         btnAnswer3.setText(answers.get(2));
 
-        btnNext.setVisibility(View.GONE); // Hide Next until user answers
+        btnNext.setVisibility(View.GONE); // להחביא את כפתור "NEXT"
     }
 
     private List<String> buildAnswers(Word correctWord) {
-        // Creates a list of 3 answers: 1 correct + 2 random wrong ones
+        //יוצר רשימה של 3 תשובות, אחת מהן נכונה ו2 מהן שגויות
         List<String> answers = new ArrayList<>();
-        answers.add(correctWord.getWordHebrew()); // Add correct answer
+        answers.add(correctWord.getWordHebrew()); // מוסיפים את התשובה הנכונה לרשימה
 
         // Build pool of wrong answers
-        List<String> wrongPool = new ArrayList<>();
-        for (Word w : allWords) {
-            if (!w.getWordHebrew().equals(correctWord.getWordHebrew())) {
-                wrongPool.add(w.getWordHebrew());
+        List<String> wrongPool = new ArrayList<>(); // יוצרים רשימה זמנית של תשובות שגויות
+        for (Word w : allWords) {//עוברים על כל המילים במאגר הנתונים
+            if (!w.getWordHebrew().equals(correctWord.getWordHebrew())) {// בודקים אם המילה לא זהה לתשובה הכונה
+                wrongPool.add(w.getWordHebrew());// אם כן, מוסיפים לרשימת התשובות השגויות
             }
         }
 
-        Collections.shuffle(wrongPool); // Shuffle wrong answers
+        Collections.shuffle(wrongPool); // מערבבים את רשימת התשובות השגויות
 
-        // Add 2 wrong answers
-        int wrongCount = Math.min(2, wrongPool.size());
-        for (int i = 0; i < wrongCount; i++) {
-            answers.add(wrongPool.get(i));
+        int wrongCount = Math.min(2, wrongPool.size());// בודקים אם יש יותר ברשימת התשובות השגויות מאשר 2 תשובות. אם יש פחות מ2 תשובות כלומר תשובה אחת ברשימה תופיע רק תשוב נוספת אחת ולא 2
+        for (int i = 0; i < wrongCount; i++) {// עוברים על רשימת התשובות השגויות
+            answers.add(wrongPool.get(i));// מוסיפים 2 או 1 תשובות לפי הMath.min למעלה
         }
 
-        Collections.shuffle(answers); // Shuffle all 3 so correct isn't always first
+        Collections.shuffle(answers); // ערבוב רשימת התשובות והחזרתה
         return answers;
     }
 
     private void resetButtons() {
-        // Reset buttons back to default blue and re-enable them
+        // מחזיר את הכפתורים לצבע המקורי שלהם, ומאפשר ללחוץ עליהם שוב
         int defaultColor = Color.parseColor("#1A237E");
         btnAnswer1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(defaultColor));
         btnAnswer2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(defaultColor));
@@ -276,31 +266,32 @@ public class TriviaActivity extends AppCompatActivity {
         btnAnswer1.setEnabled(true);
         btnAnswer2.setEnabled(true);
         btnAnswer3.setEnabled(true);
+        //הפעלת המתודה checkAnswer עבור לחיצה על אחת מהתשובות
         btnAnswer1.setOnClickListener(v -> checkAnswer(btnAnswer1));
         btnAnswer2.setOnClickListener(v -> checkAnswer(btnAnswer2));
         btnAnswer3.setOnClickListener(v -> checkAnswer(btnAnswer3));
     }
 
     private void checkAnswer(Button tappedButton) {
-        String tappedAnswer = tappedButton.getText().toString();
+        String tappedAnswer = tappedButton.getText().toString();// שומרים את התשובה
 
-        // Disable all buttons so user can't tap again
+        // הופך את הכפתורים לבלתי ניתנים ללחיצה
         btnAnswer1.setEnabled(false);
         btnAnswer2.setEnabled(false);
         btnAnswer3.setEnabled(false);
 
         if (tappedAnswer.equals(correctAnswer)) {
-            // Correct - turn button green
+            // אם התשובה זהה לתשובה הנכונה נהפוך את צבע הכפתור לירוק
             tappedButton.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(Color.parseColor("#2E7D32")));
-            score++;
-            tvScore.setText("Score: " + score);
+            score++; // נגדיל את התוצאה ב1
+            tvScore.setText("Score: " + score);// נעדכן את הטקסט וויו
         } else {
-            // Wrong - turn tapped button red, show correct answer in green
+            // אם התשובה שגויה נצבע אותה באדום
             tappedButton.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(Color.parseColor("#C62828")));
 
-            // Find and highlight the correct answer
+            // נחפש את התשובה הנכונה ונצבע אותה בירוק
             if (btnAnswer1.getText().toString().equals(correctAnswer)) {
                 btnAnswer1.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(Color.parseColor("#2E7D32")));
@@ -313,10 +304,9 @@ public class TriviaActivity extends AppCompatActivity {
             }
         }
 
-        btnNext.setVisibility(View.VISIBLE); // Show Next button
+        btnNext.setVisibility(View.VISIBLE); // נציג את כפתור "NEXT"
     }
 
-    // ==================== RESULTS ====================
 
     private void showResults() {
         saveBestStats(); // Save best score and time if this game was better
