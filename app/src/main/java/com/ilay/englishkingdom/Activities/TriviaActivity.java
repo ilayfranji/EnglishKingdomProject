@@ -309,8 +309,8 @@ public class TriviaActivity extends AppCompatActivity {
 
 
     private void showResults() {
-        saveBestStats(); // Save best score and time if this game was better
-        saveGameHistory(); // Save this game to the history
+        saveBestStats(); // קריאה לפעולה saveBestStats()
+        saveGameHistory(); // קריאה לפעולה saveGameHistory()
 
         String message;
         if (score == questionWords.size()) {
@@ -323,7 +323,7 @@ public class TriviaActivity extends AppCompatActivity {
             message = "Keep studying! You'll get better!";
         }
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this)// בונים אלרט דיאלוג עם כל נתוני המשחק של השחקן
                 .setTitle("Game Over!")
                 .setMessage("Your score: " + score + "/" + questionWords.size()
                         + "\nYour time: " + formatTime(elapsedTime)
@@ -335,7 +335,7 @@ public class TriviaActivity extends AppCompatActivity {
     }
 
     private void saveBestStats() {
-        // Only save stats if a user is logged in
+        // שומרים נתוני משחק רק אם המשתמש מחובר
         if (mAuth.getCurrentUser() == null) return;
 
         String userId = mAuth.getCurrentUser().getUid();
@@ -343,112 +343,102 @@ public class TriviaActivity extends AppCompatActivity {
         // Read current best stats from Firestore to compare
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
-                    // Read current best score - default 0 if not set yet
+                    // התוצאה הטובה ביותר בברירת מחדל היא 0
                     long currentBestScore = 0;
-                    if (document.exists() && document.getLong("triviaBestScore") != null) {
+                    if (document.exists() && document.getLong("triviaBestScore") != null) {//אם המסמך של המשתמש קיים וכבר יש בתוכו שדה triviaBestScore, שולפים אותו ומעדכנים את המשתנה בשיא האמיתי שלו מהמאגר
                         currentBestScore = document.getLong("triviaBestScore");
                     }
 
-                    // Read current best time - default very large number if not set yet
-                    // We use Long.MAX_VALUE so any real time will be better
+                    // הצבת המספר הגדול ביותר כך שכל תוצאה של זמן תהיה קטנה ממנו
                     long currentBestTime = Long.MAX_VALUE;
                     if (document.exists() && document.getLong("triviaBestTime") != null) {
-                        currentBestTime = document.getLong("triviaBestTime");
+                        currentBestTime = document.getLong("triviaBestTime");// שליפת הזמן הנמוך ביותר שלקח למשתמש לענות על הטריוויה, והשמה של הזמן הזה
+
                     }
 
-                    // Only update if this game was better
-                    // Better score = higher number
-                    // Better time = lower number (finished faster)
-                    boolean newBestScore = score > currentBestScore;
-                    boolean newBestTime = elapsedTime < currentBestTime;
+                    boolean newBestScore = score > currentBestScore; // בודקים אם התוצאה גדולה מהתוצאה ששמורה במאגר הנתונים
+                    boolean newBestTime = elapsedTime < currentBestTime;//בודקים אם הזמן קטן מהזמן ששמור במאגר הנתונים
 
                     if (newBestScore || newBestTime) {
-                        // Build update with whichever stats improved
+                        // בונים האש מאפ ריק (כמו ארגז)
                         java.util.HashMap<String, Object> updates = new java.util.HashMap<>();
 
-                        if (newBestScore) {
-                            updates.put("triviaBestScore", score); // Save new best score
+                        if (newBestScore) {// אם יש לנו שיא חדש נכניס אותו להאש מאפ
+                            updates.put("triviaBestScore", score);
                         }
-                        if (newBestTime) {
-                            // Save time as both milliseconds (for comparison) and formatted string (for display)
-                            updates.put("triviaBestTime", elapsedTime); // Raw milliseconds for comparison
-                            updates.put("triviaBestTimeFormatted", formatTime(elapsedTime)); // "0:45:230" for display
+                        if (newBestTime) {// אם יש לנו שיא חדש נכניס אותו להאש מאפ, פעם אחת מפורמט ופעם אחת לא מפורמט
+                            updates.put("triviaBestTime", elapsedTime);
+                            updates.put("triviaBestTimeFormatted", formatTime(elapsedTime));
                         }
 
-                        db.collection("users").document(userId).update(updates)
+                        db.collection("users").document(userId).update(updates)// מביאים לפייר בייס את השיאים החדשים
                                 .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best!", Toast.LENGTH_SHORT).show());
+                                        Toast.makeText(this, "New best!", Toast.LENGTH_SHORT).show());// הצגת הודעה על שיא חדש
                     }
                 });
     }
 
     private void resetGame() {
-        // Reset everything and start a fresh game
+        // מאפסים הכל ומתחילים משחק חדש
         currentQuestion = 0;
         score = 0;
         elapsedTime = 0;
         tvScore.setText("Score: 0");
         tvTimer.setText("0:00:000");
         Collections.shuffle(allWords);
-        int count = Math.min(TOTAL_QUESTIONS, allWords.size());
-        questionWords = new ArrayList<>(allWords.subList(0, count));
-        startTimer(); // Restart the timer
+        int count = Math.min(TOTAL_QUESTIONS, allWords.size());// כמות השאלות שיהיו
+        questionWords = new ArrayList<>(allWords.subList(0, count));// מייצרים שוב רשימת שאלות
+        startTimer(); // מתחילים את הטיימר מחדש
         showQuestion();
     }
 
-    // ==================== SAVE GAME HISTORY ====================
 
     private void saveGameHistory() {
-        // Save this trivia game to the history so the user can see it later
-        // We only save for logged in users - guests have no history
+        // אם אין משתמש רשום אז לא שומרים לו את היסטורית המשחקים
         if (mAuth.getCurrentUser() == null) return;
 
         String userId = mAuth.getCurrentUser().getUid();
 
-        // Get the current date and time when the game ended
+        // לקיחת הזמן הנוכחי והתאריך הנוכחי בסוף המשחק
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         Date now = new Date();
-        String date = dateFormat.format(now); // e.g. "28/03/2026"
-        String time = timeFormat.format(now); // e.g. "17:45"
+        String date = dateFormat.format(now); // התאריך הנוכחי בפורמט של תאריך
+        String time = timeFormat.format(now); // הזמן הנוכחי בפורמט של זמן
 
-        // Build the game history entry
+        //בניית האש מאפ (ארגז) ריק שלתוכו יוכנסו כל
         java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();
-        historyEntry.put("type", "TRIVIA"); // So we know which game this was
-        historyEntry.put("date", date); // Date the game was played
-        historyEntry.put("time", time); // Time the game was played
-        historyEntry.put("score", score + "/" + questionWords.size()); // e.g. "7/10"
-        historyEntry.put("duration", formatTime(elapsedTime)); // e.g. "0:45:230"
-        historyEntry.put("timestamp", System.currentTimeMillis()); // Raw number for sorting
+        historyEntry.put("type", "TRIVIA"); // הכנסת סוג המשחק להאש מאפ
+        historyEntry.put("date", date); // הכנסת התאריך להאש מאפ
+        historyEntry.put("time", time); // הכנסת השעה והדקה (הזמן) שהמשחק הסתיים בו להאש מאפ
+        historyEntry.put("score", score + "/" + questionWords.size()); // הכנסת התוצאה (מתוך 10) להאש מאפ
+        historyEntry.put("duration", formatTime(elapsedTime)); // הכנסת הזמן (המפורמט) שלקח לשחק את המשחק להאש מאפ
+        historyEntry.put("timestamp", System.currentTimeMillis()); // הכנסת הזמן (לא המפורמט) שלקח לשחק את המשחק להאש מאפ
 
-        // Save under users/[userId]/gameHistory/ with an auto-generated document ID
+        // נשמר במאגר הנתונים אצל משתמש - ואז בגיים היסטורי
         db.collection("users").document(userId)
                 .collection("gameHistory")
-                .add(historyEntry); // Silent save - no toast needed for history
+                .add(historyEntry); // הוספה למאגר הנתונים (שמירה)
     }
 
-    // ==================== BACK CONFIRMATION ====================
-
     private void showBackConfirmation() {
-        // Pause the timer while the dialog is open
-        // so the user's time doesn't keep running while they decide
+        // עוצרים את הטיימר
         stopTimer();
 
         new AlertDialog.Builder(this)
                 .setTitle("Leave Game?")
                 .setMessage("If you go back now your progress will be lost. Are you sure?")
                 .setPositiveButton("Leave", (dialog, which) -> {
-                    // User confirmed they want to leave - close the screen
+                    // בטוח שרוצה לצאת ?
                     finish();
                 })
                 .setNegativeButton("Keep Playing", (dialog, which) -> {
-                    // User wants to keep playing - restart the timer from where it stopped
-                    // We do this by adjusting startTime so elapsedTime stays correct
+                    // החסרת הזמן שנוצל לפני שנפתח הידאלוג ובכך לא התבזבז זמן
                     startTime = System.currentTimeMillis() - elapsedTime;
                     timerRunning = true;
                     timerHandler.post(timerRunnable);
                 })
-                .setCancelable(false) // User must tap a button - can't dismiss by tapping outside
+                .setCancelable(false) //אי אפשר ללחוץ מחוץ לדיאלוג
                 .show();
     }
 }
