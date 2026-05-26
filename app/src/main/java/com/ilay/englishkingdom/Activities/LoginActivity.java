@@ -220,15 +220,15 @@ public class LoginActivity extends AppCompatActivity {
     private void resetPassword() {
         String email = etEmail.getText().toString().trim();
 
-        if (email.isEmpty()) {
+        if (email.isEmpty()) {// בודקים אם שדה הקליטה של המייל ריק, אם כן מציבים שגיאה
             etEmail.setError("Please enter your email first");
-            etEmail.requestFocus();
+            etEmail.requestFocus();// השמת השגיאה על שדה הכנסת המייל
             return;
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {//אם לא הוכנס מייל לפי התבנית של AS מציבים שגיאה
             etEmail.setError("Please enter a valid email");
-            etEmail.requestFocus();
+            etEmail.requestFocus();//השמת השגיאה על שדה הכנסת המייל
             return;
         }
 
