@@ -1,28 +1,24 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.content.Intent; // Used to open TriviaActivity, SpeedTriviaActivity, WordSearchActivity and WordMatchActivity
-import android.os.Bundle; // Used when creating the activity
-import android.widget.TextView; // Used for the back button and info buttons
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog; // Used for mode selection and info dialogs
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
-import androidx.cardview.widget.CardView; // Used for the game cards
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.ilay.englishkingdom.R;
 
 public class PracticeActivity extends AppCompatActivity {
-    // This screen shows all available games
-    // Trivia card shows a mode selection dialog (Classic vs Speed)
-    // Word Search and Word Match cards open their games directly
-    // Each card has an info button that explains how to play in Hebrew
 
-    private TextView tvBack; // Back arrow to go back to HomeActivity
-    private CardView cardTrivia; // Trivia card - tapping shows Classic vs Speed selection
-    private CardView cardWordSearch; // Word Search card - opens game directly
-    private CardView cardWordMatch; // Word Match card - opens game directly
-    private TextView btnTriviaInfo; // Info button for Trivia
-    private TextView btnWordSearchInfo; // Info button for Word Search
-    private TextView btnWordMatchInfo; // Info button for Word Match
+    private TextView tvBack;
+    private CardView cardTrivia;
+    private CardView cardWordSearch;
+    private CardView cardWordMatch;
+    private TextView btnTriviaInfo;
+    private TextView btnWordSearchInfo;
+    private TextView btnWordMatchInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,51 +33,48 @@ public class PracticeActivity extends AppCompatActivity {
         btnWordSearchInfo = findViewById(R.id.btnWordSearchInfo);
         btnWordMatchInfo = findViewById(R.id.btnWordMatchInfo);
 
-        tvBack.setOnClickListener(v -> finish()); // Go back to HomeActivity
+        tvBack.setOnClickListener(v -> finish()); // סוגר את מסך התרגול ועובר למסך הבית
 
-        // Trivia card shows mode selection - Classic or Speed
+        // קורא למתודה showTriviaModeDialog()
         cardTrivia.setOnClickListener(v -> showTriviaModeDialog());
 
-        // Word Search opens directly
+        // מעביר למסך התפזורת
         cardWordSearch.setOnClickListener(v ->
                 startActivity(new Intent(this, WordSearchActivity.class)));
 
-        // Word Match opens directly
+        // מעביר למסך ההתאמת מילה לתמונה
         cardWordMatch.setOnClickListener(v ->
                 startActivity(new Intent(this, WordMatchActivity.class)));
 
-        // Info buttons - show how to play in Hebrew
+        // לחיצה על כל info קורא למתודה שכתובה אצלו
         btnTriviaInfo.setOnClickListener(v -> showTriviaInfo());
         btnWordSearchInfo.setOnClickListener(v -> showWordSearchInfo());
         btnWordMatchInfo.setOnClickListener(v -> showWordMatchInfo());
     }
 
-    // ==================== TRIVIA MODE SELECTION ====================
-
     private void showTriviaModeDialog() {
-        // Shows a dialog letting the user pick between Classic and Speed Trivia
+        // מציגים דיאלוג לבחירה בסוג משחק טריוויה
         new AlertDialog.Builder(this)
                 .setTitle("Choose Trivia Mode")
                 .setItems(new String[]{
-                        "🧠 Classic — 10 questions",
-                        "⚡ Speed — 1 minute challenge"
+                        "Classic - 10 questions",
+                        "Speed - 1 minute challenge"
                 }, (dialog, which) -> {
                     if (which == 0) {
-                        startActivity(new Intent(this, TriviaActivity.class)); // Classic mode
+                        startActivity(new Intent(this, TriviaActivity.class)); // מצב רגיל
                     } else {
-                        startActivity(new Intent(this, SpeedTriviaActivity.class)); // Speed mode
+                        startActivity(new Intent(this, SpeedTriviaActivity.class)); // מצב מהיר
                     }
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("Cancel", null)// סוגר את הדיאלוג
                 .show();
     }
 
-    // ==================== INFO DIALOGS ====================
 
     private void showTriviaInfo() {
-        // Explains both Trivia modes in Hebrew
+        // דיאלוג הסבר בעברית על 2 סוגי הטריוויה
         new AlertDialog.Builder(this)
-                .setTitle("🧠 טריוויה - איך משחקים?")
+                .setTitle("טריוויה - איך משחקים?")
                 .setMessage(
                         "מצב קלאסי:\n" +
                                 "מוצגת לך מילה באנגלית ועליך לבחור את התרגום הנכון לעברית מתוך 3 אפשרויות. " +
@@ -96,9 +89,9 @@ public class PracticeActivity extends AppCompatActivity {
     }
 
     private void showWordSearchInfo() {
-        // Explains Word Search in Hebrew
+        // הסבר על משחק התפזורת
         new AlertDialog.Builder(this)
-                .setTitle("🔍 חיפוש מילים - איך משחקים?")
+                .setTitle("חיפוש מילים - איך משחקים?")
                 .setMessage(
                         "מוצגת לך רשת של אותיות. עליך למצוא מילים באנגלית שמוסתרות בתוך הרשת.\n\n" +
                                 "המילים מוסתרות לרוחב (משמאל לימין) או לגובה (מלמעלה למטה).\n\n" +
@@ -111,9 +104,9 @@ public class PracticeActivity extends AppCompatActivity {
     }
 
     private void showWordMatchInfo() {
-        // Explains Word Match in Hebrew
+        // הסבר על משחק התאמת מילה לתמונה
         new AlertDialog.Builder(this)
-                .setTitle("🖼️ התאמת מילים - איך משחקים?")
+                .setTitle("התאמת מילים - איך משחקים?")
                 .setMessage(
                         "בכל שלב יוצגו לך שתי תמונות ורשימה של 6 מילים באנגלית.\n\n" +
                                 "עליך להתאים את המילה הנכונה לכל תמונה.\n\n" +

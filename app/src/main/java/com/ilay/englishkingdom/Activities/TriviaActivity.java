@@ -29,47 +29,45 @@ import java.util.Date;
 public class TriviaActivity extends AppCompatActivity {
 
 
-    private TextView tvBack; // Back arrow
-    private TextView tvQuestionCount; // Shows "Question 3/10"
-    private TextView tvScore; // Shows current score
-    private TextView tvQuestion; // Shows the English word to translate
-    private TextView tvTimer; // Shows elapsed time e.g. "0:45:230"
-    private Button btnAnswer1; // First answer choice
-    private Button btnAnswer2; // Second answer choice
-    private Button btnAnswer3; // Third answer choice
-    private Button btnNext; // Next question button
-    private TextView tvLoading; // Loading text shown while fetching words
+    private TextView tvBack;
+    private TextView tvQuestionCount;
+    private TextView tvScore;
+    private TextView tvQuestion;
+    private TextView tvTimer;
+    private Button btnAnswer1;
+    private Button btnAnswer2;
+    private Button btnAnswer3;
+    private Button btnNext;
+    private TextView tvLoading;
 
 
-    private FirebaseFirestore db; // Our database connection
-    private FirebaseAuth mAuth; // Used to get current user for saving stats
-    private List<Word> allWords = new ArrayList<>(); // All words loaded from Firestore
-    private List<Word> questionWords = new ArrayList<>(); // 10 random words for this game
-    private int currentQuestion = 0; // Index of the current question (0-9)
-    private int score = 0; // How many correct answers so far
-    private String correctAnswer = ""; // The correct Hebrew answer for the current question
+    private FirebaseFirestore db; // משתנה שדרכו מתחברים למאגר הנתונים
+    private FirebaseAuth mAuth; // לצורך שמירת הנתונים למשתמש שמשחק
+    private List<Word> allWords = new ArrayList<>(); // כל המילים ממאגר הנתונים
+    private List<Word> questionWords = new ArrayList<>(); // 10 מילים רנדומליות למשחק
+    private int currentQuestion = 0;
+    private int score = 0;
+    private String correctAnswer = ""; // התשובה הנכונה בעברית
 
 
-    private Handler timerHandler = new Handler(Looper.getMainLooper()); // Runs timer on main thread
-    private long startTime = 0; // When the timer started in milliseconds
-    private long elapsedTime = 0; // How many milliseconds have passed
-    private boolean timerRunning = false; // true = timer is currently running
+    private Handler timerHandler = new Handler(Looper.getMainLooper()); // מריץ את הטיימר במרווחי זמן קבועים של 10 מילי שניות (מריץ במזך הראשי כדי לא לגרום לקריסות)
+    private long startTime = 0; // הזמן שהטיימר התחיל
+    private long elapsedTime = 0; // הזמן שעבר מהרגע שהטיימר התחיל לפעול
+    private boolean timerRunning = false; // אם זה טרו אז הטיימר רץ עכשיו
 
-    // This runnable runs every 10ms to update the timer display
-    // A Runnable is just a block of code that can be scheduled to run later
-    private Runnable timerRunnable = new Runnable() {
+    private Runnable timerRunnable = new Runnable() {// אובייקט המכיל את המשימה של השעון (חישוב הזמן ועדכון המסך) שנועד להרצה חוזרת בלופ
         @Override
         public void run() {
-            // Calculate how much time has passed since the timer started
+            // מחשב את הזמן שהטיימר עבר מהרגע שהוא התחיל את הספירה
             elapsedTime = System.currentTimeMillis() - startTime;
-            tvTimer.setText(formatTime(elapsedTime)); // Update the timer display
-            // Schedule this same runnable to run again in 10ms
-            timerHandler.postDelayed(this, 10);
+            tvTimer.setText(formatTime(elapsedTime)); // מעדכן את התצוגה של הטיימר במסך
+            // מתכנן פעולה לשנות ולהריץ את הטיימר בעוד 10 מילי שניות
+            timerHandler.postDelayed(this, 10);// קריאה שוב להאנדלר שבעזרתו הטיימר יעשה שוב את הפעולה לאחר 10 מילי שניות
         }
     };
 
 
-    private static final int TOTAL_QUESTIONS = 10; // Total questions per game
+    private static final int TOTAL_QUESTIONS = 10; // משתנה קבוע - עשר שאלות במשחק
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,16 +111,15 @@ public class TriviaActivity extends AppCompatActivity {
     }
 
     private void startTimer() {
-        // Starts the timer from 0
+        // מתחיל את הטיימר מ0
         startTime = System.currentTimeMillis(); // Save the current time
         timerRunning = true;
         timerHandler.post(timerRunnable); // מתחיל את הטיימר על ידי הפעולה run()
     }
 
     private void stopTimer() {
-        // Stops the timer
         timerRunning = false;
-        timerHandler.removeCallbacks(timerRunnable); // עוצר את הטיימר ואת פעולות הפובט דילייד העתידיות שלו
+        timerHandler.removeCallbacks(timerRunnable); // עוצר את הטיימר ואת פעולות הפוסט דילייד העתידיות שלו
     }
 
     private String formatTime(long millis) {
@@ -329,7 +326,7 @@ public class TriviaActivity extends AppCompatActivity {
                         + "\nYour time: " + formatTime(elapsedTime)
                         + "\n\n" + message)
                 .setPositiveButton("Play Again", (dialog, which) -> resetGame())
-                .setNegativeButton("Exit", (dialog, which) -> finish())
+                .setNegativeButton("Exit", (dialog, which) -> finish()) // סוגר את המסך ומחזיר אוטומטית למסך התרגול
                 .setCancelable(false)
                 .show();
     }
@@ -402,7 +399,7 @@ public class TriviaActivity extends AppCompatActivity {
         // לקיחת הזמן הנוכחי והתאריך הנוכחי בסוף המשחק
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        Date now = new Date();
+        Date now = new Date();// שמירת הזמן הנוכחי
         String date = dateFormat.format(now); // התאריך הנוכחי בפורמט של תאריך
         String time = timeFormat.format(now); // הזמן הנוכחי בפורמט של זמן
 
@@ -413,7 +410,7 @@ public class TriviaActivity extends AppCompatActivity {
         historyEntry.put("time", time); // הכנסת השעה והדקה (הזמן) שהמשחק הסתיים בו להאש מאפ
         historyEntry.put("score", score + "/" + questionWords.size()); // הכנסת התוצאה (מתוך 10) להאש מאפ
         historyEntry.put("duration", formatTime(elapsedTime)); // הכנסת הזמן (המפורמט) שלקח לשחק את המשחק להאש מאפ
-        historyEntry.put("timestamp", System.currentTimeMillis()); // הכנסת הזמן (לא המפורמט) שלקח לשחק את המשחק להאש מאפ
+        historyEntry.put("timestamp", System.currentTimeMillis()); // הזמן הנוכחי (לא מפורמט)
 
         // נשמר במאגר הנתונים אצל משתמש - ואז בגיים היסטורי
         db.collection("users").document(userId)
@@ -430,7 +427,7 @@ public class TriviaActivity extends AppCompatActivity {
                 .setMessage("If you go back now your progress will be lost. Are you sure?")
                 .setPositiveButton("Leave", (dialog, which) -> {
                     // בטוח שרוצה לצאת ?
-                    finish();
+                    finish();// סגירת המסך
                 })
                 .setNegativeButton("Keep Playing", (dialog, which) -> {
                     // החסרת הזמן שנוצל לפני שנפתח הידאלוג ובכך לא התבזבז זמן

@@ -21,6 +21,8 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.ilay.englishkingdom.R;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class LoginActivity extends AppCompatActivity {
 
     // הצהרה על כל רכיבי ממשק המשתמש - מוצהרים כאן כדי שנוכל להשתמש בהם בכל הפונק'
@@ -62,14 +64,13 @@ public class LoginActivity extends AppCompatActivity {
             sharedPreferences = getSharedPreferences("EnglishKingdomPrefs", MODE_PRIVATE); // חזרה ל-SharedPreferences רגיל כגיבוי
         }
 
-        // חיבור כל משתנה Java לרכיב ה-XML שלו באמצעות ה-ID שנתנו לו ב-XML
-        etEmail = findViewById(R.id.etEmail); // חיבור שדה האימייל
-        etPassword = findViewById(R.id.etPassword); // חיבור שדה הסיסמה
-        btnLogin = findViewById(R.id.btnLogin); // חיבור כפתור ההתחברות
-        btnGuest = findViewById(R.id.btnGuest); // חיבור כפתור האורח
-        cbRememberMe = findViewById(R.id.cbRememberMe); // חיבור תיבת הסימון "זכור אותי"
-        tvForgotPassword = findViewById(R.id.tvForgotPassword); // חיבור טקסט "שכחתי סיסמה"
-        tvRegister = findViewById(R.id.tvRegister); // חיבור טקסט "הרשמה"
+        etEmail = findViewById(R.id.etEmail);
+        etPassword = findViewById(R.id.etPassword);
+        btnLogin = findViewById(R.id.btnLogin);
+        btnGuest = findViewById(R.id.btnGuest);
+        cbRememberMe = findViewById(R.id.cbRememberMe);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
+        tvRegister = findViewById(R.id.tvRegister);
 
         // בדיקה אם המשתמש סימן בעבר "זכור אותי"
         boolean rememberMe = sharedPreferences.getBoolean("rememberMe", false); // קבלת הערך השמור, ברירת המחדל היא false
@@ -84,7 +85,6 @@ public class LoginActivity extends AppCompatActivity {
             etEmail.setText(savedEmail); // מילוי שדה האימייל באופן אוטומטי
         }
 
-        // הגדרת מאזין ללחיצה על כפתור ההתחברות
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { // רץ כאשר לוחצים על כפתור ההתחברות
@@ -92,7 +92,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        // הגדרת מאזין ללחיצה על כפתור האורח
         btnGuest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { // רץ כאשר לוחצים על כפתור האורח
@@ -100,7 +99,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        // הגדרת מאזין ללחיצה על טקסט "שכחתי סיסמה"
         tvForgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { // רץ כאשר לוחצים על שכחתי סיסמה
@@ -108,14 +106,13 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        // הגדרת מאזין ללחיצה על טקסט ההרשמה
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // ניקוי כל השדות לפני מעבר למסך הרשמה
                 // זה מבטיח שהשדות יהיו ריקים כשהמשתמש יחזור למסך ההתחברות
-                etEmail.setText(""); // ניקוי שדה אימייל
-                etPassword.setText(""); // ניקוי שדה סיסמה
+                etEmail.setText("");
+                etPassword.setText("");
                 etEmail.setError(null); // הסרת התראת שגיאה משדה האימייל
                 etPassword.setError(null); // הסרת התראת שגיאה משדה הסיסמה
                 startActivity(new Intent(LoginActivity.this, RegisterActivity.class)); // מעבר ל-RegisterActivity
@@ -133,7 +130,7 @@ public class LoginActivity extends AppCompatActivity {
         if (email.isEmpty()) {
             etEmail.setError("Email is required"); // הצגת שגיאה ישירות מתחת לשדה האימייל
             hasError = true; // סימון שקיימת שגיאה
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // בדיקה אם פורמט האימייל תקין
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { // בדיקה אם פורמט האימייל תקין (לפי הפורמט אימייל של אנדרואיד סטודיו)
             etEmail.setError("Please enter a valid email"); // הצגת שגיאה מתחת לשדה האימייל
             hasError = true; // סימון שקיימת שגיאה
         }
@@ -151,7 +148,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // כל הבדיקות עברו בהצלחה - נבקש מ-Firebase לבצע התחברות עם אימייל וסיסמה
         mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> { // addOnCompleteListener ממתין ל-Firebase שיסיים את הפעולה
+                .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) { // אם ההתחברות הצליחה
 
                         // בדיקה אם המשתמש אימת את האימייל שלו
@@ -233,20 +230,19 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // שלב א': חיבור ל-Firestore ובדיקה אם המייל קיים במאגר
-        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("users")
                 .whereEqualTo("email", email) // מחפש מסמך שבו שדה המייל שווה למייל שהוזן
                 .get()
                 .addOnCompleteListener(firestoreTask -> {
                     if (firestoreTask.isSuccessful() && firestoreTask.getResult() != null) {
 
-                        // אם הרשימה ריקה - המשתמש לא קיים במסד הנתונים!
+                        // אם הרשימה ריקה המשתמש לא קיים במסד הנתונים
                         if (firestoreTask.getResult().isEmpty()) {
                             Toast.makeText(LoginActivity.this, "No account found. Please register first", Toast.LENGTH_SHORT).show();
                             etEmail.requestFocus();
                         } else {
-                            // שלב ב': המשתמש נמצא! עכשיו בטוח לשלוח את המייל לאיפוס
+                            // שלב ב': המשתמש נמצא עכשיו אפשר לשלוח את המייל לאיפוס
                             performFirebaseReset(email);
                         }
 
@@ -259,11 +255,11 @@ public class LoginActivity extends AppCompatActivity {
 
     // מעביר את הלוגיקה המקורית שלך למתודה נפרדת שנקראת רק אחרי שהבדיקה עברה
     private void performFirebaseReset(String email) {
-        mAuth.sendPasswordResetEmail(email)
+        mAuth.sendPasswordResetEmail(email)// האימות שולח מייל לאיפוס סיסמה
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                    if (task.isSuccessful()) {// כשהמייל נשלח
                         Toast.makeText(LoginActivity.this, "Reset email sent! Check your inbox", Toast.LENGTH_LONG).show();
-                    } else {
+                    } else {// כשהמייל לא נשלח
                         Toast.makeText(LoginActivity.this, "Error sending reset email, please try again", Toast.LENGTH_LONG).show();
                     }
                 });

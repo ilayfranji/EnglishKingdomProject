@@ -1,98 +1,79 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.graphics.Color; // Used to color buttons green or red after answering
-import android.os.Bundle; // Used when creating the activity
-import android.os.Handler; // Used for the countdown timer and the 0.5s auto-advance delay
-import android.os.Looper; // Used with Handler to run on the main thread
-import android.view.View; // Used to show and hide UI elements
-import android.widget.Button; // Used for the 3 answer buttons
-import android.widget.TextView; // Used for the timer, score and question
-import android.widget.Toast; // Used to show short messages
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // Used to show the results dialog
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth; // Used to get the current logged in user
-import com.google.firebase.firestore.FirebaseFirestore; // Used to load words and save best score
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single Firestore document
-import com.ilay.englishkingdom.Models.CategoryType; // Used to filter out LETTERS categories
-import com.ilay.englishkingdom.Models.Word; // Our Word data model
-import com.ilay.englishkingdom.R; // Used to reference XML resources
-
-import java.text.SimpleDateFormat; // Used to format the game date and time for history
-import java.util.ArrayList; // Used to store the word list
-import java.util.Collections; // Used to shuffle words so questions are random
-import java.util.Date; // Used to get the current date and time
-import java.util.List; // The List interface
-import java.util.Locale; // Used for string formatting
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.ilay.englishkingdom.Models.CategoryType;
+import com.ilay.englishkingdom.Models.Word;
+import com.ilay.englishkingdom.R;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class SpeedTriviaActivity extends AppCompatActivity {
 
-    // ==================== UI ELEMENTS ====================
+    private TextView tvBack;
+    private TextView tvScore;
+    private TextView tvTimer;
+    private TextView tvQuestion;
+    private Button btnAnswer1;
+    private Button btnAnswer2;
+    private Button btnAnswer3;
+    private TextView tvLoading;
 
-    private TextView tvBack; // Back arrow
-    private TextView tvScore; // Shows current score e.g. "Score: 7"
-    private TextView tvTimer; // Shows seconds remaining e.g. "60"
-    private TextView tvQuestion; // Shows the English word to translate
-    private Button btnAnswer1; // First answer choice
-    private Button btnAnswer2; // Second answer choice
-    private Button btnAnswer3; // Third answer choice
-    private TextView tvLoading; // Loading text while words are being fetched
+    private FirebaseFirestore db; // חיבור למאגר הנתונים
+    private FirebaseAuth mAuth; // לצורך שמירת תוצאות המשחק למשתמש
 
-    // ==================== FIREBASE ====================
 
-    private FirebaseFirestore db; // Our database connection
-    private FirebaseAuth mAuth; // Used to get current user for saving best score
+    private List<Word> allWords = new ArrayList<>(); //כל המילים הרלוונטיות שיהיו במשחק
+    private List<Word> remainingWords = new ArrayList<>();// יוצרים רשימה ריקה (המילים שלא השתמשנו בהם במשחק עוד) ברגע שהרשימה מתרוקנת המילים יעורבבו שוב ויחזרו על עצמן
+    private int score = 0;
+    private String correctAnswer = ""; // התשובה הנכונה בעברית
+    private boolean gameRunning = false; // true = המשחק בפעולה, false = המשחק נגמר
+    private boolean waitingForNext = false; // true = מחכה 0.5 שניות לפני השאלה הבאה
 
-    // ==================== GAME DATA ====================
+    private Handler countdownHandler = new Handler(Looper.getMainLooper()); // מטפל בהרצת השעון אחורה
+    private int secondsLeft = 60;
 
-    private List<Word> allWords = new ArrayList<>(); // All words loaded from Firestore
-    private List<Word> remainingWords = new ArrayList<>();
-    // This list starts as a copy of allWords shuffled once
-// We take one word at a time from the front of this list
-// When the list is empty we reshuffle allWords and refill it
-// This guarantees no word repeats until every single word has been shown at least once
-    private int score = 0; // How many correct answers so far this game
-    private String correctAnswer = ""; // The correct Hebrew answer for the current question
-    private boolean gameRunning = false; // true = game is in progress, false = game is over
-    private boolean waitingForNext = false; // true = waiting for the 0.5s delay before next question
-
-    // ==================== COUNTDOWN TIMER ====================
-
-    private Handler countdownHandler = new Handler(Looper.getMainLooper()); // Runs on main thread
-    private int secondsLeft = 60; // Starts at 60 and counts down to 0
-
-    // This runnable ticks every 1 second to update the countdown display
-    private Runnable countdownRunnable = new Runnable() {
+    private Runnable countdownRunnable = new Runnable() {// אובייקט המכיל את המשימה של השעון (חישוב הזמן ועדכון המסך) שנועד להרצה חוזרת בלופ
         @Override
         public void run() {
-            secondsLeft--; // Subtract 1 second
+            secondsLeft--; // מוריד בשניייה את הזמן שנותר
 
-            tvTimer.setText(String.valueOf(secondsLeft)); // Update the display
+            tvTimer.setText(String.valueOf(secondsLeft)); //מעדכן את תצוגת המסך
 
-            // Turn the timer red when below 10 seconds to create urgency
+            // עשר שניות ומטה השעון נצבע באדום
             if (secondsLeft <= 10) {
-                tvTimer.setTextColor(Color.parseColor("#C62828")); // Red
+                tvTimer.setTextColor(Color.parseColor("#C62828"));
             }
 
             if (secondsLeft <= 0) {
-                // Time is up - end the game
+                // נגמר המשחק קורא למתודה endGame()
                 gameRunning = false;
-                endGame(); // Show results
+                endGame();
             } else {
-                // Still time left - schedule the next tick in 1 second
+                // אם נשאר עוד זמן קורא שוב לפעולה run() לאחר שנייה
                 countdownHandler.postDelayed(this, 1000);
             }
         }
     };
 
-    // ==================== AUTO-ADVANCE HANDLER ====================
-
-    // This handler is used to wait 0.5 seconds after an answer before showing the next question
-    // During the 0.5 seconds the button stays colored green/red so the user can see if they were right
-    private Handler nextQuestionHandler = new Handler(Looper.getMainLooper());
-
-    // ==================== LIFECYCLE ====================
+    private Handler nextQuestionHandler = new Handler(Looper.getMainLooper());// קורא לRunnable שיפעל ויעבור לשאלה הבאה רק לאחר חצי שנייה
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,165 +94,154 @@ public class SpeedTriviaActivity extends AppCompatActivity {
 
         tvBack.setOnClickListener(v -> showBackConfirmation());
 
-        loadWords(); // Load words from Firestore then start the game
+        loadWords(); //טוען את המילים ממאגר הנתונים
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Always clean up handlers when the activity is destroyed
-        // Otherwise they keep running and cause memory leaks
-        countdownHandler.removeCallbacks(countdownRunnable);
-        nextQuestionHandler.removeCallbacksAndMessages(null);
+        //מונע דליפת זיכרון
+        countdownHandler.removeCallbacks(countdownRunnable);// מבטל את הרצת השעון לאחור בסגירת המסך
+        nextQuestionHandler.removeCallbacksAndMessages(null);// מבטל את הפעולה שיש להאנדלר לחכות חצי שנייה בין כל שאלה
     }
 
-    // ==================== LOAD WORDS ====================
 
     private void loadWords() {
-        // Load all categories except LETTERS - same as Classic Trivia
+        // מביאים את כל המילים והמשפטים שיש במאגר הנתונים (לא מביאים אותיות)
         db.collection("categories").get()
-                .addOnSuccessListener(categories -> {
-                    int[] categoriesLeft = {0};
+                .addOnSuccessListener(categories -> {// הצלחנו להביא את הקטגוריות
+                    int[] categoriesLeft = {0};// כמה קטגוריות רלוונטיות נשארו
 
-                    // Count valid categories (skip LETTERS)
+                    //עוברים על כל הקטגוריות ובודקים מי שונה מnull ואם היא שווה גם לאותיות אנחנו מתקדמים הלאה ומשאירים אותה למעבר הבא
                     for (QueryDocumentSnapshot categoryDoc : categories) {
                         String type = categoryDoc.getString("categoryType");
                         if (type != null && type.equals(CategoryType.LETTERS.name())) continue;
-                        categoriesLeft[0]++;
+                        categoriesLeft[0]++;// אם הקטגוריה עברה את התנאי היא מתווספת לרשימת הקטגוריות הרלוונטיות
                     }
 
-                    if (categoriesLeft[0] == 0) {
-                        tvLoading.setText("No words found! Please add some words first.");
+                    if (categoriesLeft[0] == 0) {// אם אין קטגוריות רלוונטיות מציגים הודעה שאין מספיק מילים
+                        tvLoading.setText("No words found! Please add some words first");
                         return;
                     }
 
-                    // Load words from each valid category
+                    //עוברים על כל הקטגוריות ובודקים מי שונה מnull ואם היא שווה גם לאותיות אנחנו מתקדמים הלאה ומשאירים אותה למעבר הבא
                     for (QueryDocumentSnapshot categoryDoc : categories) {
                         String type = categoryDoc.getString("categoryType");
                         if (type != null && type.equals(CategoryType.LETTERS.name())) continue;
 
-                        String categoryId = categoryDoc.getId();
+                        String categoryId = categoryDoc.getId();// שומרים את המזהה הייחודי של הקטגוריה שעברה את התנאי
 
                         db.collection("categories").document(categoryId)
-                                .collection("words").get()
+                                .collection("words").get()// לוקחים את כל המילים שיש בקטגוריה הזאת
                                 .addOnSuccessListener(words -> {
-                                    for (QueryDocumentSnapshot wordDoc : words) {
-                                        Word word = wordDoc.toObject(Word.class);
-                                        word.setIdFS(wordDoc.getId());
-                                        // Only add words with both English and Hebrew text
-                                        if (word.getWordEnglish() != null
+                                    for (QueryDocumentSnapshot wordDoc : words) {// עוברים על כל המילים שבקטגוריה
+                                        Word word = wordDoc.toObject(Word.class);// יוצרים אובייקט "מילה"
+                                        word.setIdFS(wordDoc.getId());//שומרים את המזהה הייחודי של המילה
+                                        if (word.getWordEnglish() != null// מוסיפים רק מילים שיש להם גם מילה באנגלית וגם פירוש בעברית
                                                 && word.getWordHebrew() != null
                                                 && !word.getWordEnglish().isEmpty()
                                                 && !word.getWordHebrew().isEmpty()) {
-                                            allWords.add(word);
+                                            allWords.add(word);// מוסיפים את המילה לרשימת כל המילים
                                         }
                                     }
 
-                                    categoriesLeft[0]--;
+                                    categoriesLeft[0]--;// מקטינים את מספר הקטגוריות הרלוונטיות באחד
 
                                     if (categoriesLeft[0] == 0) {
-                                        startGame(); // All loaded - start the game
+                                        startGame(); // כשנשארו 0 קטגוריות רלוונטיות מתחילים את המשחק, קוראים למתודה startGame()
                                     }
                                 });
                     }
                 })
-                .addOnFailureListener(e ->
-                        tvLoading.setText("Error loading words. Please try again."));
+                .addOnFailureListener(e ->// אם לא הצלחנו להביא את הקטגוריות
+                        tvLoading.setText("Error loading words. Please try again"));
     }
 
-    // ==================== GAME START ====================
-
     private void startGame() {
-        if (allWords.size() < 3) {
-            tvLoading.setText("Not enough words! Please add at least 3 words first.");
+        if (allWords.size() < 3) {// אם יש לנו פחות משלוש מילים רלוונטיות אז מציגים הודעה שאין מספיק מילים וסוגרים את המשחק
+            tvLoading.setText("Not enough words! Please add at least 3 words first");
             return;
         }
 
-        // Fill remainingWords with all words shuffled
-        // Questions will be taken from this list one by one
-        // ensuring no repeats until all words have been shown
+        //רשימת המילים שנותרו זהה תחילה לרשימת המילים הרלוונטיות
+        // מערבבים את רשימת המילים שנותרו
         remainingWords = new ArrayList<>(allWords);
         Collections.shuffle(remainingWords);
 
-        // Hide loading and show the game elements
+        // מציגים את השאלה ואת התשובות במשחק ומסתירים את loading...
         tvLoading.setVisibility(View.GONE);
         tvQuestion.setVisibility(View.VISIBLE);
         btnAnswer1.setVisibility(View.VISIBLE);
         btnAnswer2.setVisibility(View.VISIBLE);
         btnAnswer3.setVisibility(View.VISIBLE);
 
-        gameRunning = true;
+        gameRunning = true;// משחק התחיל
 
-        // Start the 60 second countdown
+        // התחלת הטיימר וקריאה לפעולה הזאת כל שנייה
         countdownHandler.postDelayed(countdownRunnable, 1000);
 
-        showNextQuestion(); // Show the first question
+        showNextQuestion(); // קריאה למתודה showNextQuestion() מציגה לנו שאלה
     }
 
-    // ==================== SHOW QUESTION ====================
-
     private void showNextQuestion() {
-        // Don't show a new question if the game is over
+        // אם המשחק נגמר אל תציג שאלה חדשה
         if (!gameRunning) return;
 
-        waitingForNext = false; // We're no longer waiting - show the question now
+        waitingForNext = false; // אם אנחנו לא מחכים לשאלה הבאה ועבור 0.5 שניות כבר
 
-        // If remainingWords is empty it means we showed every word at least once
-        // Reshuffle allWords and refill remainingWords for another round
-        // This way words never repeat until all words have been shown
+        //אם רשימת המילים הרלוונטיות שנשארו נגמרה אנחנו משווים אותה שוב לרשימת המילים הרלוונטיות המקורית
+        // ומערבבים את רשימת המילים הרלוונטיות שנשארה שוב
         if (remainingWords.isEmpty()) {
-            remainingWords = new ArrayList<>(allWords); // Copy all words into remaining
-            Collections.shuffle(remainingWords); // Shuffle so order is random each round
+            remainingWords = new ArrayList<>(allWords);
+            Collections.shuffle(remainingWords);
         }
 
-        // Take the first word from the remaining list and remove it
-        // This ensures we don't show this word again until all others have been shown
-        Word word = remainingWords.remove(0); // remove(0) takes and removes the first item
-        correctAnswer = word.getWordHebrew(); // Save the correct Hebrew answer
+        // שומרים את המילה הראשונה שמופיע ברשימת המילים הרלוונטיות שנשארו
+        // ומוציאים אותה מהרשימה של המילים הרלוונטיות שנשארו
+        Word word = remainingWords.remove(0);
+        correctAnswer = word.getWordHebrew(); // שומרים את התשובה, (המילה הנכונה בעברית)
 
-        // Show the English word
+        // מציגים את השאלה
         tvQuestion.setText(word.getWordEnglish());
 
-        resetButtons(); // Reset colors and re-enable buttons
+        resetButtons(); // מאפסים כפתורים על ידי המתודה resetButtons()
 
-        // Build 3 answer choices: 1 correct + 2 random wrong ones
+        //מקבלים רשימה של 3 תשובות מהמתודה buildAnswers()
         List<String> answers = buildAnswers(word);
-        btnAnswer1.setText(answers.get(0));
+        btnAnswer1.setText(answers.get(0));//שמים את התשובה על כל כפתור
         btnAnswer2.setText(answers.get(1));
         btnAnswer3.setText(answers.get(2));
     }
 
-    // ==================== BUILD ANSWERS ====================
-
     private List<String> buildAnswers(Word correctWord) {
-        // Creates a list of 3 answers: 1 correct + 2 random wrong ones
+        // יוצר רשימה של 3 תשובות, אחת נכונה ו2 שגויות
         List<String> answers = new ArrayList<>();
-        answers.add(correctWord.getWordHebrew()); // Add correct answer first
+        answers.add(correctWord.getWordHebrew()); // מוסיפים קודם כל את התשובה הנכונה
 
-        // Build a pool of wrong answers from all other words
+        // בונים רשימה של תשובות שגויות
         List<String> wrongPool = new ArrayList<>();
-        for (Word w : allWords) {
-            if (!w.getWordHebrew().equals(correctWord.getWordHebrew())) {
-                wrongPool.add(w.getWordHebrew());
+        for (Word w : allWords) {// עוברים על כל המילים הרלוונטיות
+            if (!w.getWordHebrew().equals(correctWord.getWordHebrew())) {// בודקים המילה מתוך הרשימה שונה מהתשובה הנכונה
+                wrongPool.add(w.getWordHebrew());// אם כן מוסיפים אותה לרשימת התשובות השגויות
             }
         }
 
-        Collections.shuffle(wrongPool); // Shuffle wrong answers
+        Collections.shuffle(wrongPool); // מערבבים את רשימת התשובות השגויות
 
-        // Add 2 wrong answers
+        // מוסיפים רק 2 תשובות שגויות (אבל אם יש פחות מ2 תשובות שגויות תוצג רק תשובה אחת שגויה,
+        // אין מצב של אפס תשובות שגויות בזכות הבדיקה שהצגנו למעלה במתודה startGame() )
         int wrongCount = Math.min(2, wrongPool.size());
-        for (int i = 0; i < wrongCount; i++) {
+        for (int i = 0; i < wrongCount; i++) {// מוסיפים לרשימת התשובות מספר תשובות שגויות לפי wrongCount (או 2 או 1)
             answers.add(wrongPool.get(i));
         }
 
-        Collections.shuffle(answers); // Shuffle all 3 so correct isn't always first
+        Collections.shuffle(answers); // מערבבים את רשימת התשובות ומחזירים את הרשימה (מגיעה למתודה showNextWuestion() )
         return answers;
     }
 
-    // ==================== RESET BUTTONS ====================
 
     private void resetButtons() {
-        // Reset all buttons back to dark blue and re-enable them
+        // מאפס את כל הכפתורים (מחזיר אותם לצבע אפור ומאפשר עליהם לחיצה)
         int defaultColor = Color.parseColor("#1A237E");
         btnAnswer1.setBackgroundTintList(android.content.res.ColorStateList.valueOf(defaultColor));
         btnAnswer2.setBackgroundTintList(android.content.res.ColorStateList.valueOf(defaultColor));
@@ -280,39 +250,37 @@ public class SpeedTriviaActivity extends AppCompatActivity {
         btnAnswer2.setEnabled(true);
         btnAnswer3.setEnabled(true);
 
-        // Set click listeners
+        // מגדירים מאזינים לכפתורי תשובה שאם לוחצים על כל אחד מהם המתודה checkAnswer() פועלת
         btnAnswer1.setOnClickListener(v -> checkAnswer(btnAnswer1));
         btnAnswer2.setOnClickListener(v -> checkAnswer(btnAnswer2));
         btnAnswer3.setOnClickListener(v -> checkAnswer(btnAnswer3));
     }
 
-    // ==================== CHECK ANSWER ====================
-
     private void checkAnswer(Button tappedButton) {
-        // Ignore taps if game is over or we're already waiting for next question
+        // אם המשחק הסתיים או שאנחנו מחכים לשאלה הבאה וכפתור נלחץ לא קורה דבר
         if (!gameRunning || waitingForNext) return;
 
-        waitingForNext = true; // Block further taps until next question appears
+        waitingForNext = true; // ממתינים לשאלה הבאה
 
-        String tappedAnswer = tappedButton.getText().toString();
+        String tappedAnswer = tappedButton.getText().toString();// שומר את התשובה שנבחרה
 
-        // Disable all buttons so user can't tap again during the 0.5s delay
+        // אי אפשר ללחוץ על כל שאר הכפתורים במשך 0.5 השניות הבאות
         btnAnswer1.setEnabled(false);
         btnAnswer2.setEnabled(false);
         btnAnswer3.setEnabled(false);
 
         if (tappedAnswer.equals(correctAnswer)) {
-            // Correct! Turn the tapped button green and add to score
+            // אם המשתמש צדק הכפתור נצבע בירוק
             tappedButton.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#2E7D32"))); // Green
-            score++;
-            tvScore.setText("Score: " + score); // Update score display
+                    android.content.res.ColorStateList.valueOf(Color.parseColor("#2E7D32")));
+            score++;// מגדילים את התוצאה שלו באחד
+            tvScore.setText("Score: " + score); // ומעדכנים את התוצאה שמוצגת על המסך
         } else {
-            // Wrong! Turn tapped button red and highlight the correct answer in green
+            // אם המשתמש טעה הכפתור נצבע באדום
             tappedButton.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#C62828"))); // Red
+                    android.content.res.ColorStateList.valueOf(Color.parseColor("#C62828")));
 
-            // Find and highlight the correct answer button
+            //רק אם המשתמש טעה אנחנו נחפש בנוסף את התשובה הנכונה ונצבע אותה בירוק
             if (btnAnswer1.getText().toString().equals(correctAnswer)) {
                 btnAnswer1.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(Color.parseColor("#2E7D32")));
@@ -325,129 +293,125 @@ public class SpeedTriviaActivity extends AppCompatActivity {
             }
         }
 
-        // Wait 0.5 seconds so the user can see if they were right or wrong
-        // then automatically advance to the next question
+        //מפעילים את ההאנדלר שיפעל בעוד 0.5 שניות
         nextQuestionHandler.postDelayed(() -> {
-            if (gameRunning) { // Only advance if game is still running
+            if (gameRunning) { // מתקדם לשאלה הבאה רק אם המשחק עדיין פועל
                 showNextQuestion();
             }
-        }, 500); // 500 milliseconds = 0.5 seconds
+        }, 500);
     }
 
-    // ==================== END GAME ====================
 
     private void endGame() {
-        // Stop all handlers to prevent anything from running after game ends
+        // עוצרים את כל ההאנדלרים ככה שלא יפעלו ומונעים מהם פעולות עתידיות לא רצויות
+        //מונעים דליפת זיכרון
         countdownHandler.removeCallbacks(countdownRunnable);
         nextQuestionHandler.removeCallbacksAndMessages(null);
 
-        // Disable all buttons so user can't answer after time is up
+        // מבטל את האופציה ללחוץ על כל הכפתורים
         btnAnswer1.setEnabled(false);
         btnAnswer2.setEnabled(false);
         btnAnswer3.setEnabled(false);
 
-        saveBestScore(); // Save best score if this game beat the previous best
-        saveGameHistory(); // Save this game to history
+        saveBestScore(); // קורא למתודה saveBestScore() שומרת את התוצאה הטובה ביותר
+        saveGameHistory(); //  קוראים למתודה saveGameHistory() שנתוני המשחק ישמרו
 
-        // Show the results dialog
+        // מציג את דיאלוג סיום המשחק
         new AlertDialog.Builder(this)
-                .setTitle("Time's up! ⏱")
+                .setTitle("Time's up!")
                 .setMessage("You answered " + score + " questions correctly!\n\n" +
-                        getResultMessage()) // Show an appropriate message based on score
-                .setPositiveButton("Play Again", (dialog, which) -> resetGame()) // Play again
-                .setNegativeButton("Exit", (dialog, which) -> finish()) // Go back
-                .setCancelable(false) // User must tap a button
+                        getResultMessage()) //מציג הודעה מותאמת לפי המתודה getResultMessage()
+                .setPositiveButton("Play Again", (dialog, which) -> resetGame()) // לשחק שוב
+                .setNegativeButton("Exit", (dialog, which) -> finish()) // חזרה למסך התרגול (סגירה של המסך)
+                .setCancelable(false) // אי אפשר ללחוץ מחוץ לדיאלוג
                 .show();
     }
 
     private String getResultMessage() {
-        // Returns an appropriate message based on how well the user did
-        if (score >= 20) return "Incredible! You're a Legend! 🔥";
-        if (score >= 15) return "Amazing speed! 👑";
-        if (score >= 10) return "Great job! Keep practicing! ⭐";
+        if (score >= 20) return "Incredible! You're a Legend!";
+        if (score >= 15) return "Amazing speed!";
+        if (score >= 10) return "Great job! Keep practicing!";
         if (score >= 5) return "Not bad! Try again to beat your score!";
-        return "Keep studying and try again! 📚";
+        return "Keep studying and try again!";
     }
 
-    // ==================== SAVE BEST SCORE ====================
 
     private void saveBestScore() {
-        // Save best score to Firestore if this game was better than the previous best
-        // We only save for logged in users - guests have no history
+        // אם המשתמש לא רשום תוצאות לא נשמרות
         if (mAuth.getCurrentUser() == null) return;
 
-        String userId = mAuth.getCurrentUser().getUid();
+        String userId = mAuth.getCurrentUser().getUid();// מזהה ייחודי של המשתמש
 
-        db.collection("users").document(userId).get()
+        db.collection("users").document(userId).get()// לקיחת המשתמש מהמאגר
                 .addOnSuccessListener(document -> {
-                    // Default to 0 so any real score is automatically better
+                    // התוצאה הטובה ביותר כברירת מחדל היא 0
                     long currentBestScore = 0;
-                    if (document.exists() && document.getLong("speedTriviaBestScore") != null) {
-                        currentBestScore = document.getLong("speedTriviaBestScore");
+                    if (document.exists() && document.getLong("speedTriviaBestScore") != null) {// בודק אם קיים שיא בטריוויה מהירה
+                        currentBestScore = document.getLong("speedTriviaBestScore");// אם קיים שיא, נשים אותו בשיא הטוב ביותר
                     }
 
-                    // Only update if this game scored higher
+                    // בודקים אם תוצאת המשחק עכשיו גבוהה מהשיא שיש למשתמש
                     if (score > currentBestScore) {
                         db.collection("users").document(userId)
-                                .update("speedTriviaBestScore", score)
-                                .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best score! 🏆", Toast.LENGTH_SHORT).show());
+                                .update("speedTriviaBestScore", score)// אם כן אנחנו נעדכן את השיא במשתמש שלו במאגר הנתונים
+                                .addOnSuccessListener(v ->// לאחר העגכון נציג הודעה מתאימה
+                                        Toast.makeText(this, "New best score!", Toast.LENGTH_SHORT).show());
                     }
                 });
     }
 
-    // ==================== SAVE GAME HISTORY ====================
-
     private void saveGameHistory() {
-        // Save this game to Firestore so the user can see it in the history screen
+        // בודקים אם המשתמש רשום כי רק למשתמשים רשומים נשמרים נתוני משחק
         if (mAuth.getCurrentUser() == null) return;
 
-        String userId = mAuth.getCurrentUser().getUid();
+        String userId = mAuth.getCurrentUser().getUid();// לוקחים את המזהה הייחודי של המשתמש
 
-        // Get the current date and time
+        // שומרים את הזמן והתאריך של סיום המשחק
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        Date now = new Date();
+        Date now = new Date();// שמירת הזמן הנוכחי
+        String date = dateFormat.format(now); // התאריך הנוכחי בפורמט של תאריך
+        String time = timeFormat.format(now); // הזמן הנוכחי בפורמט של זמן
 
+        // בניית האש מאפ (כמו ארגז) חדש שלתוכו יכנסו נתוני המשחק
         java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();
-        historyEntry.put("type", "SPEEDTRIVIA"); // So we know this is a Speed Trivia game
-        historyEntry.put("date", dateFormat.format(now));
-        historyEntry.put("time", timeFormat.format(now));
-        historyEntry.put("score", String.valueOf(score)); // How many correct answers
-        historyEntry.put("duration", "60 seconds"); // Speed mode is always 60 seconds
-        historyEntry.put("timestamp", System.currentTimeMillis()); // For sorting
+        historyEntry.put("type", "SPEEDTRIVIA"); // סוג המשחק (טריוויה מהירה)
+        historyEntry.put("date", date);// התאריך הנוכחי (מפורמט)
+        historyEntry.put("time", time);// הזמן הנוכחי (מפורמט)
+        historyEntry.put("score", String.valueOf(score)); // מספר התשובות הנכונות
+        historyEntry.put("duration", "60 seconds"); // הזמן שלקח (60 שניות תמיד)
+        historyEntry.put("timestamp", System.currentTimeMillis()); //הזמן הנוכחי (לא מפורמט)
 
         db.collection("users").document(userId)
                 .collection("gameHistory")
-                .add(historyEntry); // Silent save - no toast needed
+                .add(historyEntry); // הכנסה של ההאש מאפ לנתונים של המשתמש במאגר הנתונים
     }
 
-    // ==================== RESET GAME ====================
 
     private void resetGame() {
+        //מאפסים הכל (תוצאה, צבע כפתורים, טיימר, את המשתנה שמחכה לשאלה הבאה)
         score = 0;
         secondsLeft = 60;
-        waitingForNext = false;
+        waitingForNext = false;// לא מחכים לשאלה הבאה
         tvScore.setText("Score: 0");
         tvTimer.setText("60");
         tvTimer.setTextColor(Color.parseColor("#FFD700"));
 
-        // Refill and reshuffle remainingWords for the fresh game
+        // ממלאים מחדש את רשימת המילים הרלוונטיות שנשארו
         remainingWords = new ArrayList<>(allWords);
-        Collections.shuffle(remainingWords);
+        Collections.shuffle(remainingWords);// מערבבים מחדש את רשימת המילים הרלוונטיות שנשארו
 
-        gameRunning = true;
+        gameRunning = true;// המשחק החל
 
+        // מפעילים את ההאנדלר שלנו שקורא לראנאבל כל שנייה ומעדכן את הטיימר
         countdownHandler.postDelayed(countdownRunnable, 1000);
 
-        showNextQuestion();
+        showNextQuestion();// קוראים למתודה שמראה את השאלה הבאה
     }
 
-    // ==================== BACK CONFIRMATION ====================
-
     private void showBackConfirmation() {
-        // Stop both the countdown and the auto-advance handler while dialog is open
-        // so the game doesn't keep running while the user decides
+        // עוצרים את כל ההאנדלרים והראנאבל ואת כל הפעולות העתידיות שלהם כדי שהזמן לא ימשיך לרדתם למטה
+        // וששאלות הבאות לא יוצגו כשעובר 0.5 שניות
         countdownHandler.removeCallbacks(countdownRunnable);
         nextQuestionHandler.removeCallbacksAndMessages(null);
 
@@ -455,18 +419,17 @@ public class SpeedTriviaActivity extends AppCompatActivity {
                 .setTitle("Leave Game?")
                 .setMessage("If you go back now your progress will be lost. Are you sure?")
                 .setPositiveButton("Leave", (dialog, which) -> {
-                    // User confirmed - stop everything and close
+                    // רוצה לצאת, המשחק הפסיק וסוגרים את המסך
                     gameRunning = false;
-                    finish();
+                    finish();// סגירת המסך מעבר אוטומטי למסך התרגול
                 })
                 .setNegativeButton("Keep Playing", (dialog, which) -> {
-                    // User wants to stay - restart both handlers from where they stopped
-                    // We adjust startTime so the countdown continues from the correct second
+                    // רוצה להישאר, בודק אם המשחק עדיין רץ אם כן אנחנו מחזירים את הטיימר לעבוד
                     if (gameRunning) {
                         countdownHandler.postDelayed(countdownRunnable, 1000);
                     }
                 })
-                .setCancelable(false)
+                .setCancelable(false)// לא ניתן ללחוץ מחוץ לדיאלוג
                 .show();
     }
 }
