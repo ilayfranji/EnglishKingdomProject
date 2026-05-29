@@ -1,18 +1,15 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.os.Bundle; // Used when creating the activity
-import android.widget.TextView; // Used for the back button and title
+import android.os.Bundle;
+import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
+import androidx.appcompat.app.AppCompatActivity;
 
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.ilay.englishkingdom.R;
 
 public class HowToPlayActivity extends AppCompatActivity {
-    // This screen explains how to use the app step by step
-    // It is a simple scrollable screen with steps and icons
-    // No Firebase needed here - it's just static content
 
-    private TextView tvBack; // Back arrow to go back to HomeActivity
+    private TextView tvBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +18,7 @@ public class HowToPlayActivity extends AppCompatActivity {
 
         tvBack = findViewById(R.id.tvBack);
 
-        // finish() closes this screen and goes back to HomeActivity
+        // סוגר את המסך בלחיצה על back
         tvBack.setOnClickListener(v -> finish());
     }
 }

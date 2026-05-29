@@ -1,38 +1,32 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.os.Bundle; // Used when creating the activity
-import android.view.View; // Used to show and hide the loading text and scroll view
-import android.widget.LinearLayout; // Used to hold the history cards for each game type
-import android.widget.ScrollView; // Used to show/hide the scrollable content
-import android.widget.TextView; // Used for back button, title, loading text and game entries
+import android.os.Bundle;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
-import androidx.cardview.widget.CardView; // Used to show each game entry as a card
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
-import com.google.firebase.auth.FirebaseAuth; // Used to get the current user
-import com.google.firebase.firestore.FirebaseFirestore; // Used to read game history from Firestore
-import com.google.firebase.firestore.Query; // Used to sort history by timestamp newest first
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single history entry
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.ilay.englishkingdom.R;
 
 public class GameHistoryActivity extends AppCompatActivity {
-
-    // ==================== UI ELEMENTS ====================
-
-    private TextView tvBack; // Back arrow to go back to ProfileActivity
-    private TextView tvLoading; // Shows "Loading..." while fetching from Firestore
-    private ScrollView scrollView; // The scrollable container - hidden until data is loaded
-    private LinearLayout triviaContainer; // Where Classic Trivia game cards get added
-    private LinearLayout speedTriviaContainer; // Where Speed Trivia game cards get added
-    private LinearLayout wordSearchContainer; // Where Word Search game cards get added
+    private TextView tvBack;
+    private TextView tvLoading;
+    private ScrollView scrollView;
+    private LinearLayout triviaContainer;
+    private LinearLayout speedTriviaContainer;
+    private LinearLayout wordSearchContainer;
     private LinearLayout wordMatchContainer;
 
-    // ==================== FIREBASE ====================
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
-    private FirebaseFirestore db; // Our database connection
-    private FirebaseAuth mAuth; // Used to get the current user's ID
-
-    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,77 +44,77 @@ public class GameHistoryActivity extends AppCompatActivity {
         wordSearchContainer = findViewById(R.id.wordSearchContainer);
         wordMatchContainer = findViewById(R.id.wordMatchContainer);
 
-        tvBack.setOnClickListener(v -> finish());
+        tvBack.setOnClickListener(v -> finish());// לחיצה על כפתור החזור סוגר את המסך
 
-        // If somehow a guest got here close immediately - guests have no history
+        // בדיקה אם המשתמש מחובר, אם איכשהו אורח הצליח להיכנס מוציאים אותו ישר
         if (mAuth.getCurrentUser() == null) {
             finish();
             return;
         }
 
-        loadHistory(); // Load all game history from Firestore
+        loadHistory(); // טוען את כל נתוני ההיסטוריה מפייר סטור, קורא למתודה
     }
 
-    // ==================== LOAD HISTORY ====================
-
     private void loadHistory() {
-        String userId = mAuth.getCurrentUser().getUid();
+        String userId = mAuth.getCurrentUser().getUid();// המזהה הייחודי של המשתמש
 
-        // Fetch all game history sorted by timestamp newest first
-        // so the most recent games always appear at the top
+        //מביאים את כל תוצאות המשחקים של המשתמש הזה ששמורים במאגר הנתונים,
+        // שולף אותם בסדר מהחדש לישן ככה שהמשחקים החדשים יופיעו קודם
         db.collection("users").document(userId)
                 .collection("gameHistory")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
-                .addOnSuccessListener(snapshots -> {
-                    // Hide loading and show the scrollable content
+                .addOnSuccessListener(snapshots -> {// אם הצלחנו לשלוף
                     tvLoading.setVisibility(View.GONE);
-                    scrollView.setVisibility(View.VISIBLE);
+                    scrollView.setVisibility(View.VISIBLE);// מפעילים את הגלילה במסך
 
-                    // These track whether we found any games of each type
-                    // If we didn't find any we show a placeholder message instead
+                    //השמת דגלים לכל אחד מהמשחקים, אם נמצא משחק נשנה את הדגל שלו
                     boolean hasTrivia = false;
                     boolean hasSpeedTrivia = false;
                     boolean hasWordSearch = false;
                     boolean hasWordMatch = false;
 
-                    // Loop through every history entry and create a card for it
+                    // עוברים על כל היסטורית המשחקים של המשתמש ובודקים אם קיימים אצלו משחקי עבר
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        String type = doc.getString("type"); // "TRIVIA", "SPEEDTRIVIA" or "WORDSEARCH"
+                        String type = doc.getString("type"); // מקבל את סוג המשחק ושומר אותו
 
                         if ("TRIVIA".equals(type)) {
-                            // Classic Trivia game - add card to the trivia section
+                            // אם המשחק הוא טריוויה קוראים למתודה addTriviaCard
+                            // ויוצרים קארד וויו למשחק הזה שמכיל את הנתונים למטה
                             addTriviaCard(
                                     doc.getString("date"),
                                     doc.getString("time"),
                                     doc.getString("score"),
                                     doc.getString("duration")
                             );
-                            hasTrivia = true;
+                            hasTrivia = true;// מצאנו משחק טריוויה
 
                         } else if ("SPEEDTRIVIA".equals(type)) {
-                            // Speed Trivia game - add card to the speed trivia section
+                            // אם המשחק הוא טריוויה מהירה קוראים למתודה addTriviaCard
+                            // ויוצרים קארד וויו למשחק הזה שמכיל את הנתונים למטה
                             addSpeedTriviaCard(
                                     doc.getString("date"),
                                     doc.getString("time"),
                                     doc.getString("score")
-                                    // No duration for speed trivia - it's always 60 seconds
+                                    // אין צורך לשלוח את משך הזמן של המשחק כי הוא תמיד 60 שניות
                             );
-                            hasSpeedTrivia = true;
+                            hasSpeedTrivia = true;// מצאנו משחק טריוויה מהירה
 
                         } else if ("WORDSEARCH".equals(type)) {
-                            // Word Search game - add card to the word search section
+                            // אם המשחק הוא תפזורת קוראים למתודה addTriviaCard
+                            // ויוצרים קארד וויו למשחק הזה שמכיל את הנתונים למטה
                             addWordSearchCard(
                                     doc.getString("date"),
                                     doc.getString("time"),
                                     doc.getString("wordsFound"),
                                     doc.getString("duration")
                             );
-                            hasWordSearch = true;
+                            hasWordSearch = true;// מצאנו משחק תפזורת
 
                         }else if ("WORDMATCH".equals(type)) {
-                                // Word Match game entry - add to word match section
-                                addWordMatchCard(
+                            // אם המשחק הוא התאמת מילה לתמונה קוראים למתודה addTriviaCard
+                            // ויוצרים קארד וויו למשחק הזה שמכיל את הנתונים למטה
+                            addWordMatchCard(
                                         doc.getString("date"),
                                         doc.getString("time"),
                                         doc.getString("result"),
@@ -128,114 +122,98 @@ public class GameHistoryActivity extends AppCompatActivity {
                                         doc.getString("livesLeft"),
                                         doc.getString("duration")
                                 );
-                                hasWordMatch = true;
+                                hasWordMatch = true;// מצאנו משחק התאמת מילה לתמונה
                             }
 
                     }
 
-                    // Show placeholder messages for game types with no history yet
+                    //אם לא קיימת היסטורית משחקים של המשתמש במשחק מסויים נציג הודעה מתאימה
                     if (!hasTrivia) {
-                        addEmptyMessage(triviaContainer, "No classic trivia games played yet.");
+                        addEmptyMessage(triviaContainer, "No classic trivia games played yet");
                     }
                     if (!hasSpeedTrivia) {
-                        addEmptyMessage(speedTriviaContainer, "No speed trivia games played yet.");
+                        addEmptyMessage(speedTriviaContainer, "No speed trivia games played yet");
                     }
                     if (!hasWordSearch) {
-                        addEmptyMessage(wordSearchContainer, "No word search games played yet.");
+                        addEmptyMessage(wordSearchContainer, "No word search games played yet");
                     }
                     if (!hasWordMatch) {
-                        addEmptyMessage(wordMatchContainer, "No word match games played yet.");
+                        addEmptyMessage(wordMatchContainer, "No word match games played yet");
                     }
                 })
-                .addOnFailureListener(e ->
-                        tvLoading.setText("Error loading history. Please try again."));
+                .addOnFailureListener(e ->// אם לא הצלחנו להביא את היסטוריית המשחקים ממאגר הנתונים נציג הודעת שגיאה
+                        tvLoading.setText("Error loading history. Please try again"));
     }
 
-    // ==================== EMPTY MESSAGE ====================
 
     private void addEmptyMessage(LinearLayout container, String message) {
-        // Adds a grey placeholder message to a container when no games of that type exist yet
-        // We use a helper method to avoid repeating this code 3 times
-        TextView empty = new TextView(this);
-        empty.setText(message);
-        empty.setTextColor(0xFFB0BEC5); // Grey color
+        TextView empty = new TextView(this);//יוצרים טקסט וויו חדש במסך
+        empty.setText(message);// שמים בטקסט וויו את ההודעה ששלחנו למתודה
+        empty.setTextColor(0xFFB0BEC5); // צבע אפור לכיתוב בהודעה
         empty.setTextSize(13);
-        empty.setPadding(8, 8, 8, 8);
-        container.addView(empty);
+        empty.setPadding(8, 8, 8, 8);// רווח מקצוות תיבת הטקסט
+        container.addView(empty);// הכנסת ההודעה ללינאר לייאווט שנשלח למתודה
     }
 
-    // ==================== ADD CLASSIC TRIVIA CARD ====================
 
     private void addTriviaCard(String date, String time, String score, String duration) {
-        // Creates a card showing one Classic Trivia game's results
-        CardView card = createCard(); // Create the base card
+        CardView card = createCard(); // יוצרים קארד וויו
 
-        LinearLayout inner = createInnerLayout(); // Create the inner layout
+        LinearLayout inner = createInnerLayout(); // יוצרים לינאר לייאווט שאותו נשים בתוך הקארד וויו
 
-        // Date and time row e.g. "📅 28/03/2026  🕐 17:45"
-        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
+        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));// מכניסים את הטקסט לתוך הליניאר לייאווט שיצרנו, טקסט קטן ואפור
 
-        // Score row e.g. "Score: 7/10" in gold bold text
+        // מכניסים שוב את הטקסט אך הפעם גדול וזהב
         inner.addView(createBoldGoldText("Score: " + score));
 
-        // Duration row e.g. "⏱ Time: 0:45:230"
+        // שוב מכניסים טקסט קטן ואפור
         inner.addView(createSmallText("⏱ Time: " + duration));
 
-        card.addView(inner);
-        triviaContainer.addView(card); // Add card to the trivia section
+        card.addView(inner);// מכניסים את הליניאר לייאווט שיצרנו לקארד וויו
+        triviaContainer.addView(card); // מוסיפים את הקארד וויו לליניאר לייאווט של הטריוויה שיצרנו
     }
 
-    // ==================== ADD SPEED TRIVIA CARD ====================
 
     private void addSpeedTriviaCard(String date, String time, String score) {
-        // Creates a card showing one Speed Trivia game's results
-        // Speed Trivia doesn't show duration because it's always 60 seconds
+        // יוצרים קארד וויו
         CardView card = createCard();
 
-        LinearLayout inner = createInnerLayout();
+        LinearLayout inner = createInnerLayout();// יוצרים לינאר לייאווט שאותו נשים בתוך הקארד וויו
 
-        // Date and time row
-        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
+        inner.addView(createSmallText("📅 " + date + "  🕐 " + time));// מכניסים את הטקסט לתוך הליניאר לייאווט שיצרנו, טקסט קטן ואפור
 
-        // Score row - shows how many questions were answered correctly
+        // מכניסים שוב את הטקסט אך הפעם גדול וזהב
         inner.addView(createBoldGoldText("Correct answers: " + score));
 
-        // Fixed duration - speed trivia is always 60 seconds
+        // שוב מכניסים טקסט קטן ואפור
         inner.addView(createSmallText("⏱ Duration: 60 seconds"));
 
-        card.addView(inner);
-        speedTriviaContainer.addView(card); // Add card to the speed trivia section
+        card.addView(inner);// מכניסים את הליניאר לייאווט שיצרנו לקארד וויו
+        speedTriviaContainer.addView(card); // מוסיפים את הקארד וויו לליניאר לייאווט של הטריוויה המהירה שיצרנו
     }
 
-    // ==================== ADD WORD SEARCH CARD ====================
-
     private void addWordSearchCard(String date, String time, String wordsFound, String duration) {
-        // Creates a card showing one Word Search game's results
         CardView card = createCard();
 
         LinearLayout inner = createInnerLayout();
 
-        // Date and time row
         inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
 
-        // Words found row e.g. "Words found: 8/11"
         inner.addView(createBoldGoldText("Words found: " + wordsFound));
 
-        // Duration row
         inner.addView(createSmallText("⏱ Time: " + duration));
 
         card.addView(inner);
-        wordSearchContainer.addView(card); // Add card to the word search section
+        wordSearchContainer.addView(card);
     }
 
     private void addWordMatchCard(String date, String time, String result,
                                   String stage, String livesLeft, String duration) {
-        // Creates a card showing one Word Match game's results
         CardView card = createCard();
         LinearLayout inner = createInnerLayout();
 
         inner.addView(createSmallText("📅 " + date + "  🕐 " + time));
-        inner.addView(createBoldGoldText(result)); // e.g. "Won 🎉" or "Lost 💔"
+        inner.addView(createBoldGoldText(result));
         inner.addView(createSmallText("📍 Reached: " + stage));
         inner.addView(createSmallText("❤️ Lives left: " + livesLeft));
         inner.addView(createSmallText("⏱ Time: " + duration));
@@ -244,49 +222,46 @@ public class GameHistoryActivity extends AppCompatActivity {
         wordMatchContainer.addView(card);
     }
 
-    // ==================== CARD HELPERS ====================
 
-    // These helper methods create the card and text views so we don't repeat
-    // the same styling code inside every addTriviaCard/addSpeedTriviaCard/addWordSearchCard method
+
+    //פעולות עזר לעיצוב הקארד וויו שבונים לכל משחק
 
     private CardView createCard() {
-        // Creates a styled dark blue card with rounded corners and a small shadow
-        CardView card = new CardView(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 12); // 12px bottom margin between cards
-        card.setLayoutParams(params);
-        card.setRadius(12); // Rounded corners
-        card.setCardBackgroundColor(0xFF1A237E); // Dark blue
-        card.setCardElevation(4); // Small shadow
+        CardView card = new CardView(this);// יצירת קארד וויו במסך היסטוריית המשחקים
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(// אורך ורוחב הכרטיס כדי שלא יהרס כשהוא נמצא בתוך הליניאר לייאווט
+                LinearLayout.LayoutParams.MATCH_PARENT,// תופס את כל רוחב הליניאר לייאווט
+                LinearLayout.LayoutParams.WRAP_CONTENT);// מתרחב ומתכווץ אנכית בהתאם למה שכתוב בתוכו
+        params.setMargins(0, 0, 0, 12); // מרווח של 12 פיקסלים בין כל קארד וויו
+        card.setLayoutParams(params);// השמת הפרמטרים שיצרנו בשם (params) בתוך הקארד וויו
+        card.setRadius(12); // פינות מעוגלות
+        card.setCardBackgroundColor(0xFF1A237E); // צבע כחול כהה
+        card.setCardElevation(4); // צל קטן לקארד וויו
         return card;
     }
 
     private LinearLayout createInnerLayout() {
-        // Creates a vertical LinearLayout with padding to hold the card's text views
-        LinearLayout inner = new LinearLayout(this);
-        inner.setOrientation(LinearLayout.VERTICAL);
-        inner.setPadding(16, 12, 16, 12);
+        LinearLayout inner = new LinearLayout(this);// יצירת לינאר לייאווט חדש במסך היסטוריית המשחקים
+        inner.setOrientation(LinearLayout.VERTICAL);// הגדרה שהרכיבים בו יהיו מסודרים אנכית אחד מתחת לשני
+        inner.setPadding(16, 12, 16, 12);// המרחק בין הדפנות הפנימיות של הלייאווט לבין הקארד וויו שיהיה בתוכו
         return inner;
     }
 
     private TextView createSmallText(String text) {
-        // Creates a small grey text view - used for date, time and duration
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextColor(0xFFB0BEC5); // Grey color
-        tv.setTextSize(12);
+        //מקבך טקסט והופך אותו לטקסט וויו חדש לפי עיצוב מסויים
+        TextView tv = new TextView(this);// יוצר טקסט וויו חדש במסך היסטוריית המשחיקם
+        tv.setText(text);// מציב את הטקסט שקיבלנו בטקסט וויו החדש שיצרנו
+        tv.setTextColor(0xFFB0BEC5); // צבע אפור
+        tv.setTextSize(12);// כתב גודל 12
         return tv;
     }
 
     private TextView createBoldGoldText(String text) {
-        // Creates a bold gold text view - used for the main result (score/words found)
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextColor(0xFFFFD700); // Gold color
-        tv.setTextSize(15);
-        tv.setTypeface(null, android.graphics.Typeface.BOLD); // Bold
+        //מקבך טקסט והופך אותו לטקסט וויו חדש לפי עיצוב מסויים
+        TextView tv = new TextView(this);// יוצר טקסט וויו חדש במסך היסטוריית המשחיקם
+        tv.setText(text);// מציב את הטקסט שקיבלנו בטקסט וויו החדש שיצרנו
+        tv.setTextColor(0xFFFFD700); // צבע זהב
+        tv.setTextSize(15);// כתב גודל 15
+        tv.setTypeface(null, android.graphics.Typeface.BOLD); // פונט רגיל (null) וטקסט בכתב bold
         return tv;
     }
 }
