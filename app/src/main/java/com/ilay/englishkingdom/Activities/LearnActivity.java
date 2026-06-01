@@ -31,53 +31,50 @@ import java.util.List; // The List interface for our category list
 
 public class LearnActivity extends AppCompatActivity implements CategoryAdapter.OnCategoryClickListener {
 
-    // ==================== UI ELEMENTS ====================
+    private RecyclerView recyclerCategories;
+    private FloatingActionButton fabCategory;
+    private FloatingActionButton fabExitEditMode;
+    private TextView tvBack;
+    private TextView tvEditMode;
+    private TextView tvEditBanner;
 
-    private RecyclerView recyclerCategories; // The scrollable grid of category cards
-    private FloatingActionButton fabCategory; // The + button shown in edit mode
-    private FloatingActionButton fabExitEditMode; // The X button to exit edit mode
-    private TextView tvBack; // Back arrow to go back to HomeActivity
-    private TextView tvEditMode; // Pencil button shown only to admins
-    private TextView tvEditBanner; // Red banner shown at top when in edit mode
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
-    // ==================== FIREBASE ====================
+    private CategoryAdapter categoryAdapter;
+    private List<Category> categoryList;
 
-    private FirebaseFirestore db; // Our connection to the Firestore database
-    private FirebaseAuth mAuth; // Our connection to Firebase Authentication
+    private boolean isEditMode = false;
+    private boolean isAdmin = false;
 
-    // ==================== ADAPTER AND DATA ====================
+    private ImagePickerHelper imagePicker;
+    private AddCategoryDialog addDialog;
+    private EditCategoryDialog editDialog;
 
-    private CategoryAdapter categoryAdapter; // Connects our category list to the RecyclerView
-    private List<Category> categoryList; // The list of all categories loaded from Firestore
+    private static final String KEY_CAMERA_URI = "camera_uri"; // מפתח לשמירת הנתיב של התמונה
 
-    // ==================== STATE ====================
-
-    private boolean isEditMode = false; // true = admin is in edit mode, false = normal mode
-    private boolean isAdmin = false; // true = current user is an admin
-
-    // ==================== HELPERS AND DIALOGS ====================
-
-    private ImagePickerHelper imagePicker; // Handles ALL camera/gallery/permission logic
-    private AddCategoryDialog addDialog; // Handles the Add Category flow
-    private EditCategoryDialog editDialog; // Handles the Edit Category flow
-
-    // ==================== SAVE/RESTORE STATE ====================
-
-    private static final String KEY_CAMERA_URI = "camera_uri"; // Key to save camera URI
-
-    // ==================== ACTIVITY RESULT LAUNCHERS ====================
-
-    // These MUST live here in the Activity - passed into ImagePickerHelper
+    //יצירת launcher לגלרייה
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            uri -> imagePicker.onGalleryResult(uri)); // Forward result to ImagePickerHelper
+            new ActivityResultContracts.GetContent(), // חוזה שיש לאפליקציה עם הגלרייה לצורך הבאת תמונה בלבד וחזרה לאפליקציה
+            uri -> imagePicker.onGalleryResult(uri)); // מחזירים את התמונה ישר לדיאלוג הImagePicker
 
+    // יצירת launcher למצלמה
     private final ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.TakePicture(),
-            success -> imagePicker.onCameraResult(success)); // Forward result to ImagePickerHelper
+            new ActivityResultContracts.TakePicture(),// חוזה שיש לאפליקציה עם המצלמה לצורך צילום תמונה בלבד וחזרה לאפליקציה
+            success -> imagePicker.onCameraResult(success)); // מחזירים את התמונה ישר לדיאלוג הImagePicker
 
-    // ==================== LIFECYCLE ====================
 
+
+
+
+
+
+
+
+
+
+
+/// להמשיך מפה!!!!
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

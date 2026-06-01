@@ -136,108 +136,84 @@ public class HomeActivity extends AppCompatActivity {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-    /// להמשיך מפה!!!
     private void showMenu(View v) {
-        // Shows the hamburger popup menu with Profile, How to Play and Logout options
-        PopupMenu popupMenu = new PopupMenu(this, v);
-        popupMenu.getMenuInflater().inflate(R.menu.home_menu, popupMenu.getMenu());
+        PopupMenu popupMenu = new PopupMenu(this, v);// יצירת תפריט במסך הבית, עם הוויו שקיבלנו כפרמטר
+        popupMenu.getMenuInflater().inflate(R.menu.home_menu, popupMenu.getMenu());//עושים ניפוח של עיצוב התפריט שיצרנו לאובייקטים שניתן ללחוץ עליהם ולהשתמש בהם בג'אווה
 
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
+        popupMenu.setOnMenuItemClickListener(item -> {// יוצרים מאזין לחיצה לכל אופציה בתפריט
+            int id = item.getItemId();// שומרים את המזהה הייחודי של האופציה שנלחצה
 
             if (id == R.id.menu_profile) {
-                // Open profile screen
+                // פותח את מסך הפרופיל
                 startActivity(new Intent(HomeActivity.this, ProfileActivity.class));
-                return true;
+                return true;// מחזיר לאנדרואיד שהלחיצה על המניו טופלה ואין צורך לבדוק לחיצות נוספות
 
             } else if (id == R.id.menu_how_to_play) {
-                // Open how to play screen
+                // פותח את מסך איך לשחק
                 startActivity(new Intent(HomeActivity.this, HowToPlayActivity.class));
                 return true;
 
             } else if (id == R.id.menu_logout) {
-                logoutUser(); // Sign out and go back to login screen
+                logoutUser(); // קורא לפעולה logoutUser()
                 return true;
             }
-            return false;
+            return false;// אם כלום לא נלחץ, מחזירים לאנדרואיד תשובה ששום דבר לא נלחץ
         });
 
-        popupMenu.show(); // Display the menu
+        popupMenu.show(); // הצגת התפריט
     }
 
-    // ==================== LOGOUT ====================
-
     private void logoutUser() {
-        // Signs out the user and clears all locally saved data
-        mAuth.signOut(); // Sign out from Firebase
+        mAuth.signOut(); // ניתוק המשתמש ממאגר הנתונים
 
-        // Clear remember me data from local storage
+        // מעדכנים את הSP ומוחקים את כל מה שהיה שמור שם
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("rememberMe", false);
         editor.remove("email");
         editor.apply();
 
-        // Go back to the login screen
+        // החזרה למסך ההתחברות
         Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
         startActivity(intent);
-        finish(); // Close HomeActivity so user can't press back to return here
+        finish(); // סגירת מסך הבית
     }
 
-    // ==================== SCHEDULE REMINDER ====================
 
     private void scheduleReminder() {
-        // Schedules a daily alarm that fires at 11:00 AM
-        // If the user restarts their phone just before 11 AM and it comes back on after 11 AM
-        // BootReceiver will fire the alarm immediately when the phone finishes booting
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);// בקשה מאנדרואיד לקבל גישה לשירות המערכת הרשמי
+        // שאחראי על ניהול שעונים מעוררים ומשימות מתוזמנות בטלפון
 
-        // This intent points to ReminderReceiver - it runs when the alarm fires
-        Intent intent = new Intent(this, ReminderReceiver.class);
+        Intent intent = new Intent(this, ReminderReceiver.class);// יצירת בקשה של המסך הנוכחי להפעיל את הקוד שיש במחלקה ReminderReceiver
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 this,
-                0,
-                intent,
+                0,// מזהה ייחודי לתזכורת היומית
+                intent,// האינטנט שיצרנו למעלה שמפעיל את הקוד ברמיינדר רסיבר
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                // דגל 1 - מונע כפל התראות, אם יש כבר שעון במערכת והנתונים שונו אז הוא רק יתעדכן בנתונים החדשים
+                // דגל 2 - יצירת אבטחה לאינטנט שאף אחד לא יוכל לפגוע בו ולהרוס אותו
         );
 
-        // Set the target time to today at 11:00 AM
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 11); // 11 AM
+        Calendar calendar = Calendar.getInstance();// יצירת רובייקט עם התאריך והשעה המדוייקים כרגע
+        calendar.set(Calendar.HOUR_OF_DAY, 11); // הגדרת הזמן של התאריך והשעה של היום לשעה 11:00 בבוקר
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
 
-        // If 11:00 AM already passed today schedule for tomorrow
-        // For example if the user opens the app at 2:00 PM we don't fire immediately
+        // בדיקה אם הזמן הנוכחי כבר מאוחר יותר מהשעה 11:00 בבוקר, אם כן נשלח הודעה מחר
         if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1); // Move to tomorrow at 11:00 AM
+            calendar.add(Calendar.DAY_OF_YEAR, 1); // משנים את האובייקט שאחראי על השעה הנוכחית (מוסיפים לו יום)
         }
 
-        // Android 12+ requires permission to schedule exact alarms
-        // If permission is not granted we fall back to setAndAllowWhileIdle()
-        // which is not perfectly exact but still fires when the app is closed
+        //בדיקה אם גרסת האנדוראיד של המשתמש גדולה או זהה לאנדרואיד 12
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                // Permission granted - schedule exact alarm so it fires at exactly 11:00 AM
-                alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
-                        pendingIntent
+            if (alarmManager.canScheduleExactAlarms()) {//בודק האם קיים אישור לשלוח הודעות בשעות מדוייקות
+                alarmManager.setExactAndAllowWhileIdle(// קוראים למתודה ששולחת התראות בזמן מדוייק לגמרי (אם כתוב 11:00 היא תשלח ב11:00)
+                        AlarmManager.RTC_WAKEUP,// סוג השעון שלפיו עובדת המתודה, שולח התראה בכל מצב, גם אם המסך כבוי או שהמכשיר במצב שינה
+                        calendar.getTimeInMillis(),// השעה שתישלח ההודעה
+                        pendingIntent// המעטפת שמגדירה מה יופעל כשהזמן יגיע
                 );
             } else {
-                // Permission not granted - use non-exact fallback
-                // Still fires when app is closed but might be a few minutes late
+                // אם אין הרשאה לשלוח התראות מדוייקות נשלח בערך השעה 11:00
                 alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         calendar.getTimeInMillis(),
@@ -245,7 +221,7 @@ public class HomeActivity extends AppCompatActivity {
                 );
             }
         } else {
-            // Android 11 and below - always exact no permission needed
+            // אם הגרסא מתחת לאנדרואיד 12 ניתן ישר לאפשר שליחת התראות מדוייקות
             alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     calendar.getTimeInMillis(),
