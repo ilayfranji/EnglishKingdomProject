@@ -64,23 +64,12 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
             success -> imagePicker.onCameraResult(success)); // מחזירים את התמונה ישר לדיאלוג הImagePicker
 
 
-
-
-
-
-
-
-
-
-
-
-/// להמשיך מפה!!!!
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_learn);
 
-        // Restore camera URI if Android killed and recreated the activity
+        // לצורך שמירה של התמונה אם אנדרואיד סוגר את האפליקציה בזמן שהמצלמה נפתחת
         Uri restoredUri = null;
         if (savedInstanceState != null) {
             restoredUri = savedInstanceState.getParcelable(KEY_CAMERA_URI);
@@ -96,33 +85,36 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
         tvEditMode = findViewById(R.id.tvEditMode);
         tvEditBanner = findViewById(R.id.tvEditBanner);
 
-        categoryList = new ArrayList<>();
+        categoryList = new ArrayList<>();// יצירת מערך ריק של הקטגוריות
 
-        // GridLayoutManager with 2 columns arranges cards side by side
-        recyclerCategories.setLayoutManager(new GridLayoutManager(this, 2));
-        categoryAdapter = new CategoryAdapter(this, categoryList, this);
-        recyclerCategories.setAdapter(categoryAdapter);
+        recyclerCategories.setLayoutManager(new GridLayoutManager(this, 2));// סידור הכרטיסיות בריסייקלר וויו ב2 עמודות
+        categoryAdapter = new CategoryAdapter(this, categoryList, this);// מעבירים לאדפטר את רשימת הקטגוריות ובמקרה של לחיצה אומרים לו שיודיע לנו על מה לחצו
+        recyclerCategories.setAdapter(categoryAdapter);// חיבור האדפטר לריסייקלר וויו
 
-        checkIfAdmin();
+        checkIfAdmin();// קריאה למתודות
         loadCategories();
 
-        // Create ImagePickerHelper - forward image to whichever dialog is open
         imagePicker = new ImagePickerHelper(this,
-                (uri, fromGallery) -> {
-                    // Tell both dialogs about the new image
-                    // Each dialog checks isShowing() and ignores it if not currently open
+                (uri, fromGallery) -> {// שולחים לImagePicker את קישור התמונה והאם היא צולמה מהגלריה
+                // התמונה נשלחת לשני הדיאלוגים ולבסוף בזכות המתודה isShowing() רק אחד מהם משתמש בה, הדיאלוג שפתוח
                     addDialog.onImagePicked(uri);
                     editDialog.onImagePicked(uri);
                 },
-                galleryLauncher,
+                galleryLauncher,// העברת הלאנצ'ר למחלקת העזר כדי שהיא תוכל ללכת לגלרייה ולמצלמה בעצמה
                 cameraLauncher);
 
-        if (restoredUri != null) imagePicker.setPendingCameraUri(restoredUri);
+        if (restoredUri != null) imagePicker.setPendingCameraUri(restoredUri);// שליחת התמונה השמורה אם האפליקציה נסגרה אל imagePicker
 
-        // Create dialogs
+        // יצירת הדיאלוגים
         addDialog = new AddCategoryDialog(this, imagePicker, () -> {});
         editDialog = new EditCategoryDialog(this, imagePicker, () -> {});
 
+
+
+
+
+
+        /// להמשיך מפה!!!!!!!
         tvBack.setOnClickListener(v -> finish());
         tvEditMode.setOnClickListener(v -> enterEditMode());
         fabCategory.setOnClickListener(v -> addDialog.show());
