@@ -110,149 +110,126 @@ public class LearnActivity extends AppCompatActivity implements CategoryAdapter.
         editDialog = new EditCategoryDialog(this, imagePicker, () -> {});
 
 
-
-
-
-
-        /// להמשיך מפה!!!!!!!
         tvBack.setOnClickListener(v -> finish());
-        tvEditMode.setOnClickListener(v -> enterEditMode());
-        fabCategory.setOnClickListener(v -> addDialog.show());
-        fabExitEditMode.setOnClickListener(v -> exitEditMode());
+        tvEditMode.setOnClickListener(v -> enterEditMode());// קריאה למתודה
+        fabCategory.setOnClickListener(v -> addDialog.show());// מציג את דיאלוג ההוספה
+        fabExitEditMode.setOnClickListener(v -> exitEditMode());// קריאה למתודה
     }
 
-    // ==================== RESUME ====================
 
     @Override
-    protected void onResume() {
-        super.onResume(); // Always call super first
-        // This runs every time we come back to this screen
-        // For example when user presses back from WordsActivity
-        // We refresh all cards so the progress bars show the latest learned word counts
-        // This works together with the get() in CategoryAdapter -
-        // notifyDataSetChanged() triggers onBindViewHolder for every card
-        // which calls get() again to fetch the latest progress from Firestore
-        if (categoryAdapter != null) {
+    protected void onResume() {// כאשר חוזרים למסך הלמידה, מפעילים את המתודה כדי שכל ההישגים וההתקדמות של המשתמש תישאר
+        super.onResume();
+        if (categoryAdapter != null) {// אם קיים אדפטר, מבקשים ממנו לשים לב למה השתנה
             categoryAdapter.notifyDataSetChanged();
         }
     }
 
-    // ==================== SAVE STATE ====================
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (imagePicker != null && imagePicker.getPendingCameraUri() != null) {
+        if (imagePicker != null && imagePicker.getPendingCameraUri() != null) {// שמירה במאין "כספת" את הכתובת של התמונה שנלקחה מהמצלמה במקרה
+            // והאנדוראיד יסגור את האפליקציה כשהמצלמה דולקת
             outState.putParcelable(KEY_CAMERA_URI, imagePicker.getPendingCameraUri());
         }
     }
 
-    // ==================== PERMISSION RESULT ====================
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {// בדיקת ההרשאות
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Forward permission result to ImagePickerHelper - it knows what to do
-        imagePicker.onPermissionResult(requestCode, grantResults);
+        imagePicker.onPermissionResult(requestCode, grantResults);// שולח ישר את התשובה לבקשת ההרשאה מהמשתמש לimagePicker
     }
 
-    // ==================== ADMIN CHECK ====================
-
     private void checkIfAdmin() {
-        if (mAuth.getCurrentUser() == null) return; // No user logged in - skip
+        if (mAuth.getCurrentUser() == null) return; // אם המשתמש לא רשום לא ממשיכים במתודה
 
-        String userId = mAuth.getCurrentUser().getUid();
-        db.collection("users").document(userId).get()
+        String userId = mAuth.getCurrentUser().getUid();// שמירת מזהה ייחודי
+        db.collection("users").document(userId).get()//הבאת המשתמש ממאגר הנתונים
                 .addOnSuccessListener(document -> {
-                    if (document.exists()) {
-                        String role = document.getString("role");
-                        if (role != null && role.equals("ADMIN")) {
-                            isAdmin = true;
-                            tvEditMode.setVisibility(View.VISIBLE); // Show pencil for admin only
+                    if (document.exists()) {// אם קיים משתמש
+                        String role = document.getString("role");// שמירת הrole של המשתמש
+                        if (role != null && role.equals("ADMIN")) {// אם קיים role והוא מנהל
+                            isAdmin = true;// המשתמש אדמין
+                            tvEditMode.setVisibility(View.VISIBLE); // מציג את עיפרון העריכה אם המשתמש הוא אדמין
                         }
                     }
                 });
     }
 
-    // ==================== LOAD CATEGORIES ====================
 
     private void loadCategories() {
         // Real time listener - updates automatically when categories are added/edited/deleted
         db.collection("categories")
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
+                .addSnapshotListener((snapshots, error) -> {// מאזין 24/7 למאגר הנתונים ורואה מה משתנה בו כל הזמן
+                    if (error != null) {// במקרה של שגיאה בטעינת הקטגוריות
                         Toast.makeText(this, "Error loading categories", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    categoryList.clear(); // Clear old data before adding fresh data
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        Category category = doc.toObject(Category.class); // Convert to Category object
-                        category.setIdFS(doc.getId()); // Save document ID into the object
-                        categoryList.add(category);
+                    categoryList.clear(); // מחיקת רשימת הקטגוריות הישנה
+                    for (QueryDocumentSnapshot doc : snapshots) {// מעבר על כל הקטגוריות במאגר
+                        Category category = doc.toObject(Category.class); // המרת הקטגוריה לאובייקט שג'אווה יוכל להשתמש בו
+                        category.setIdFS(doc.getId()); // שמירת המזהה הייחודי של הקטגוריה
+                        categoryList.add(category);// הוספת הקטגוריה לרשימת הקטגוריות
                     }
-                    categoryAdapter.notifyDataSetChanged(); // Refresh the grid
+                    categoryAdapter.notifyDataSetChanged(); // רענון המסך שיופיעו הקטגוריות לפי העגכון האחרון שהן עברו
                 });
     }
 
-    // ==================== EDIT MODE ====================
-
     private void enterEditMode() {
-        isEditMode = true;
-        tvEditBanner.setVisibility(View.VISIBLE); // Show red edit mode banner
-        fabCategory.setVisibility(View.VISIBLE); // Show + button
-        fabExitEditMode.setVisibility(View.VISIBLE); // Show X button
-        tvEditMode.setVisibility(View.GONE); // Hide pencil button
+        isEditMode = true;// המנהל במצב עריכה
+        tvEditBanner.setVisibility(View.VISIBLE); // הצגת סרגל עם פירוט על מצב העריכה במעלה המסך
+        fabCategory.setVisibility(View.VISIBLE); // הצגת כפתור ההוספה +
+        fabExitEditMode.setVisibility(View.VISIBLE); // הצגת כפתור היציאה ממצב עריכה X
+        tvEditMode.setVisibility(View.GONE); // הסתרת העיפרון
     }
 
     private void exitEditMode() {
-        isEditMode = false;
+        isEditMode = false;// המנהל לא במצב עריכה
         tvEditBanner.setVisibility(View.GONE);
         fabCategory.setVisibility(View.GONE);
         fabExitEditMode.setVisibility(View.GONE);
         tvEditMode.setVisibility(View.VISIBLE);
     }
 
-    // ==================== CATEGORY CLICK LISTENERS ====================
-
     @Override
     public void onCategoryClick(Category category) {
-        // Called by CategoryAdapter when a category card is tapped
+        // המתודה הזאת נקראת על ידי האדפטר ומעבירה לו קטגוריה שעליה לחצו
         if (isEditMode) {
-            editDialog.show(category); // Edit mode → open edit dialog
+            editDialog.show(category); // בדיקה אם המנהל במצב עריכה, אם כן, לחיצה על קטגוריה מציגה את דיאלוג העריכה
         } else {
-            // Normal mode → open WordsActivity and pass the categoryId and categoryName
+            // אם אנחנו במצב רגיל, לחיצה על קטגוריה מעביר למסך המילים של הקטגוריה
             Intent intent = new Intent(this, WordsActivity.class);
-            intent.putExtra("categoryId", category.getIdFS()); // So WordsActivity knows which words to load
-            intent.putExtra("categoryName", category.getCategoryName()); // For display at the top
-            intent.putExtra("categoryType", category.getCategoryType()); // "WORDS"/"LETTERS"/"SENTENCES"
-            startActivity(intent);
+            intent.putExtra("categoryId", category.getIdFS()); // מעבירים למסך המילים את המזהה הייחודי של הקטגוריה
+            intent.putExtra("categoryName", category.getCategoryName()); // מעבירים גם את שם הקטגוריה
+            intent.putExtra("categoryType", category.getCategoryType()); // מעבירים גם את סוג הקטגוריה
+            startActivity(intent);// עוברים למסך המילים
         }
     }
 
     @Override
     public void onCategoryLongClick(Category category) {
-        // Called by CategoryAdapter when a category card is long pressed
+        // המתודה הזאת נקראת על ידי האדפטר ומעבירה לו קטגוריה שעליה לחצו לחיצה ארוכה
         if (isEditMode) {
-            showDeleteConfirmationDialog(category); // Edit mode → show delete confirmation
+            showDeleteConfirmationDialog(category); // בדיקה אם המנהל במצב עריכה, אם כן מציגים את דיאלוג המחיקה
         }
     }
 
-    // ==================== DELETE ====================
-
     private void showDeleteConfirmationDialog(Category category) {
-        // Shows a confirmation popup before deleting - prevents accidental deletion
+        // מציגים דיאלוג "האם אתה בטוח שאתה רוצה למחוק את הקטגוריה?"
         new AlertDialog.Builder(this)
                 .setTitle("Delete Category")
                 .setMessage("Are you sure you want to delete \"" + category.getCategoryName() + "\"?")
-                .setPositiveButton("Delete", (dialog, which) -> deleteCategoryFromFirestore(category.getIdFS()))
-                .setNegativeButton("Cancel", null) // null = just close, don't delete
+                .setPositiveButton("Delete", (dialog, which) -> deleteCategoryFromFirestore(category.getIdFS()))// מוחקים את הקטגוריה ממאגר הנתונים ובכך היא גם נמחקת מהמסך
+                .setNegativeButton("Cancel", null) // סגירת הדיאלוג ללא מחיקה
                 .show();
     }
 
     private void deleteCategoryFromFirestore(String categoryId) {
-        // Permanently deletes the category document from Firestore
-        db.collection("categories").document(categoryId).delete()
-                .addOnSuccessListener(v -> Toast.makeText(this, "Category deleted!", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(this, "Error deleting category", Toast.LENGTH_SHORT).show());
+        // המתודה מוחקת את הדיאלוג ממאגר הנתונים לצמיתות
+        db.collection("categories").document(categoryId).delete()// הולך לקטגוריה שקיבלנו במתודה ומוחק אותה
+                .addOnSuccessListener(v -> Toast.makeText(this, "Category deleted!", Toast.LENGTH_SHORT).show())// אם הקטגוריה נמחקה נציג הודעת טוסט מתאימה
+                .addOnFailureListener(e -> Toast.makeText(this, "Error deleting category", Toast.LENGTH_SHORT).show());// אם לא הצלחנו למחוק מסיבה כלשהי של מאגר הנתונים נציג הודעה מתאימה
     }
 }

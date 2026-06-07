@@ -11,44 +11,36 @@ import androidx.appcompat.app.AlertDialog;
 import com.ilay.englishkingdom.Utils.PermissionManager;
 
 public class ImagePickerHelper {
-    // למחלקה הזו יש תפקיד אחד: להציג את בחירת המצלמה/גלריה ולהחזיר את התמונה שנבחרה
-    // היא משמשת את AddCategoryDialog, EditCategoryDialog, ו-RegisterActivity
-    // כך שאנחנו כותבים את לוגיקת המצלמה/גלריה/הרשאות פעם אחת כאן במקום 3 פעמים
+    //המחלקה מציגה את התמונה שנבחרה מהמצלמה או הגלריה ומחזירה אותה למסך שמבקש
 
-    // ==================== ממשק CALLBACK ====================
 
     public interface OnImagePickedListener {
-        // זהו "callback" - כמו מספר טלפון שאנחנו מתקשרים אליו כשהתמונה מוכנה
+        // זה callback, כמו מספר טלפון שאנחנו מתקשרים אליו כשהתמונה מוכנה
         // המחלקה שיוצרת את ImagePickerHelper חייבת לממש את המתודה הזו
-        // כשנבחרת תמונה, אנחנו קוראים ל-listener.onImagePicked() כדי להחזיר את התמונה
+        // כשנבחרת תמונה, אנחנו קוראים לlistener.onImagePicked() כדי להחזיר את התמונה
         void onImagePicked(Uri uri, boolean fromGallery);
     }
 
-    // ==================== שדות (FIELDS) ====================
-
-    private final Activity activity; // נחוץ להצגת דיאלוגים והודעות טוסט
+    private final Activity activity; //  לצורך הצגת דיאלוגים והודעות טוסט
     private final OnImagePickedListener listener; // את מי לעדכן כשהתמונה נבחרת
     private final ActivityResultLauncher<String> galleryLauncher; // פותח את אפליקציית הגלריה
     private final ActivityResultLauncher<Uri> cameraLauncher; // פותח את אפליקציית המצלמה
 
-    private Uri pendingCameraUri = null; // ה-URI של הקובץ הזמני שנוצר לפני הפעלת המצלמה
-    // אנחנו שומרים אותו כאן כי המצלמה צריכה קובץ לשמור אליו לפני שהיא נפתחת
-    // ואנחנו צריכים לזכור אותו עבור הרגע שבו המצלמה מחזירה תוצאה
+    private Uri pendingCameraUri = null; // הכתובת של התמונה שתגיע מהמצלמה כדי שלא תימחק
 
     private boolean waitingForCamera = false; // true = ביקשנו הרשאת מצלמה, ממתינים לתגובת המשתמש
     private boolean waitingForGallery = false; // true = ביקשנו הרשאת גלריה, ממתינים לתגובת המשתמש
+
     // אנחנו צריכים את הדגלים האלו כי אחרי בקשת הרשאה, אנדרואיד קורא ל-onRequestPermissionsResult()
     // ואנחנו צריכים לדעת מה ניסינו לעשות לפני בקשת ההרשאה
 
-    // ==================== בנאי (CONSTRUCTOR) ====================
 
+
+    //יוצרים ImagePickerHelper חדש
     public ImagePickerHelper(Activity activity, OnImagePickedListener listener,
                              ActivityResultLauncher<String> galleryLauncher,
                              ActivityResultLauncher<Uri> cameraLauncher) {
         // הבנאי שומר את כל הדברים שאנחנו צריכים כדי לבצע את העבודה
-        // ה-launchers מועברים מה-Activity כי הם חייבים להיווצר
-        // בתוך ה-Activity באמצעות registerForActivityResult() - אנדרואיד דורש זאת
-        // אנחנו לא יכולים ליצור אותם כאן בתוך מחלקת עזר (helper class)
         this.activity = activity;
         this.listener = listener;
         this.galleryLauncher = galleryLauncher;
@@ -58,28 +50,25 @@ public class ImagePickerHelper {
     // ==================== הצגת הבחירה (SHOW PICKER) ====================
 
     public void show() {
-        // מציג פופ-אפ עם שתי אפשרויות: מצלמה או גלריה
-        // נקרא בכל פעם שהמנהל לוחץ על "הוסף תמונה" או "שנה תמונה"
+        //מציג את דיאלוג הבחירה
         new AlertDialog.Builder(activity)
                 .setTitle("Choose Image Source")
                 .setItems(new String[]{"Camera", "Gallery"}, (dialog, which) -> {
                     if (which == 0) { // אינדקס 0 = נלחצה מצלמה
                         if (PermissionManager.hasCameraPermission(activity)) {
-                            // הרשאה כבר ניתנה - הפעל מצלמה מיד
+                            // בודק אם יש הרשאה לפתיחת מצלמה, אם כן נקרא למתודה launchCamera
                             launchCamera();
                         } else {
-                            // הרשאה עדיין לא ניתנה - שאל את המשתמש
-                            // אנחנו מגדירים waitingForCamera = true כדי שכשתחזור תוצאת ההרשאה
-                            // נדע שעלינו להפעיל את המצלמה
+                            //אם אין הרשאה, נבקש הרשאה ונשים "תזכורת" שהתשובה להרשאה שביקשנו תהיה עבור המצלמה
                             waitingForCamera = true;
                             PermissionManager.requestCameraPermission(activity);
                         }
-                    } else { // אינדקס 1 = נלחצה גלריה
+                    } else { // אינדקס 1 = נלחצה גלרייה
                         if (PermissionManager.hasGalleryPermission(activity)) {
-                            // הרשאה כבר ניתנה - הפעל גלריה מיד
+                            // בודק אם יש הרשאה לפתיחת גלרייה, אם כן נקרא למתודה launchGallery
                             launchGallery();
                         } else {
-                            // הרשאה עדיין לא ניתנה - שאל את המשתמש
+                            //אם אין הרשאה, נבקש הרשאה ונשים "תזכורת" שהתשובה להרשאה שביקשנו תהיה עבור הגלרייה
                             waitingForGallery = true;
                             PermissionManager.requestGalleryPermission(activity);
                         }
@@ -92,69 +81,62 @@ public class ImagePickerHelper {
     // ==================== תוצאת הרשאה (PERMISSION RESULT) ====================
 
     public void onPermissionResult(int requestCode, int[] grantResults) {
-        // מתודת onRequestPermissionsResult() של ה-Activity קוראת למתודה הזו
-        // מכיוון ש-ImagePickerHelper הוא זה שביקש את ההרשאה
-        // והוא זה שיודע מה לעשות אחרי קבלת התוצאה
 
-        // בדוק אם המשתמש לחץ על "אפשר" (PERMISSION_GRANTED) או "דחה"
+        // בדיקה אם יש תשובה להרשאה אחת לפחות ואם ההרשאה אושרה
         boolean granted = grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
-        if (requestCode == PermissionManager.CAMERA_PERMISSION_CODE) {
-            // זו התגובה לבקשת הרשאת המצלמה שלנו
+        if (requestCode == PermissionManager.CAMERA_PERMISSION_CODE) { // האם הקוד שווה לקוד של הרשאת מצלמה
+            //אם התנאי מעל התקיים ויש אישור לפי תוצאות ההרשאות שקיבלנו ואנחנו מחכים לתשובה על מצלמה
             if (granted && waitingForCamera) {
-                // המשתמש אישר מצלמה והמתנו להפעיל אותה - הפעל כעת
+                // נקרא למתודה launchCamera
                 launchCamera();
             } else if (!granted) {
-                // המשתמש דחה הרשאת מצלמה - הצג הודעה
-                Toast.makeText(activity, "Camera permission denied.", Toast.LENGTH_SHORT).show();
+                // אם המשתמש דחה את ההרשאה מציגים הודעה מתאימה
+                Toast.makeText(activity, "Camera permission denied", Toast.LENGTH_SHORT).show();
             }
-            waitingForCamera = false; // איפוס הדגל - אנחנו כבר לא ממתינים
+            waitingForCamera = false; // "תזכורת" שאנחנו לא מחכים לתשובה יותר על הרשאת מצלמה
 
         } else if (requestCode == PermissionManager.GALLERY_PERMISSION_CODE) {
-            // זו התגובה לבקשת הרשאת הגלריה שלנו
+            // האם הקוד שווה לקוד של הרשאת גלרייה
             if (granted && waitingForGallery) {
-                // המשתמש אישר גלריה והמתנו להפעיל אותה - הפעל כעת
-                launchGallery();
-            } else if (!granted) {
-                Toast.makeText(activity, "Gallery permission denied.", Toast.LENGTH_SHORT).show();
+                //אם התנאי מעל התקיים ויש אישור לפי תוצאות ההרשאות שקיבלנו ואנחנו מחכים לתשובה על גלרייה
+                launchGallery(); // נקרא למתודה launchGallery
+            } else if (!granted) { // אם המשתמש לחץ דחה מציגים הודעה מתאימה
+                Toast.makeText(activity, "Gallery permission denied", Toast.LENGTH_SHORT).show();
             }
-            waitingForGallery = false; // איפוס הדגל
+            waitingForGallery = false; // "תזכורת" שאנחנו לא מחכים לתשובה יותר על הרשאת גלרייה
         }
     }
 
     // ==================== CALLBACKS לתוצאות LAUNCHER ====================
 
     public void onGalleryResult(Uri uri) {
-        // ה-galleryLauncher של ה-Activity קורא לזה אחרי שהמשתמש בוחר תמונה
-        // אנחנו מעבירים את התוצאה למי שמקשיב (דיאלוג הוספה, דיאלוג עריכה, הרשמה)
+        // האקטביטי קורא לפעולה הזאת ומעביר לה את התמונה מהגלרייה
         if (uri != null) listener.onImagePicked(uri, true); // true = הגיע מהגלריה
+        // מעבירים את התמונה בחזרה לאקטיביטי
     }
 
     public void onCameraResult(boolean success) {
-        // ה-cameraLauncher של ה-Activity קורא לזה אחרי שהמשתמש מצלם תמונה
+        // האקטביטי קורא לפעולה הזאת ומעביר לה את המידע האם הצלחנו לצלם תמונה או לא
         // success = true אומר שהתמונה צולמה, false אומר שהמשתמש ביטל
-        if (success && pendingCameraUri != null) {
+        if (success && pendingCameraUri != null) {// אם הצלחנו לצלם ויש מקום שבו התמונה נשמרה
             listener.onImagePicked(pendingCameraUri, false); // false = הגיע מהמצלמה
+            // מעבירים את התמונה מהמצלמה לאקטיביטי
         } else {
-            pendingCameraUri = null; // המשתמש ביטל - נקה את ה-URI הזמני
+            pendingCameraUri = null; // אם אין תמונה נמחק את המקום שבו נשמרה התמונה
         }
     }
 
-    // ==================== GETTERS ====================
-
     public Uri getPendingCameraUri() {
-        // LearnActivity צריכה את זה כדי לשמור/לשחזר את ה-URI כשאנדרואיד הורג את ה-activity
-        // (למשל כשהמצלמה נפתחת אנדרואיד עשוי להרוג את האפליקציה כדי לפנות זיכרון)
+        //מביא את הכתובת שבו שמורה התמונה מהמצלמה
         return pendingCameraUri;
     }
 
     public void setPendingCameraUri(Uri uri) {
-        // LearnActivity קוראת לזה כדי לשחזר את ה-URI אחרי שאנדרואיד בונה מחדש את ה-activity
+        // מציבים את הכתובת של התמונה שצולמה מהמצלמה ב"תא האחסון" שיצרנו
         pendingCameraUri = uri;
     }
-
-    // ==================== עוזרי עזר פרטיים (PRIVATE HELPERS) ====================
 
     private void launchCamera() {
         // יוצר קובץ זמני תחילה, ואז פותח את המצלמה המכוונת לקובץ הזה
@@ -164,7 +146,7 @@ public class ImagePickerHelper {
     }
 
     private void launchGallery() {
-        // פותח את הגלריה - "image/*" אומר לקבל כל סוג תמונה (jpg, png וכו')
+        // פותח את הגלריה. "image/*" אומר לקבל כל סוג תמונה (jpg, png וכו')
         galleryLauncher.launch("image/*");
     }
 
@@ -173,9 +155,10 @@ public class ImagePickerHelper {
         // System.currentTimeMillis() הופך את שם הקובץ לייחודי בכל פעם
         java.io.File photo = new java.io.File(activity.getCacheDir(),
                 "temp_photo_" + System.currentTimeMillis() + ".jpg");
-        // FileProvider הופך את נתיב הקובץ ל-URI מאובטח שאפליקציית המצלמה יכולה לכתוב אליו
-        // בלי FileProvider המצלמה תיחסם משמירה (כלל אבטחה של אנדרואיד)
+        // FIleProvider מאפשר כניסה חד פעמית לקובץ שיצרנו רק לשים את התמונה בו
+        // בלי FileProvider לא נצליח לשמור את התמונה (כלל אבטחה של אנדרואיד)
         return androidx.core.content.FileProvider.getUriForFile(activity,
                 activity.getPackageName() + ".provider", photo);
+        //הכנסת התמונה לתיקייה החדשה שנוצרה
     }
 }
