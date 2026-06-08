@@ -41,7 +41,7 @@ public class BootReceiver extends BroadcastReceiver {
 
         // Set the alarm to fire at 9:00 AM today (or tomorrow if it's already past 9)
         Calendar calendar = Calendar.getInstance(); // Get current date and time
-        calendar.set(Calendar.HOUR_OF_DAY, 9); // Set hour to 9
+        calendar.set(Calendar.HOUR_OF_DAY, 11); // Set hour to 9
         calendar.set(Calendar.MINUTE, 0); // Set minute to 0
         calendar.set(Calendar.SECOND, 0); // Set second to 0
 
