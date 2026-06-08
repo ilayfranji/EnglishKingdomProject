@@ -1,63 +1,57 @@
 package com.ilay.englishkingdom.Receivers;
 
-import android.app.AlarmManager; // Used to schedule the daily alarm
-import android.app.PendingIntent; // Used to tell AlarmManager which receiver to wake up
-import android.content.BroadcastReceiver; // Base class - runs when phone finishes booting
-import android.content.Context; // Needed to access system services
-import android.content.Intent; // Used to create the intent pointing to ReminderReceiver
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 
-import java.util.Calendar; // Used to set the alarm time to 9:00 AM
+import java.util.Calendar;
 
 public class BootReceiver extends BroadcastReceiver {
-    // When the phone restarts, AlarmManager loses all scheduled alarms
-    // This class listens for the phone boot event and reschedules our daily alarm
-    // Without this, the notification would stop working after every phone restart
+    // מחלקה שבעזרתה אנחנו קובעים ומגדירים חדש את התזכורת היומית לאחר שהטלפון נכבה (ריסטארט)
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // onReceive runs automatically when the phone finishes booting
-        // We check the action to make sure it really is a boot event
+        // פעולה שרצה באופן אוטומטי כשהטלפון נדלק
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-            // Phone just finished booting - reschedule the daily alarm
+            // בדיקה אם הטלפון נדלק מחדש, אם כן יוצרים שוב את התזכורת שנמחקה
             scheduleAlarm(context);
         }
     }
 
     private void scheduleAlarm(Context context) {
-        // This is the same alarm scheduling logic as in HomeActivity
-        // We put it here so it also runs after phone restart
+        // יצירת תזכורת חדשה
 
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);// מעניק גישה למערכת השעונים של הטלפון
 
-        // Create the intent that points to ReminderReceiver
-        // When the alarm fires, Android will start ReminderReceiver
+        // קריאה למחלקה ReminderReceiver שמטפלת בשליחת ההודעות
         Intent intent = new Intent(context, ReminderReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
-                0,
-                intent,
+                0,// מזהה ייחודי לתזכורת היומית
+                intent,// האינטנט שיצרנו למעלה שמפעיל את הקוד ברמיינדר רסיבר
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                // דגל 1 - מונע כפל התראות, אם יש כבר שעון במערכת והנתונים שונו אז הוא רק יתעדכן בנתונים החדשים
+                // דגל 2 - יצירת אבטחה לאינטנט שאף אחד לא יוכל לפגוע בו ולהרוס אותו
         );
 
-        // Set the alarm to fire at 9:00 AM today (or tomorrow if it's already past 9)
-        Calendar calendar = Calendar.getInstance(); // Get current date and time
-        calendar.set(Calendar.HOUR_OF_DAY, 11); // Set hour to 9
-        calendar.set(Calendar.MINUTE, 0); // Set minute to 0
-        calendar.set(Calendar.SECOND, 0); // Set second to 0
+        Calendar calendar = Calendar.getInstance(); // שמירת הזמן הנוכחי
+        calendar.set(Calendar.HOUR_OF_DAY, 11); // הגדרת השעון לשעה 11:00 בדיוק
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
 
-        // If 9:00 AM has already passed today, schedule for tomorrow
+        // אם כבר עברה השעה 11:00 באותו יום נשלח הודעה ביום שאחרי
         if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1); // Add 1 day
+            calendar.add(Calendar.DAY_OF_YEAR, 1); // מוסיפים יום אחד
         }
 
-        // setRepeating schedules the alarm to fire every 24 hours
-        // AlarmManager.RTC_WAKEUP means wake up the phone even if it's sleeping
-        // AlarmManager.INTERVAL_DAY = 24 hours in milliseconds
+
         alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(), // First fire time
-                AlarmManager.INTERVAL_DAY, // Repeat every 24 hours
-                pendingIntent
+                AlarmManager.RTC_WAKEUP,// שלח תזכורת אפילו אם הטלפון במצב שינה והמסך כבוי
+                calendar.getTimeInMillis(), // הזמן המדויק שהתזכורת תוצג
+                AlarmManager.INTERVAL_DAY, // חוזר על עצמו כל 24 שעות
+                pendingIntent // "ההוראות" שהתזכורת צריכה לעשות בכל פעם שמגיע הזמן לשלוח תזכורת
         );
     }
 }
