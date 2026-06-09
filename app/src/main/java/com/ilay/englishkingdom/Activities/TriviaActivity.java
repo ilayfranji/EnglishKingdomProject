@@ -50,7 +50,7 @@ public class TriviaActivity extends AppCompatActivity {
     private String correctAnswer = ""; // התשובה הנכונה בעברית
 
 
-    private Handler timerHandler = new Handler(Looper.getMainLooper()); // מריץ את הטיימר במרווחי זמן קבועים של 10 מילי שניות (מריץ במזך הראשי כדי לא לגרום לקריסות)
+    private Handler timerHandler = new Handler(Looper.getMainLooper()); // מריץ את הטיימר במרווחי זמן קבועים של 10 מילי שניות (מריץ במסך הראשי כדי לא לגרום לקריסות)
     private long startTime = 0; // הזמן שהטיימר התחיל
     private long elapsedTime = 0; // הזמן שעבר מהרגע שהטיימר התחיל לפעול
     private boolean timerRunning = false; // אם זה טרו אז הטיימר רץ עכשיו

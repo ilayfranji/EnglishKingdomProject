@@ -1,98 +1,85 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.graphics.Color; // Used to color selected words yellow and correct words green
-import android.os.Bundle; // Used when creating the activity
-import android.os.Handler; // Used for the timer and the transition delay after correct/wrong answer
-import android.os.Looper; // Used with Handler to run on the main thread
-import android.util.Pair; // Used to store word + image URL pairs
-import android.view.View; // Used to show and hide UI elements
-import android.widget.ImageView; // Used to display the pictures
-import android.widget.LinearLayout; // Used for the image rows and word bank rows
-import android.widget.TextView; // Used for the back button, timer, lives, info label and word bank items
-import android.widget.Toast; // Used to show short messages
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Pair;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull; // Used for the @NonNull annotation on the helper method
-import androidx.appcompat.app.AlertDialog; // Used for the back confirmation, game over and win dialogs
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
-import androidx.appcompat.content.res.AppCompatResources; // Used to load the green and red border drawables
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 
-import com.bumptech.glide.Glide; // Used to load pictures from Cloudinary URLs
-import com.google.firebase.auth.FirebaseAuth; // Used to get the current user for saving history
-import com.google.firebase.firestore.FirebaseFirestore; // Used to load words and save history
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single Firestore document
-import com.ilay.englishkingdom.Models.CategoryType; // Used to filter only WORDS type categories
-import com.ilay.englishkingdom.Models.Stage; // Holds the data for one stage (2 words + word bank)
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.ilay.englishkingdom.Models.CategoryType;
+import com.ilay.englishkingdom.Models.Stage;
+import com.ilay.englishkingdom.R;
 
-import java.text.SimpleDateFormat; // Used to format the game date and time for history
-import java.util.ArrayList; // Used for word lists
-import java.util.Collections; // Used to shuffle words so stages are random
-import java.util.Date; // Used to get current date and time
-import java.util.HashSet; // Used to track correctly matched words
-import java.util.List; // The List interface
-import java.util.Locale; // Used for time formatting
-import java.util.Random; // Used to pick random words for each stage
-import java.util.Set; // Used to track previously used words across stages
-import java.util.stream.Collectors; // Used to build the word bank list
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WordMatchActivity extends AppCompatActivity {
 
-    // ==================== CONSTANTS ====================
+    private static final int MAX_LIVES = 3; // משתנה קבוע, יש 3 לבבות
 
-    private static final int MAX_LIVES = 3; // Player gets 3 wrong attempts before game over
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
-    // ==================== FIREBASE ====================
+    private TextView tvBack;
+    private TextView tvTimer;
+    private TextView tvLoading;
+    private TextView word1Text;
+    private TextView word2Text;
+    private TextView infoTv;
+    private TextView livesTv;
+    private ImageView word1ImageView;
+    private ImageView word2ImageView;
+    private LinearLayout wordListContainer;
+    private LinearLayout layout1;
+    private LinearLayout layout2;
+    private LinearLayout wordMatchLayout;
 
-    private FirebaseFirestore db; // Our database connection
-    private FirebaseAuth mAuth; // Used to get current user for saving game history
+    private Stage stage1Words;
+    private Stage stage2Words;
+    private Stage stage3Words;
+    private int currentStage = 1;
+    private String selectedWord = null;
+    private TextView selectedTv = null;
+    private boolean inTransition = false; // האם אנחנו בהמתנה כלשהי (המתנה במעבר שלב או אחרי התאמה)
+    private HashSet<String> correct = new HashSet<>(); // המילים שהותאמו נכון
+    private List<TextView> wordTextViews = new ArrayList<>(); //רשימת מחסן המילים של שלב נוכחי
+    private int lives = MAX_LIVES;
 
-    // ==================== UI ELEMENTS ====================
+    private Handler timerHandler = new Handler(Looper.getMainLooper()); // מריץ את הטיימר במרווחי זמן קבועים של 10 מילי שניות (מריץ במסך הראשי כדי לא לגרום לקריסות)
+    private long startTime = 0;
+    private long elapsedTime = 0; // הזמן שעבר מהרגע שהטיימר הופעל
+    private boolean timerRunning = false; // האם הטיימר רץ ברגע זה
 
-    private TextView tvBack; // Back arrow - asks for confirmation before leaving
-    private TextView tvTimer; // Timer counting up from 0:00:000
-    private TextView tvLoading; // Loading text while words are fetched from Firestore
-    private TextView word1Text; // Shows the matched word on top of image 1 when correct
-    private TextView word2Text; // Shows the matched word on top of image 2 when correct
-    private TextView infoTv; // Tells user which word is selected or asks them to pick one
-    private TextView livesTv; // Shows remaining lives e.g. "Lives: 2/3"
-    private ImageView word1ImageView; // The first picture
-    private ImageView word2ImageView; // The second picture
-    private LinearLayout wordListContainer; // Container for the word bank below the images
-    private LinearLayout layout1; // The first image row - tapping matches selected word to image 1
-    private LinearLayout layout2; // The second image row - tapping matches selected word to image 2
-    private LinearLayout wordMatchLayout; // The whole game area - hidden while loading
-
-    // ==================== GAME DATA ====================
-
-    private Stage stage1Words; // Data for stage 1 - 2 words + word bank
-    private Stage stage2Words; // Data for stage 2
-    private Stage stage3Words; // Data for stage 3
-    private int currentStage = 1; // Which stage we're on right now (1, 2 or 3)
-    private String selectedWord = null; // The word the user tapped in the word bank
-    private TextView selectedTv = null; // The TextView the user tapped - used to reset its color
-    private boolean inTransition = false; // true = waiting after right/wrong answer, ignore taps
-    private HashSet<String> correct = new HashSet<>(); // Words correctly matched in current stage
-    private List<TextView> wordTextViews = new ArrayList<>(); // All word bank TextViews - used to reset colors
-    private int lives = MAX_LIVES; // How many wrong attempts are left
-
-    // ==================== TIMER ====================
-
-    private Handler timerHandler = new Handler(Looper.getMainLooper()); // Runs on main thread
-    private long startTime = 0; // System time when the timer started in milliseconds
-    private long elapsedTime = 0; // How many milliseconds have passed
-    private boolean timerRunning = false; // true = timer is ticking
-
-    // This runnable updates the timer display every 10 milliseconds
-    private Runnable timerRunnable = new Runnable() {
+    private Runnable timerRunnable = new Runnable() {// אובייקט המכיל את המשימה של השעון (חישוב הזמן ועדכון המסך) שנועד להרצה חוזרת בלופ
         @Override
         public void run() {
-            elapsedTime = System.currentTimeMillis() - startTime; // Calculate elapsed time
-            tvTimer.setText(formatTime(elapsedTime)); // Update display
-            timerHandler.postDelayed(this, 10); // Run again in 10ms
+            elapsedTime = System.currentTimeMillis() - startTime; // מחשב את הזמן שהטיימר עבר מהרגע שהוא התחיל את הספירה
+            tvTimer.setText(formatTime(elapsedTime)); // מעדכן את התצוגה של הטיימר במסך
+            timerHandler.postDelayed(this, 10); //קריאה שוב להאנדלר שבעזרתו הטיימר יעשה שוב את הפעולה לאחר 10 מילי שניות
         }
     };
-
-    // ==================== GAME START TIME ====================
 
     private String gameStartDate = ""; // Saved when timer starts e.g. "28/03/2026"
     private String gameStartTime = ""; // Saved when timer starts e.g. "17:45"
