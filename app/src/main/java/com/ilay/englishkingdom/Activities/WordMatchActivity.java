@@ -61,7 +61,7 @@ public class WordMatchActivity extends AppCompatActivity {
     private Stage stage3Words;
     private int currentStage = 1;
     private String selectedWord = null;
-    private TextView selectedTv = null;
+    private TextView selectedTv = null;// שמירת הtext view של המילה שנבחרה
     private boolean inTransition = false; // האם אנחנו בהמתנה כלשהי (המתנה במעבר שלב או אחרי התאמה)
     private HashSet<String> correct = new HashSet<>(); // המילים שהותאמו נכון
     private List<TextView> wordTextViews = new ArrayList<>(); //רשימת מחסן המילים של שלב נוכחי
@@ -81,10 +81,6 @@ public class WordMatchActivity extends AppCompatActivity {
         }
     };
 
-    private String gameStartDate = ""; // Saved when timer starts e.g. "28/03/2026"
-    private String gameStartTime = ""; // Saved when timer starts e.g. "17:45"
-
-    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,7 +90,6 @@ public class WordMatchActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Connect each variable to its XML view
         tvBack = findViewById(R.id.tvBack);
         tvTimer = findViewById(R.id.tvTimer);
         tvLoading = findViewById(R.id.tvLoading);
@@ -109,108 +104,106 @@ public class WordMatchActivity extends AppCompatActivity {
         wordMatchLayout = findViewById(R.id.wordMatchLayout);
         livesTv = findViewById(R.id.tvLives);
 
-        // Hide game area and show loading while words are fetched
+        // מציגים הודעת Loading... ולא מציגים את המשחק בזמן הבאת נתונים מFireStore
         tvLoading.setVisibility(View.VISIBLE);
         wordMatchLayout.setVisibility(View.GONE);
 
-        // Back button - ask for confirmation so the user doesn't lose progress by accident
+        // קורא למתודה showBackConfirmation()
         tvBack.setOnClickListener(v -> showBackConfirmation());
 
-        loadWords(); // Start loading words from Firestore
+        loadWords(); // קריאה למתודה
 
-        // ==================== IMAGE CLICK LISTENERS ====================
 
-        layout1.setOnClickListener(v -> {
-            if (inTransition) return; // Ignore taps during transition delay
-            if (!isWordSelected()) return; // Ignore if no word is selected
+        layout1.setOnClickListener(v -> {// לחיצה על התמונה העליונה
+            if (inTransition) return; // חוסם לחיצות על המסך בזמן המתנה
+            if (!isWordSelected()) return; // אם לא לחצנו על מילה קודם מתעלמים מלחיצה על תמונה
 
-            Stage stage = getCurrentStageObject();
-            if (stage.isFirstWordSuccess()) return; // Already matched - ignore tap
+            Stage stage = getCurrentStageObject(); // שמירת השלב לאחר שקיבלנו אותו מהמתודה getCurrentStageObject()
+            if (stage.isFirstWordSuccess()) return; // אם התאמנו את הזוג הראשון, לחיצה על התמונה שלו לא תשפיע
 
-            if (selectedWord.equalsIgnoreCase(stage.getFirstWord().first)) {
-                // Correct match for image 1!
-                correct.add(stage.getFirstWord().first.toLowerCase()); // Mark as correctly matched
-                inTransition = true; // Block taps during the 2 second success animation
-                layout1.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_green)); // Green border
-                word1Text.setText(stage.getFirstWord().first); // Show the word on the image
-                resetSelectedWord(); // Deselect the word from the word bank
-                stage.setFirstWordSuccess(true); // Mark image 1 as done
+            if (selectedWord.equalsIgnoreCase(stage.getFirstWord().first)) {// בדיקה אם המילה שסומנה במחסן המילים זהה (לא משנה אותיות קטנות וגדולות)
+                // למילה המתאימה לתמונה שנלחצה (האיבר הראשון בזוג)
+                // אם התנאי מתקיים, צדקנו בהתאמת זוג מספר אחד (העליון)
+                correct.add(stage.getFirstWord().first.toLowerCase()); // הוספה להאש סט של המילים שהצלחנו להתאים
+                inTransition = true; // מחסום לחיצות על המסך
+                layout1.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_green)); // מסגרת ירוקה לתמונה
+                word1Text.setText(stage.getFirstWord().first); // השמת המילה ליד התמונה
+                resetSelectedWord(); // קריאה למתודה resetSelectedWord()
+                stage.setFirstWordSuccess(true); // הצלחנו להתאים את המילה הראשונה
 
                 if (stage.isSecondWordSuccess()) {
-                    // Both images matched - move to next stage after 2 seconds
-                    new Handler().postDelayed(() -> {
-                        inTransition = false;
-                        nextStage();
-                    }, 2000);
-                } else {
-                    // Still need to match image 2 - just unblock taps after 2 seconds
-                    new Handler().postDelayed(() -> inTransition = false, 2000);
+                    // בדיקה אם החלק השני כבר הושלם
+                    new Handler().postDelayed(() -> {// מייצרים שעון נוסף שימתין שנייה אחת לפני שהוא מריץ את הקוד שבתוכו
+                        inTransition = false;// נגמר מחסום הלחיצה
+                        nextStage();// קריאה לnextStage()
+                    }, 1000);
+                } else {// אם החלק השני עדיין לא הושלם
+                    new Handler().postDelayed(() -> inTransition = false, 1000);// מייצרים שעון נוסף שימתין שנייה אחת לפני שהוא מריץ את הקוד שבתוכו
                 }
-            } else {
-                // Wrong match for image 1
-                layout1.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_red)); // Red border
-                inTransition = true;
-                lives--; // Lose a life
-                livesTv.setText(getLivesText()); // Update lives display
-                resetSelectedWord();
+            } else { // אם לא הצליח להתאים את המילה לתמונה שבחלק הראשון וטעה
+                layout1.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_red)); //מסגרת אדומה לתמונה
+                inTransition = true;// מחסום לחיצה
+                lives--; // לב אחד יורד
+                livesTv.setText(getLivesText()); // עדכון התצוגה של הלבבות על המסך
+                resetSelectedWord();// קריאה למתודה
 
-                new Handler().postDelayed(() -> {
-                    layout1.setBackground(null); // Remove red border after 0.5 seconds
-                    inTransition = false;
+                new Handler().postDelayed(() -> {// מייצרים שעון נוסף שימתין חצי שנייה לפני שהוא מריץ את הקוד שבתוכו
+                    layout1.setBackground(null); // מוריד את המסגרת האדומה
+                    inTransition = false;// מוריד את מחסום הלחיצה
                 }, 500);
 
-                if (lives == 0) {
-                    gameOver(false); // No lives left - game over
-                } else {
+                if (lives == 0) {// אם נגמרו הפסילות
+                    gameOver(false); // קריאה למתודה gameOver עם הפרמטר שהמשתמש הפסיד
+                } else {// אם לא נגמרו הפסילות
                     Toast.makeText(this, "Not quite! " + lives + " " +
-                            (lives == 1 ? "life" : "lives") + " left", Toast.LENGTH_SHORT).show();
+                            (lives == 1 ? "life" : "lives") + " left", Toast.LENGTH_SHORT).show();// הודעה מתאימה עם כמות החיים שנותרו לשחקן
                 }
             }
         });
 
         layout2.setOnClickListener(v -> {
-            if (inTransition) return;
-            if (!isWordSelected()) return;
+            if (inTransition) return; // חוסם לחיצות על המסך בזמן המתנה
+            if (!isWordSelected()) return; // אם לא לחצנו על מילה קודם מתעלמים מלחיצה על תמונה
 
-            Stage stage = getCurrentStageObject();
-            if (stage.isSecondWordSuccess()) return; // Already matched - ignore tap
+            Stage stage = getCurrentStageObject();// שמירת השלב לאחר שקיבלנו אותו מהמתודה getCurrentStageObject()
+            if (stage.isSecondWordSuccess()) return; // אם התאמנו את הזוג השני, לחיצה על התמונה שלו לא תשפיע
 
-            if (selectedWord.equalsIgnoreCase(stage.getSecondWord().first)) {
-                // Correct match for image 2!
-                correct.add(stage.getSecondWord().first.toLowerCase());
-                inTransition = true;
-                layout2.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_green));
-                word2Text.setText(stage.getSecondWord().first);
-                resetSelectedWord();
-                stage.setSecondWordSuccess(true);
+            if (selectedWord.equalsIgnoreCase(stage.getSecondWord().first)) {// בדיקה אם המילה שסומנה במחסן המילים זהה (לא משנה אותיות קטנות וגדולות)
+                // למילה המתאימה לתמונה שנלחצה (האיבר הראשון בזוג)
+                // אם התנאי מתקיים, צדקנו בהתאמת זוג מספר שתיים (התחתון)
+                correct.add(stage.getSecondWord().first.toLowerCase());// הוספה להאש סט של המילים שהצלחנו להתאים
+                inTransition = true;// מחסום לחיצות על המסך
+                layout2.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_green));// מסגרת ירוקה לתמונה
+                word2Text.setText(stage.getSecondWord().first);// השמת המילה ליד התמונה
+                resetSelectedWord();// קריאה למתודה resetSelectedWord()
+                stage.setSecondWordSuccess(true);// הצלחנו להתאים את המילה השנייה
 
                 if (stage.isFirstWordSuccess()) {
-                    // Both images matched - move to next stage after 2 seconds
-                    new Handler().postDelayed(() -> {
-                        inTransition = false;
-                        nextStage();
-                    }, 2000);
-                } else {
-                    new Handler().postDelayed(() -> inTransition = false, 2000);
+                    // בדיקה אם החלק הראשון כבר הושלם
+                    new Handler().postDelayed(() -> {// מייצרים שעון נוסף שימתין שנייה אחת לפני שהוא מריץ את הקוד שבתוכו
+                        inTransition = false;// נגמר מחסום הלחיצה
+                        nextStage();// קריאה למתודה
+                    }, 1000);
+                } else {// אם החלק הראשון עדיין לא הושלם
+                    new Handler().postDelayed(() -> inTransition = false, 1000);// מייצרים שעון נוסף שימתין שנייה אחת לפני שהוא מריץ את הקוד שבתוכו
                 }
-            } else {
-                // Wrong match for image 2
-                layout2.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_red));
-                inTransition = true;
-                lives--;
-                livesTv.setText(getLivesText());
-                resetSelectedWord();
+            } else {// אם לא הצליח להתאים את ההמילה לתמונה שבחלק השני וטעה
+                layout2.setBackground(AppCompatResources.getDrawable(this, R.drawable.border_red));// מסגרת אדומה לתמונה בחלק השני
+                inTransition = true;// מחסום לחיצה
+                lives--;// הורדת מספר הלבבות
+                livesTv.setText(getLivesText());// עדכון התצוגה של הלבבות על המסך
+                resetSelectedWord();// קריאה למתודה
 
-                new Handler().postDelayed(() -> {
-                    layout2.setBackground(null);
-                    inTransition = false;
+                new Handler().postDelayed(() -> {// מייצרים שעון נוסף שימתין חצי שנייה לפני שהוא מריץ את הקוד שבתוכו
+                    layout2.setBackground(null);// מוריד את המסגרת האדומה
+                    inTransition = false;// מוריד את מחסום הלחיצה
                 }, 500);
 
-                if (lives == 0) {
-                    gameOver(false);
-                } else {
+                if (lives == 0) {// אם נגמרו הפסילות
+                    gameOver(false);// קריאה למתודה gameOver עם הפרמטר שהמשתמש הפסיד
+                } else {// אם לא נגמרו הפסילות
                     Toast.makeText(this, "Not quite! " + lives + " " +
-                            (lives == 1 ? "life" : "lives") + " left", Toast.LENGTH_SHORT).show();
+                            (lives == 1 ? "life" : "lives") + " left", Toast.LENGTH_SHORT).show();// הודעה מתאימה עם כמות החיים שנותרו לשחקן
                 }
             }
         });
@@ -219,77 +212,65 @@ public class WordMatchActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopTimer(); // Always stop the timer when activity is destroyed to prevent memory leaks
+        stopTimer(); // כשסוגרים את המסך נעצור את הטיימר כדי למנוע דליפת זיכרון
     }
 
-    // ==================== BACK BUTTON ====================
-
     private void showBackConfirmation() {
-        // Asks the user if they really want to leave - prevents accidental exits mid game
+        // דיאלוג "האם אתה בטוח שאתה רוצה להפסיק את המשחק?"
         new AlertDialog.Builder(this)
                 .setTitle("Leave Game?")
                 .setMessage("If you go back now your progress will be lost. Are you sure?")
-                .setPositiveButton("Leave", (dialog, which) -> {
-                    stopTimer(); // Stop the timer before leaving
-                    finish(); // Close the activity
+                .setPositiveButton("Leave", (dialog, which) -> {// לחיצה על Leave
+                    stopTimer(); // קורא למתודה stopTimer()
+                    finish(); // סגירת המסך
                 })
-                .setNegativeButton("Keep Playing", null) // User changed their mind - stay
+                .setNegativeButton("Keep Playing", null) // לחיצה על Keep Playing סוגר את הדיאלוג
                 .show();
     }
 
-    // ==================== TIMER METHODS ====================
 
     private void startTimer() {
-        // Save the start date and time for game history
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        Date now = new Date();
-        gameStartDate = dateFormat.format(now); // e.g. "28/03/2026"
-        gameStartTime = timeFormat.format(now); // e.g. "17:45"
-
-        startTime = System.currentTimeMillis(); // Save when the timer started
-        timerRunning = true;
-        timerHandler.post(timerRunnable); // Start ticking
+        // מתחיל את הטיימר מ0
+        startTime = System.currentTimeMillis(); // שמירת הזמן הנוכחי
+        timerRunning = true;// הטיימר רץ
+        timerHandler.post(timerRunnable); // מתחיל את הטיימר על ידי הפעולה run()
     }
 
     private void stopTimer() {
-        timerRunning = false;
-        timerHandler.removeCallbacks(timerRunnable); // Cancel any pending timer updates
+        timerRunning = false;// הטיימר נעצר
+        timerHandler.removeCallbacks(timerRunnable); // עצירת הטיימר וכל פעולת הרצה עתידית שלו
     }
 
     private String formatTime(long millis) {
-        // Converts milliseconds into "0:00:000" format - same as Word Search and Trivia
+        // שליפת הדקות, השניות והמילי שניות של הזמן שהשחקן משחק במשחק
         long minutes = millis / 60000;
         long seconds = (millis % 60000) / 1000;
         long ms = millis % 1000;
-        return String.format(Locale.getDefault(), "%d:%02d:%03d", minutes, seconds, ms);
+        return String.format(Locale.getDefault(), "%d:%02d:%03d", minutes, seconds, ms);// הצגת זמן המשחק בפורמט של דקות, שניות ומילי שניות
     }
 
-    // ==================== LIVES HELPER ====================
 
     private String getLivesText() {
-        // Returns e.g. "Lives: 2/3" - called every time lives change
+        // מחזיר את ההודעה שמוצגת בראש המסך, מספר לבבות שנותרו מתוך הכמות הכוללת
         return String.format("Lives: %d/%d", lives, MAX_LIVES);
     }
 
-    // ==================== GAME OVER / WIN ====================
 
-    private void gameOver(boolean won) {
-        stopTimer(); // Stop the timer as soon as the game ends
-        saveGameHistory(won); // Save this game to history before showing the dialog
-        inTransition = true; // Disable all interactions while dialog is showing
+    private void gameOver(boolean won) {// משחק נגמר, מקבלת את תוצאת המשחק (ניצח/ הפסיד)
+        stopTimer(); // עצירת הטיימר
+        saveGameHistory(won); // קריאה למתודה saveGameHistory() עם המידע האם המשתמש ניצח או הפסיד
+        inTransition = true; // מחסום לחיצות הופעל
 
         String title;
         String message;
 
-        if (won) {
-            // User completed all 3 stages without running out of lives
+        if (won) {// אם המשתמש ניצח
             title = "You Won!";
             message = "Amazing! You matched all the words correctly!\n\n" +
                     "Your time: " + formatTime(elapsedTime) + "\n" +
                     "Lives remaining: " + lives + "/" + MAX_LIVES;
-        } else {
-            // User made 3 mistakes and ran out of lives
+
+        } else {// אם המשתמש הפסיד
             title = "Game Over!";
             message = "You ran out of lives this time, but don't give up!\n\n" +
                     "You made it to stage " + currentStage + " out of 3.\n" +
@@ -297,37 +278,33 @@ public class WordMatchActivity extends AppCompatActivity {
                     "Keep practicing and try again!";
         }
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this)// יצירת דיאלוג סיום המשחק לפי הניצחון או ההפסד של המשתמש
                 .setTitle(title)
                 .setMessage(message)
-                .setPositiveButton("Play Again", (dialog, which) -> resetGame()) // Start fresh
-                .setNegativeButton("Exit", (dialog, which) -> finish()) // Go back to Practice screen
-                .setCancelable(false) // User must tap a button
+                .setPositiveButton("Play Again", (dialog, which) -> resetGame()) // קריאה למתודה resetGame(), מתחילים משחק מחדש
+                .setNegativeButton("Exit", (dialog, which) -> finish()) // סוגר את המסך וחוזרים למסך התרגול
+                .setCancelable(false) // אי אפשר לסגור את הדיאלוג עד שלא לוחצים על כפתור בדיאלוג
                 .show();
     }
 
-    // ==================== RESET SELECTED WORD ====================
-
     private void resetSelectedWord() {
-        // Clears the selection and resets all word bank text colors
+        // איפוס המילה שנבחרה
         selectedWord = null;
         selectedTv = null;
-        infoTv.setText("Pick a word from the word bank below"); // Reset info label
+        infoTv.setText("Pick a word from the word bank below"); // איפוס ההוראות
 
         for (TextView tv : wordTextViews) {
-            // Already matched words stay green, others go back to white
+            // עוברים על כל המילים במחסן המילים
             if (correct.contains(tv.getText().toString().toLowerCase())) {
-                tv.setTextColor(Color.GREEN);
+                tv.setTextColor(Color.GREEN);// אם אחת מהמילים במחסן המילים נמצאת במילים שצדקנו בהן נסמן אותה בירוק
             } else {
-                tv.setTextColor(Color.WHITE);
+                tv.setTextColor(Color.WHITE);// אחרת נשאיר אותה בלבן
             }
         }
     }
 
-    // ==================== GET CURRENT STAGE ====================
-
     private Stage getCurrentStageObject() {
-        // Returns the Stage object for whichever stage we're currently on
+        // מחזיר את השלב עצמו לפי מספר השלב שהמשתמש נמצא בו
         switch (currentStage) {
             case 2: return stage2Words;
             case 3: return stage3Words;
@@ -335,126 +312,122 @@ public class WordMatchActivity extends AppCompatActivity {
         }
     }
 
-    // ==================== LOAD WORDS ====================
 
-    private void loadWords() {
-        // Loads all words from WORDS type categories only - same approach as Word Search
+    private void loadWords() {// העלאת המילים למשחק רק מטיפוס (WORD)
         db.collection("categories")
                 .whereEqualTo("categoryType", CategoryType.WORDS.name())
                 .get()
-                .addOnSuccessListener(categories -> {
-                    int[] categoriesLeft = {categories.size()};
+                .addOnSuccessListener(categories -> {// מאזין הצלחה להבאת כל המילים ממאגר הנתונים
+                    int[] categoriesLeft = {categories.size()};// יוצר מערך בגודל 1 ובתא כתוב את מספר הקטגוריות הרלוונטיות
 
-                    if (categoriesLeft[0] == 0) {
+                    if (categoriesLeft[0] == 0) {// כשנגמרו הקטגוריות במערך מציגים הודעה
                         tvLoading.setText("No words found! Please add some words first.");
                         return;
                     }
 
-                    // Each pair is (English word, Cloudinary image URL)
+                    // יוצרים רשימה של זוגות של מילים, בכל זוג יש מילה ותמונה שמתאימה למילה
                     List<Pair<String, String>> allWordsList = new ArrayList<>();
 
-                    for (QueryDocumentSnapshot categoryDoc : categories) {
+                    for (QueryDocumentSnapshot categoryDoc : categories) {// מעבר על כל הקטגוריות
                         db.collection("categories").document(categoryDoc.getId())
                                 .collection("words").get()
-                                .addOnSuccessListener(words -> {
-                                    for (QueryDocumentSnapshot wordDoc : words) {
-                                        String english = wordDoc.getString("wordEnglish");
-                                        String image = wordDoc.getString("image");
-                                        // Only add single words (no spaces) that have an image
+                                .addOnSuccessListener(words -> {// מאזין להצלחה
+                                    for (QueryDocumentSnapshot wordDoc : words) {// עובר על כל המילים בקטגוריה שעברנו עליה בלולאה החיצונית
+                                        String english = wordDoc.getString("wordEnglish");// שמירת המילה באנגלית
+                                        String image = wordDoc.getString("image");// שמירת התמונה של המילה
+                                        // אם יש מילה והיא לא מכילה רווחים ויש תמונה למילה
                                         if (english != null && !english.isEmpty()
                                                 && !english.contains(" ")
                                                 && image != null && !image.isEmpty()) {
-                                            allWordsList.add(new Pair<>(english.toLowerCase(), image));
+                                            allWordsList.add(new Pair<>(english.toLowerCase(), image));// אם עמד בתנאים נוסיף אותו לרשימת הזוגות
                                         }
                                     }
 
-                                    categoriesLeft[0]--;
+                                    categoriesLeft[0]--;// בסיום המעבר על כל המילים בקטגוריה הרלוונטית נוריד את הערך בתא באחד
 
-                                    if (categoriesLeft[0] == 0) {
-                                        startGame(allWordsList); // All loaded - start the game
+                                    if (categoriesLeft[0] == 0) {// כשנגמרו כל הקטגוריות
+                                        startGame(allWordsList); // נקרא למתודה startGame עם רשימת המילים שנמצאו מתאימות למשחק
                                     }
                                 });
                     }
                 })
-                .addOnFailureListener(e ->
+                .addOnFailureListener(e ->// מאזין לכישלון
                         tvLoading.setText("Error loading words. Please try again."));
     }
 
-    // ==================== START GAME ====================
 
-    private void startGame(List<Pair<String, String>> allWordsList) {
-        if (allWordsList.size() < 6) {
-            // Need at least 6 words - 2 correct + 4 distractors per stage
+    private void startGame(List<Pair<String, String>> allWordsList) {// התחלת משחק, מקבל את רשימת המילים
+        if (allWordsList.size() < 6) {// אם יש לנו פחות מ6 מילים לא נוכל לשחק
             Toast.makeText(this, "Not enough words to play. Please add more words first!", Toast.LENGTH_LONG).show();
-            finish();
+            finish();// סגירת המסך
             return;
         }
 
-        livesTv.setText(getLivesText()); // Show initial lives
-        tvLoading.setVisibility(View.GONE); // Hide loading text
-        wordMatchLayout.setVisibility(View.VISIBLE); // Show game area
+        livesTv.setText(getLivesText()); // הצגת מספר הלבבות
+        tvLoading.setVisibility(View.GONE); // מחיקת Loadinig...
+        wordMatchLayout.setVisibility(View.VISIBLE); // הצגת המשחק
 
-        // Build all 3 stages - each stage uses different words
-        Set<String> previouslyUsed = new HashSet<>(); // Track used words so stages don't repeat
-        stage1Words = buildStage(allWordsList, previouslyUsed);
+        // בניית 3 שלבים
+        Set<String> previouslyUsed = new HashSet<>(); // יצירת האש סט שבו ימצאו כל המילים שהשתמשנו כבר
+        stage1Words = buildStage(allWordsList, previouslyUsed);// בניית שלב, בכל שלב נעביר את כל המילים הרלוונטיות ואת המילים שהשתמשנו בהם כבר
         stage2Words = buildStage(allWordsList, previouslyUsed);
         stage3Words = buildStage(allWordsList, previouslyUsed);
 
-        currentStage = 1; // Always start from stage 1
-        startTimer(); // Start the timer now that game is ready
-        startStage(); // Show stage 1
+        currentStage = 1; // מתחילים משלב 1
+        startTimer(); // הפעלת השעון
+        startStage(); // הצגת השלב
     }
 
-    // ==================== NEXT STAGE ====================
-
-    private void nextStage() {
-        if (currentStage == 3) {
-            gameOver(true); // All 3 stages done - user wins!
+    private void nextStage() {// מעבר שלב
+        if (currentStage == 3) {// אם אנחנו בשלב 3
+            gameOver(true); // קריאה למתודה gameOver עם המידע שהשחקן ניצח
             return;
         }
 
-        correct.clear(); // Clear matched words from previous stage
-        currentStage++; // Move to next stage
-        layout1.setBackground(null); // Remove green border from previous stage
+        correct.clear(); // מחיקת המילים שהצלחנו בהאש סט
+        currentStage++; // קידום שלב
+        layout1.setBackground(null); // מחיקת מסגרות מסביב לתמונות
         layout2.setBackground(null);
-        startStage(); // Show the new stage
+        startStage(); // התחלת השלב
     }
 
-    // ==================== START STAGE ====================
 
     private void startStage() {
         // Resets the image rows and loads the pictures and word bank for the current stage
-        word1Text.setText(""); // Clear previous word text on image 1
-        word2Text.setText(""); // Clear previous word text on image 2
-        infoTv.setText("Pick a word from the word bank below"); // Reset info label
+        word1Text.setText(""); // מחיקת המילה שמופיעה ליד התמונה
+        word2Text.setText("");
+        infoTv.setText("Pick a word from the word bank below"); // איפוס שורת ההוראות
 
-        Stage stage = getCurrentStageObject(); // Get the data for this stage
+        Stage stage = getCurrentStageObject(); // קבלת מספר השלב הנוכחי מהפעולה getCurrentStageObject()
 
-        // Load both pictures from their Cloudinary URLs using Glide
+        // שימוש בספריית גלייד לטעינת תמונות
         Glide.with(this).load(stage.getFirstWord().second).into(word1ImageView);
         Glide.with(this).load(stage.getSecondWord().second).into(word2ImageView);
 
-        buildWordList(stage); // Build the word bank below
+        buildWordList(stage); // בניית מחסן המילים, מקבל את השלב הנוכחי
     }
 
-    // ==================== BUILD STAGE ====================
 
-    private Stage buildStage(List<Pair<String, String>> allWordsList, Set<String> previouslyUsed) {
-        // Picks 2 unique words for the images and 4 distractors for the word bank
-        List<Pair<String, String>> tempCopy = new ArrayList<>(allWordsList);
+    private Stage buildStage(List<Pair<String, String>> allWordsList, Set<String> previouslyUsed) {// מקבלת את רשימת המילים הרלוונטיות למשחק ואת רשימת המילים שהשתמשנו בהם כבר
+        List<Pair<String, String>> tempCopy = new ArrayList<>(allWordsList);// יצירת עותק של רשימת המילים הרלוונטיות למשחק
         Random rnd = new Random();
 
-        // Pick first word - make sure it wasn't used in a previous stage
-        Pair<String, String> firstWord = tempCopy.remove(rnd.nextInt(tempCopy.size()));
-        int attempts = 20; // Max attempts to find a non-duplicate
-        while (attempts > 0 && previouslyUsed.contains(firstWord.first)) {
-            attempts--;
-            if (tempCopy.isEmpty()) return null;
-            firstWord = tempCopy.remove(rnd.nextInt(tempCopy.size()));
+        Pair<String, String> firstWord = tempCopy.remove(rnd.nextInt(tempCopy.size()));// שליפת זוג רנדומלי מהעותק של רשימת המילים הרלוונטיות
+        int attempts = 20; // מקסימום של 20 נסיונות
+        while (attempts > 0 && previouslyUsed.contains(firstWord.first)) {// לולאה רצה כל עוד יש מספיק נסיונות וכל עוד המילה הרנדומלית שנשלפה נמצאת במילים שהיו במשחק
+            attempts--;// הקטנת מספר הנסיונות
+            if (tempCopy.isEmpty()) return null;// אם רשימת עותק המילים ריקה נחזיר null
+            firstWord = tempCopy.remove(rnd.nextInt(tempCopy.size()));// שליפת זוג רנדומלי מהעותק של רשימת המילים הרלוונטיות שוב
         }
-        if (attempts == 0) return null;
 
-        // Pick second word - also make sure it's unique
+        // לאחר היציאה מהלולאה נבדוק למה יצאנו
+
+
+        if (attempts == 0) return null;// אם יצאנו כי נגמרו הניסיונות נחזיר null
+
+        // אם לא החזרנו עדיין null, קיים זוג שהצלחנו לשמור שלא הופיע עוד במשחק
+
+        //עכשיו אותה לוגיקה גם לזוג השני
         Pair<String, String> secondWord = tempCopy.remove(rnd.nextInt(tempCopy.size()));
         attempts = 20;
         while (attempts > 0 && previouslyUsed.contains(secondWord.first)) {
@@ -463,27 +436,46 @@ public class WordMatchActivity extends AppCompatActivity {
             secondWord = tempCopy.remove(rnd.nextInt(tempCopy.size()));
         }
 
-        // Mark both words as used so the next stage picks different ones
+        // אחרי שמצאנו 2 זוגות מתאימים שלא היו במשחק, נוסיף את המילים של הזוגות לרשימת המילים שהיו במשחק כדי שלא יופיעו שוב בשלבים הבאים
         previouslyUsed.add(firstWord.first);
         previouslyUsed.add(secondWord.first);
 
-        // Pick 4 random distractor words from the remaining pool
+        //ערבוב רשימת המילים (המילים שמופיעות במשחק כבר נשלפו ממנה)
         Collections.shuffle(tempCopy);
-        List<Pair<String, String>> stageWords = tempCopy.stream()
-                .limit(4)
-                .collect(Collectors.toList());
+        List<Pair<String, String>> stageWords = tempCopy.stream()// יוצרים רשימה של המילים שיופיעו בשלב, הרשימה הופכת לזרם
+                .limit(4)// מכניסים לשם מילים שגויות
+                .collect(Collectors.toList());// הוספת המילים לזרם והפיכה לרשימה
 
-        // Add the 2 correct words into the mix and shuffle
+        // מוסיפים את 2 המילים הנכונות גם
         stageWords.add(firstWord);
         stageWords.add(secondWord);
-        Collections.shuffle(stageWords);
+        Collections.shuffle(stageWords);// ערבוב הרשימה
 
-        return new Stage(stageWords, firstWord, secondWord);
+        return new Stage(stageWords, firstWord, secondWord);// מחזירים שלב, בשלב יש את המילים שבשלבף, את הזוג הראשון והזוג השני
     }
 
-    // ==================== BUILD WORD BANK ====================
 
-    private void buildWordList(Stage stage) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /// להמשיך מפה!!
+
+    private void buildWordList(Stage stage) {// יוצר את מחסן המילים, מקבל שלב
         // Creates a TextView for each word in the word bank and adds them to the container
         List<String> words = stage.getStageWordStorage()
                 .stream().map(p -> p.first).collect(Collectors.toList());
@@ -567,10 +559,8 @@ public class WordMatchActivity extends AppCompatActivity {
         return tv;
     }
 
-    // ==================== IS WORD SELECTED ====================
-
     private boolean isWordSelected() {
-        return selectedWord != null; // Returns true if the user has tapped a word in the bank
+        return selectedWord != null; //בודק האם יש מילה שנלחצה
     }
 
     // ==================== SAVE GAME HISTORY ====================
@@ -580,22 +570,27 @@ public class WordMatchActivity extends AppCompatActivity {
 
         String userId = mAuth.getCurrentUser().getUid();
 
+        // קבלת התאריך והשעה המדויקים של רגע סיום המשחק (בדיוק כמו בטריוויה)
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault());
+        java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+        java.util.Date now = new java.util.Date(); // הזמן של רגע הסיום
+        String currentDate = dateFormat.format(now);
+        String currentTime = timeFormat.format(now);
+
         java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();
         historyEntry.put("type", "WORDMATCH");
-        historyEntry.put("date", gameStartDate);
-        historyEntry.put("time", gameStartTime);
+        historyEntry.put("date", currentDate);  // עכשיו זה ישמור את תאריך הסיום
+        historyEntry.put("time", currentTime);  // עכשיו זה ישמור את שעת הסיום
         historyEntry.put("result", won ? "Won" : "Lost");
         historyEntry.put("stage", "Stage " + currentStage + "/3");
         historyEntry.put("livesLeft", lives + "/" + MAX_LIVES);
-        historyEntry.put("duration", formatTime(elapsedTime));
-        historyEntry.put("timestamp", System.currentTimeMillis());
+        historyEntry.put("duration", formatTime(elapsedTime)); // משך המשחק
+        historyEntry.put("timestamp", System.currentTimeMillis()); // הזמן הלא מפורמט של רגע הסיום
 
         db.collection("users").document(userId)
                 .collection("gameHistory")
                 .add(historyEntry);
 
-        // Only save best stats if the user won
-        // Best time = fastest win, best lives = most lives remaining on a win
         if (won) {
             saveBestWordMatchStats(userId);
         }
@@ -664,25 +659,24 @@ public class WordMatchActivity extends AppCompatActivity {
                     }
                 });
     }
-    // ==================== RESET GAME ====================
 
     private void resetGame() {
-        // Resets everything and starts a fresh game from stage 1
-        lives = MAX_LIVES; // Restore all lives
-        currentStage = 1; // Back to stage 1
-        correct.clear(); // Clear matched words
-        inTransition = false; // Re-enable interactions
-        selectedWord = null;
-        selectedTv = null;
-        elapsedTime = 0; // Reset elapsed time
-        tvTimer.setText("0:00:000"); // Reset timer display
-        livesTv.setText(getLivesText()); // Reset lives display
-        layout1.setBackground(null); // Remove any leftover borders
+        // איפוס המשחק
+        lives = MAX_LIVES; // החזרת הלבבות למקסימום לבבות
+        currentStage = 1; // חזרה לשלב 1
+        correct.clear(); // מנקים את ההאש סט ככה שיהיה ריק
+        inTransition = false; // מורידים את מחסום הלחיצות
+        selectedWord = null;// אין מילה שנבחרה עדיין
+        selectedTv = null;// אין טקסט וויו של מילה שנשמרה
+        elapsedTime = 0; // איפוס זמן המשחק
+        tvTimer.setText("0:00:000");
+        livesTv.setText(getLivesText());
+        layout1.setBackground(null); // מחיקת המסגרות מסביב לתמונות
         layout2.setBackground(null);
 
-        // Reload words and build fresh stages
+        // טעינת מילים מחדש
         tvLoading.setVisibility(View.VISIBLE);
         wordMatchLayout.setVisibility(View.GONE);
-        loadWords();
+        loadWords();// קריאה למתודה
     }
 }
