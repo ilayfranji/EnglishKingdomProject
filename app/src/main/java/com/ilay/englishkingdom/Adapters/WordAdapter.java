@@ -1,127 +1,129 @@
 package com.ilay.englishkingdom.Adapters;
 
-import android.content.Context; // Needed to load images with Glide
-import android.view.LayoutInflater; // Converts XML layout files into real View objects
-import android.view.View; // Base class for all UI elements
-import android.view.ViewGroup; // A container that holds other views
-import android.widget.ImageView; // Used to display the word image
-import android.widget.TextView; // Used to show text
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import androidx.annotation.NonNull; // Means this parameter cannot be null
-import androidx.recyclerview.widget.RecyclerView; // The scrollable list we use to show words
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide; // Library we use to load images from URLs
-import com.ilay.englishkingdom.Models.CategoryType; // Our CategoryType enum
-import com.ilay.englishkingdom.Models.Word; // Our Word data model
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.bumptech.glide.Glide;
+import com.ilay.englishkingdom.Models.CategoryType;
+import com.ilay.englishkingdom.Models.Word;
+import com.ilay.englishkingdom.R;
 
-import java.util.ArrayList; // Used to create an empty list as default
-import java.util.List; // List that holds our Word objects
+import java.util.ArrayList;
+import java.util.List;
 
 public class WordAdapter extends RecyclerView.Adapter<WordAdapter.WordViewHolder> {
-    // This adapter connects our word list to the RecyclerView
-    // It receives the category type so it knows which fields to show/hide per card
-    // WORDS → show image + English + Hebrew + example sentence
-    // LETTERS → show letter name + Hebrew explanation only
-    // SENTENCES → show English sentence + Hebrew translation only
+    //יורש ממחלקת הריסייקלר וויו אדפטר של אנדרואיד, משתשמש בוורד וויו הולדר
 
-    public interface OnWordClickListener {
-        void onWordClick(Word word); // Called when card is tapped
-        void onWordLongClick(Word word); // Called when card is long pressed
+    public interface OnWordClickListener {// בלחיצה על מילים האדפטר מודיע למסך המילים ומשם מסך המילים מטפל באירועי הלחיצה
+        void onWordClick(Word word); // לחיצה רגילה
+        void onWordLongClick(Word word); // לחיצה ארוכה
     }
 
-    private final Context context; // Needed to load images with Glide
-    private final List<Word> wordList; // The list of words to display
-    private final OnWordClickListener listener; // Who handles the click events
-    private final CategoryType categoryType; // The type of this category - controls which fields show
+    private final Context context; // כדי לטעון תמונות
+    private final List<Word> wordList; // רשימת המילים שיהיו במסך
+    private final OnWordClickListener listener; // ברגע של לחיצה נשמרת הלחיצה (ארוכה או קצרה)
+    private final CategoryType categoryType; // סוג הקטגוריה של המילים, כדי לדעת איזה מילים להציג
 
-    // List of wordIds the user has learned - passed from WordsActivity
-    // Used to show/hide the green checkmark on each card
+    //רשימת המילים שהמשתמש למד, מועבר ממסך המילים, נועד להציג וי על מילה שנלמדה
     private List<String> learnedWords = new ArrayList<>();
 
+    //פעולה בונה של האדפטר
     public WordAdapter(Context context, List<Word> wordList,
                        String categoryId, CategoryType categoryType, OnWordClickListener listener) {
         this.context = context;
         this.wordList = wordList;
-        this.categoryType = categoryType; // Save type so we can use it in onBindViewHolder
+        this.categoryType = categoryType; // שמירת סוג הקטגוריה לצורך פעולת OnBind
         this.listener = listener;
     }
 
-    // WordsActivity calls this when the learned words list changes in Firestore
-    public void setLearnedWords(List<String> learnedWords) {
-        this.learnedWords = learnedWords != null ? learnedWords : new ArrayList<>();
-        notifyDataSetChanged(); // Redraw all cards with updated checkmarks
+    // קריאה למתודה כאשר יש שינוי במספר המילים שנלמדו במאגר הנתונים
+    public void setLearnedWords(List<String> learnedWords) {//מקבל את רשימת המילים שנלמדו
+        this.learnedWords = learnedWords != null ? learnedWords : new ArrayList<>();// אם אין רשימת מילים שנלמדו ניצור אחת חדשה
+        notifyDataSetChanged(); // לצורך סימון וי מחדש אם משהו השתנה
     }
 
     @NonNull
     @Override
     public WordViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Inflate single_word.xml - same layout for all types, we show/hide fields below
+        //יוצרים את הקארד וויו הריק
+        // Inflate = קורא את המידע של "מילה יחידה" והופך אותו לאובייקט שג'אווה יוכל לעבוד איתו
+        // parent = הריסייקלר וויו שיהיו בו הקארד וויו
+        // false = עדיין לא לשים את זה בריסייקלר וויו, יצורף אחר כך
         View view = LayoutInflater.from(context).inflate(R.layout.single_word, parent, false);
-        return new WordViewHolder(view);
+        return new WordViewHolder(view);// שומרים את הרכיבים שבתוך הקארד וויו לצורך זמינות מיידית
     }
 
     @Override
     public void onBindViewHolder(@NonNull WordViewHolder holder, int position) {
-        // This runs for each card - fills it with data and shows/hides fields based on type
+        // position = האינדקס של המילה ברשימה של המילים
+        // יכולה להיקרא על אותה כרטיסייה כמה וכמה פעמים כתוצאה ממיחזור הכרטיסיות
         Word word = wordList.get(position);
 
-        // Show/hide fields based on category type
+        //הצגת או הסתרת דברים בקארד וויו בהתאם לסוג הקטגוריה
         if (categoryType == CategoryType.WORDS) {
-            // Regular words - show all fields
-            holder.imgWord.setVisibility(View.VISIBLE); // Show image
-            holder.tvExampleSentence.setVisibility(View.VISIBLE); // Show example sentence
+            // הצגת כל השדות בקארד וויו
+            holder.imgWord.setVisibility(View.VISIBLE); // הצגת תמונה
+            holder.tvExampleSentence.setVisibility(View.VISIBLE); // הצגת משפט דוגמא
 
-            // Load word image from Cloudinary URL
+            // טעינת התמונה מהקלאודינארי
             Glide.with(context).load(word.getImage()).into(holder.imgWord);
-            holder.tvExampleSentence.setText(word.getExampleSentence()); // Set example sentence
+            holder.tvExampleSentence.setText(word.getExampleSentence()); // השמת משפט הדוגמא שיש במאגר הנתונים
 
-        } else if (categoryType == CategoryType.LETTERS) {
-            // Letters - hide image and example sentence
-            holder.imgWord.setVisibility(View.GONE); // No image for letters
-            holder.tvExampleSentence.setVisibility(View.GONE); // No example sentence for letters
+        } else if (categoryType == CategoryType.LETTERS) {// אם אותיות
+            holder.imgWord.setVisibility(View.GONE); // אין תמונה
+            holder.tvExampleSentence.setVisibility(View.GONE); // אין משפט דוגמא
 
-        } else if (categoryType == CategoryType.SENTENCES) {
-            // Sentences - hide image and example sentence
-            holder.imgWord.setVisibility(View.GONE); // No image for sentences
-            holder.tvExampleSentence.setVisibility(View.GONE); // No example sentence for sentences
+        } else if (categoryType == CategoryType.SENTENCES) {// אם משפטים
+            holder.imgWord.setVisibility(View.GONE); // אין תמונה
+            holder.tvExampleSentence.setVisibility(View.GONE); // אין משפט דוגמא
         }
 
-        // These fields show for ALL types - just with different content
-        holder.tvWordEnglish.setText(word.getWordEnglish()); // Word / Letter name / English sentence
-        holder.tvWordHebrew.setText(word.getWordHebrew()); // Hebrew word / Hebrew explanation / Hebrew translation
+        // מוצג לכל סוגי הקטגוריות, בכל אחד תוכן שונה
+        holder.tvWordEnglish.setText(word.getWordEnglish()); // המילה באנגלית
+        holder.tvWordHebrew.setText(word.getWordHebrew()); // המילה בעברית
 
-        // Show green checkmark if this word/letter/sentence is in the learned list
+        // אם המילה נמצאת ברשימת המילים שנלמדו
         if (learnedWords.contains(word.getIdFS())) {
-            holder.tvLearned.setVisibility(View.VISIBLE); // Show checkmark
-        } else {
-            holder.tvLearned.setVisibility(View.GONE); // Hide checkmark
+            holder.tvLearned.setVisibility(View.VISIBLE); // הצגת סימון הוי הירוק
+        } else {// אם לא נמצאת
+            holder.tvLearned.setVisibility(View.GONE); // להחביא את סימון הוי הירוק
         }
 
-        // Set tap listener
+        // מאזין ללחיצה קצרה
         holder.itemView.setOnClickListener(v -> listener.onWordClick(word));
 
-        // Set long press listener
+        // מאזין ללחיצה ארוכה
         holder.itemView.setOnLongClickListener(v -> {
             listener.onWordLongClick(word);
-            return true; // true = we handled the long press
+            return true; // true = טיפול בלחיצה ארוכה, לא צריך להפעיל את הלחיצה הקצרה
         });
     }
 
     @Override
     public int getItemCount() {
-        return wordList.size(); // Tell RecyclerView how many cards to show
+        // קורא למתודה הזאת כדי לדעת כמה קארד וויו ליצור
+        return wordList.size(); // קארד וויו אחד לכל מילה ברשימה
     }
 
     public static class WordViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgWord; // The word image - only shown for WORDS type
-        TextView tvWordEnglish; // English word / Letter name / English sentence
-        TextView tvWordHebrew; // Hebrew word / Hebrew explanation / Hebrew translation
-        TextView tvExampleSentence; // Example sentence - only shown for WORDS type
-        TextView tvLearned; // Green checkmark - shown when item is learned
+        //במחלקה הזאת המצאים כל הרכיבים שימוחזרו כדי לייצר
+        //קארד וויו חדשים עם נתונים ממוחזרים
+        ImageView imgWord; // תמונת המילה (רק לסוג "מילים")
+        TextView tvWordEnglish; // המילה באנגלית
+        TextView tvWordHebrew; // המילה בעברית
+        TextView tvExampleSentence; // משפט דוגמא (רק לסוג "מילים")
+        TextView tvLearned; // סימון הוי הירוק (רק למילים שנלמדו)
 
         public WordViewHolder(@NonNull View itemView) {
-            super(itemView);
+            super(itemView);// קריאה למחלקת האב עם הוויו כדי שאנדוראיד תדע לנהל לו מקום בזיכרון
+            //חיבור המשתנים הגרפיים למשתנים הלוגיים
             imgWord = itemView.findViewById(R.id.imgWord);
             tvWordEnglish = itemView.findViewById(R.id.tvWordEnglish);
             tvWordHebrew = itemView.findViewById(R.id.tvWordHebrew);
