@@ -443,7 +443,7 @@ public class WordMatchActivity extends AppCompatActivity {
         //ערבוב רשימת המילים (המילים שמופיעות במשחק כבר נשלפו ממנה)
         Collections.shuffle(tempCopy);
         List<Pair<String, String>> stageWords = tempCopy.stream()// יוצרים רשימה של המילים שיופיעו בשלב, הרשימה הופכת לזרם
-                .limit(4)// מכניסים לשם מילים שגויות
+                .limit(4)// מכניסים לשם 4 מילים שגויות
                 .collect(Collectors.toList());// הוספת המילים לזרם והפיכה לרשימה
 
         // מוסיפים את 2 המילים הנכונות גם
@@ -454,108 +454,87 @@ public class WordMatchActivity extends AppCompatActivity {
         return new Stage(stageWords, firstWord, secondWord);// מחזירים שלב, בשלב יש את המילים שבשלבף, את הזוג הראשון והזוג השני
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /// להמשיך מפה!!
-
     private void buildWordList(Stage stage) {// יוצר את מחסן המילים, מקבל שלב
-        // Creates a TextView for each word in the word bank and adds them to the container
+        // יוצרים רשימה שמקבלת את מאגר המילים שמופיעות בשלב הספציפי
         List<String> words = stage.getStageWordStorage()
-                .stream().map(p -> p.first).collect(Collectors.toList());
+                .stream().map(p -> p.first).collect(Collectors.toList());// עבור כל הזוגות שעוברים בזרם,
+                //לוקחים רק את האיבר הראשון בזוג ומוסיפים אותו לזרם words, לבסוף מעבירים את הזרם לרשימה
 
-        wordTextViews.clear(); // Clear old references
-        wordListContainer.removeAllViews(); // Remove old views
+        wordTextViews.clear(); // מחיקת הרשימה של הטקסט וויו של השלב הקודם
+        wordListContainer.removeAllViews(); // מוחק את מחסן המילים הקודם
 
-        // Header label
-        TextView header = new TextView(this);
+        // יצירת העיצוב של מחסן המילים
+        TextView header = new TextView(this);// יצירת רכיב טקסט וויו חדש
         header.setText("Word Bank:");
-        header.setTextColor(0xFFFFD700); // Gold
+        header.setTextColor(0xFFFFD700); // צבע זהב
         header.setTextSize(14);
-        header.setPadding(8, 8, 8, 8);
-        wordListContainer.addView(header);
+        header.setPadding(8, 8, 8, 8);// מרווח מהקצוות
+        wordListContainer.addView(header);// הלבשת רכיב הטקסט וויו החדש על הלייאווט שקיים
 
-        // Show 3 words per row to save space
+        // השורה הנוכחית שבה מוצגות המילים
         LinearLayout currentRow = null;
 
-        for (int i = 0; i < words.size(); i++) {
-            if (i % 3 == 0) { // Start a new row every 3 words
-                currentRow = new LinearLayout(this);
-                currentRow.setOrientation(LinearLayout.HORIZONTAL);
-                wordListContainer.addView(currentRow);
+        for (int i = 0; i < words.size(); i++) {// עוברים על כל המילים שבמחסן המילים
+            if (i % 3 == 0) { // מתחילים שורה חדשה אחרי שיש 3 מילים בשורה
+                currentRow = new LinearLayout(this);// יוצרים לינאר לייאווט שהוא השורה הנוכחית
+                currentRow.setOrientation(LinearLayout.HORIZONTAL);// אופקי
+                wordListContainer.addView(currentRow);// מוסיפים את השורה ללייאווט
             }
 
-            TextView tv = createWordBankTextView(words, i);
-            currentRow.addView(tv);
-            wordTextViews.add(tv);
+            TextView tv = createWordBankTextView(words, i);// קריאה למתודה שיוצרת טקסט וויו למילה
+            currentRow.addView(tv);//הוספת המילה בטקסט וויו לשורה
+            wordTextViews.add(tv);// הוספת המילה שצורפה לרשימת המילים שיש במחסן המילים
         }
     }
 
-    // ==================== WORD BANK TEXT VIEW ====================
 
     @NonNull
     private TextView createWordBankTextView(List<String> words, int i) {
-        // Creates a single word TextView for the word bank with a click listener
-        String word = words.get(i);
+        // יוצר טקסט וויו של מילה במחסן מילים ומטפל גם באירועי לחיצה עליה
+        String word = words.get(i);// שמירת המילה
 
-        TextView tv = new TextView(this);
-        tv.setText(word.toUpperCase()); // Show uppercase so it matches the overall style
+        TextView tv = new TextView(this);// יוצרים טקסט וויו חדש
+        tv.setText(word.toUpperCase());
         tv.setTextColor(Color.WHITE);
         tv.setTextSize(13);
         tv.setPadding(8, 4, 8, 4);
 
         tv.setOnClickListener(v -> {
-            if (correct.contains(word)) return; // Already matched - can't select again
-            if (inTransition) return; // During transition delay - ignore taps
+            if (correct.contains(word)) return; // אם כבר מסומנת כנכון
+            if (inTransition) return; // אם אנחנו לוחצים על המילה בזמן חסימת הלחיצות
 
             if (word.equals(selectedWord)) {
-                // Tapping the already selected word deselects it
-                selectedWord = null;
+                // אם לחצנו שוב על אותה מילה שעכשיו היא במצב לחיצה (צבע צהוב)
+                selectedWord = null;// המילה שלחוצה ברגע זה כבר לא לחוצה
                 tv.setTextColor(Color.WHITE);
-                infoTv.setText("Pick a word from the word bank below");
+                infoTv.setText("Pick a word from the word bank below");// איפוס ההוראות
                 return;
             }
 
-            // Select this word - highlight it yellow and update info label
-            selectedWord = word;
-            selectedTv = tv;
+            // בחרנו מילה
+            selectedWord = word;// שמירת המילה
+            selectedTv = tv;// שמירת הטקסט וויו של המילה
 
-            // Reset all other word colors
+            // עוברים על כל המילים
             for (TextView other : wordTextViews) {
-                if (other != tv) {
-                    // Already matched words stay green, others go white
-                    if (correct.contains(other.getText().toString().toLowerCase())) {
-                        other.setTextColor(Color.GREEN);
+                if (other != tv) {// אם המילה לא המילה שלחצנו עליה
+                    if (correct.contains(other.getText().toString().toLowerCase())) {// בדוק אם היא מילה שכבר צדקנו בהתאמה שלה
+                        other.setTextColor(Color.GREEN);// ירוק
                     } else {
-                        other.setTextColor(Color.WHITE);
+                        other.setTextColor(Color.WHITE);//לבן
                     }
                 }
             }
 
-            tv.setTextColor(Color.YELLOW); // Highlight selected word in yellow
-            infoTv.setText("Now tap the image that matches: " + word.toUpperCase());
+            tv.setTextColor(Color.YELLOW); // שים למילה שבחרנו צבע צהוב
+            infoTv.setText("Now tap the image that matches: " + word.toUpperCase());// שינוי ההוראות
         });
 
-        // Equal width for all 3 words in a row
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        tv.setLayoutParams(params);
+        // קובעים פרמטרים לסידור המילים במחסן המילים
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        //width=0 אומר לא לקבוע רוחב קבוע למילה
+        //weight=1f אומר שאנדוראיד יקח את 3 המילים ויקבע רוחב שווה בשווה לשלושתן
+        tv.setLayoutParams(params);// הלבשת ההגדרות של הלייאווט
         return tv;
     }
 
@@ -563,99 +542,89 @@ public class WordMatchActivity extends AppCompatActivity {
         return selectedWord != null; //בודק האם יש מילה שנלחצה
     }
 
-    // ==================== SAVE GAME HISTORY ====================
 
     private void saveGameHistory(boolean won) {
-        if (mAuth.getCurrentUser() == null) return;
+        if (mAuth.getCurrentUser() == null) return;// בדיקה אם המשתמש מחובר
 
-        String userId = mAuth.getCurrentUser().getUid();
+        String userId = mAuth.getCurrentUser().getUid();// שמירת המזהה הייחודי שלו
 
-        // קבלת התאריך והשעה המדויקים של רגע סיום המשחק (בדיוק כמו בטריוויה)
         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault());
         java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
-        java.util.Date now = new java.util.Date(); // הזמן של רגע הסיום
-        String currentDate = dateFormat.format(now);
-        String currentTime = timeFormat.format(now);
+        java.util.Date now = new java.util.Date(); // שמירת רגע סיום המשחק
+        String currentDate = dateFormat.format(now);// שמירת התאריך של סיום המשחק (מפורמט)
+        String currentTime = timeFormat.format(now);//שמירת השעה של סיום המשחק (מפורמט)
 
-        java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();
+        java.util.HashMap<String, Object> historyEntry = new java.util.HashMap<>();// יצירת האש מאפ עם תוצאות המשחק
         historyEntry.put("type", "WORDMATCH");
-        historyEntry.put("date", currentDate);  // עכשיו זה ישמור את תאריך הסיום
-        historyEntry.put("time", currentTime);  // עכשיו זה ישמור את שעת הסיום
+        historyEntry.put("date", currentDate);
+        historyEntry.put("time", currentTime);
         historyEntry.put("result", won ? "Won" : "Lost");
         historyEntry.put("stage", "Stage " + currentStage + "/3");
         historyEntry.put("livesLeft", lives + "/" + MAX_LIVES);
-        historyEntry.put("duration", formatTime(elapsedTime)); // משך המשחק
-        historyEntry.put("timestamp", System.currentTimeMillis()); // הזמן הלא מפורמט של רגע הסיום
+        historyEntry.put("duration", formatTime(elapsedTime));
+        historyEntry.put("timestamp", System.currentTimeMillis());// שמירת הזמן הנוכחי של סיום המשחק (לא מפורמט)
 
         db.collection("users").document(userId)
                 .collection("gameHistory")
-                .add(historyEntry);
+                .add(historyEntry);// שמירת הנתונים במאגר הנתונים, הכנסת ההאש מאפ
 
-        if (won) {
-            saveBestWordMatchStats(userId);
+        if (won) {// אם המשתמש ניצח
+            saveBestWordMatchStats(userId);// קריאה למתודה
         }
     }
 
     private void saveBestWordMatchStats(String userId) {
-        // Read current best stats from Firestore so we can compare
-        // We only update a field if this game was better than the previous best
-        db.collection("users").document(userId).get()
-                .addOnSuccessListener(document -> {
+        //בודק שיאים ומעדכן אם יש שיא חדש
+        db.collection("users").document(userId).get()// הבאת המשתמש
+                .addOnSuccessListener(document -> {// אם הצלחנו
 
-                    // ===== BEST STAGE =====
-                    // Read current best stage - default to 0 so any real stage is better
+                    // ברירת מחדל (המשתמש הגיע לשלב 0)
                     long currentBestStage = 0;
-                    if (document.exists() && document.getLong("wordMatchBestStage") != null) {
-                        currentBestStage = document.getLong("wordMatchBestStage");
+                    if (document.exists() && document.getLong("wordMatchBestStage") != null) {// אם יש שדה של הטוב ביותר שאליו הגיע
+                        currentBestStage = document.getLong("wordMatchBestStage");// שמור את השדה הזה במקום ברירת המחדל
                     }
 
-                    // ===== BEST TIME =====
-                    // Read current best time - default to max value so any real time is better
-                    // Lower time = faster = better
+                    //ברירת מחדל (הערך הכי גדול שיש, הזמן המקסימלי)
                     long currentBestTime = Long.MAX_VALUE;
-                    if (document.exists() && document.getLong("wordMatchBestTimeMs") != null) {
-                        currentBestTime = document.getLong("wordMatchBestTimeMs");
+                    if (document.exists() && document.getLong("wordMatchBestTimeMs") != null) {// אם יש שדה של הטוב ביותר שאליו הגיע
+                        currentBestTime = document.getLong("wordMatchBestTimeMs");// שמור את השדה הזה במקום ברירת המחדל
                     }
 
-                    // ===== BEST LIVES =====
-                    // Read current best lives remaining - default to 0 so any real count is better
-                    // More lives remaining = better performance
+                    //ברירת מחדל (המשתמש עם 0 לבבות)
                     long currentBestLives = 0;
-                    if (document.exists() && document.getLong("wordMatchBestLives") != null) {
-                        currentBestLives = document.getLong("wordMatchBestLives");
+                    if (document.exists() && document.getLong("wordMatchBestLives") != null) {// אם יש שדה של הטוב ביותר שאליו הגיע
+                        currentBestLives = document.getLong("wordMatchBestLives");// שמור את השדה הזה במקום ברירת המחדל
                     }
 
-                    // Build the updates map with only the fields that improved
+                    //בניית האש מאפ שאליו נכניס את השיאים החדשים
                     java.util.HashMap<String, Object> updates = new java.util.HashMap<>();
-                    boolean shouldUpdate = false;
+                    boolean shouldUpdate = false;// דגל אם צריך לעדכן
 
-                    // Update best stage if this game reached a higher stage
-                    // currentStage at win time is always 3 since winning means completing all 3
-                    // but we save it anyway in case we add more stages in the future
+                    //אם המשתמש עקף את שיא השלבים שהגיע אליו
                     if (currentStage > currentBestStage) {
-                        updates.put("wordMatchBestStage", (long) currentStage);
-                        shouldUpdate = true;
+                        updates.put("wordMatchBestStage", (long) currentStage);// הוספת השיא החדש להאש מאפ
+                        shouldUpdate = true;// עדכון הדגל, צריך לשנות את השיאים
                     }
 
-                    // Update best time if this game finished faster
+                    //אם המשתמש סיים בזמן נמוך מהשיא שלו
                     if (elapsedTime < currentBestTime) {
-                        updates.put("wordMatchBestTimeMs", elapsedTime); // Raw ms for future comparison
-                        updates.put("wordMatchBestTimeFormatted", formatTime(elapsedTime)); // e.g. "0:45:230" for display
-                        shouldUpdate = true;
+                        updates.put("wordMatchBestTimeMs", elapsedTime); // הוספת השיא החדש להאש מאפ (לא מפורמט)
+                        updates.put("wordMatchBestTimeFormatted", formatTime(elapsedTime)); // הוספת השיא החדש להאש מאפ (מפורמט)
+                        shouldUpdate = true;// עדכון הדגל, צריך לשנות את השיאים
                     }
 
-                    // Update best lives if this game had more lives remaining at the end
+                    //אם המשתמש עקף את שיא הלבבות שהיו לו
                     if (lives > currentBestLives) {
-                        updates.put("wordMatchBestLives", (long) lives);
-                        shouldUpdate = true;
+                        updates.put("wordMatchBestLives", (long) lives);// הוספת השיא החדש להאש מאפ
+                        shouldUpdate = true;// עדכון הדגל, צריך לשנות את השיאים
                     }
 
-                    // Only write to Firestore if at least one stat improved
-                    // This avoids unnecessary writes to the database
+                    //בדיקה אם צריך לשנות שיאים במאגר הנתונים
+                    //אם כן
                     if (shouldUpdate) {
-                        db.collection("users").document(userId).update(updates)
-                                .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "New best! 🏆", Toast.LENGTH_SHORT).show());
+                        db.collection("users").document(userId).update(updates)// מוסיפים את ההאש מאפ למאגר הנתונים
+                                .addOnSuccessListener(v ->// אם התווסף בהצלחה נשלח הודעת טוסט, שיא חדש
+                                        Toast.makeText(this, "New best!", Toast.LENGTH_SHORT).show());
                     }
                 });
     }
