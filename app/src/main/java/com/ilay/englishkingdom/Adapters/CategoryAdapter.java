@@ -1,56 +1,62 @@
 package com.ilay.englishkingdom.Adapters;
 
-import android.content.Context; // Needed to inflate layouts and load images with Glide
-import android.view.LayoutInflater; // Converts XML layout files into real View objects
-import android.view.View; // Base class for all UI elements
-import android.view.ViewGroup; // A container that holds other views
-import android.widget.ImageView; // Used to display the category image
-import android.widget.ProgressBar; // Used to show how many words the user learned in this category
-import android.widget.TextView; // Used to show text labels like category name and word count
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
-import androidx.annotation.NonNull; // Means this parameter cannot be null
-import androidx.recyclerview.widget.RecyclerView; // The scrollable grid we use to show categories
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide; // Library we use to load images from Cloudinary URLs
-import com.google.firebase.auth.FirebaseAuth; // Used to check if a user is logged in
-import com.google.firebase.firestore.FirebaseFirestore; // Used to read progress data from Firestore
-import com.ilay.englishkingdom.Models.Category; // Our Category data model
-import com.ilay.englishkingdom.R; // Used to reference XML resources like layouts and drawables
+import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.ilay.englishkingdom.Models.Category;
+import com.ilay.englishkingdom.R;
 
-import java.util.List; // List that holds our Category objects
+import java.util.List;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
-    // This adapter is the bridge between our category list and the RecyclerView
-    // RecyclerView doesn't know how to display a Category object - this adapter teaches it how
-    // RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> means this adapter uses CategoryViewHolder
+    //יורש ממחלקת הריסייקלר וויו אדפטר של אנדרואיד, משתשמש בקטגורי וויו הולדר
 
-    // ==================== INTERFACE ====================
 
-    public interface OnCategoryClickListener {
-        // This is a contract - whoever creates this adapter must implement these two methods
-        // LearnActivity implements this so it can handle what happens when a card is tapped
-        void onCategoryClick(Category category); // Called when a card is tapped normally
-        void onCategoryLongClick(Category category); // Called when a card is long pressed
+    public interface OnCategoryClickListener {// בלחיצה על קטגוריות האדפטר מודיע למסך הלמידה ומשם מסך הלמידה מטפל באירועי הלחיצה
+        void onCategoryClick(Category category); // לחיצה רגילה
+        void onCategoryLongClick(Category category); // לחיצה ארוכה
     }
 
-    // ==================== FIELDS ====================
+    private final Context context; // צריך כדי לקרוא קבצי XML וכדי לטעון תמונות
+    private final List<Category> categoryList; // רשימת הקטגוריות שיוצגו
+    private final OnCategoryClickListener listener; // ברגע של לחיצה נשמרת הלחיצה (ארוכה או קצרה)
 
-    private final Context context; // Needed to inflate layouts and load images
-    private final List<Category> categoryList; // The list of categories to display
-    private final OnCategoryClickListener listener; // Who handles tap and long press events
-
-    // ==================== CONSTRUCTOR ====================
 
     public CategoryAdapter(Context context, List<Category> categoryList,
                            OnCategoryClickListener listener) {
-        // Constructor saves everything we need to do our job
+        // בנאי של האדפטר
         this.context = context;
         this.categoryList = categoryList;
         this.listener = listener;
     }
 
-    // ==================== CREATE VIEW HOLDER ====================
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /// להמשיך מפה
     @NonNull
     @Override
     public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
