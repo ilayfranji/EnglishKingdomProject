@@ -1,128 +1,115 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.net.Uri; // Used to store the camera photo file path
-import android.os.Bundle; // Used when creating the activity and saving state
-import android.view.View; // Used to show and hide UI elements
-import android.widget.TextView; // Used for the back button, edit button, banner, category name
-import android.widget.Toast; // Used to show short popup messages
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher; // Used to launch gallery/camera
-import androidx.activity.result.contract.ActivityResultContracts; // Provides contracts for gallery and camera
-import androidx.appcompat.app.AlertDialog; // Used to show the delete confirmation popup
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
-import androidx.recyclerview.widget.LinearLayoutManager; // Arranges word cards in a single vertical list
-import androidx.recyclerview.widget.RecyclerView; // The scrollable list of word cards
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton; // The round + and X buttons
-import com.google.firebase.auth.FirebaseAuth; // Used to get the current logged in user
-import com.google.firebase.firestore.FieldValue; // Used to remove items from Firestore arrays
-import com.google.firebase.firestore.FirebaseFirestore; // Used to read/write words from our database
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single word document
-import com.ilay.englishkingdom.Activities.Dialogs.AddLetterDialog; // Handles adding a letter
-import com.ilay.englishkingdom.Activities.Dialogs.AddSentenceDialog; // Handles adding a sentence
-import com.ilay.englishkingdom.Activities.Dialogs.AddWordDialog; // Handles adding a word
-import com.ilay.englishkingdom.Activities.Dialogs.EditLetterDialog; // Handles editing a letter
-import com.ilay.englishkingdom.Activities.Dialogs.EditSentenceDialog; // Handles editing a sentence
-import com.ilay.englishkingdom.Activities.Dialogs.EditWordDialog; // Handles editing a word
-import com.ilay.englishkingdom.Activities.Dialogs.FlashcardDialog; // Shows the flashcard popup
-import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper; // Handles camera/gallery
-import com.ilay.englishkingdom.Adapters.WordAdapter; // Connects our word list to the RecyclerView
-import com.ilay.englishkingdom.Models.CategoryType; // Our CategoryType enum
-import com.ilay.englishkingdom.Models.Word; // Our Word data model
-import com.ilay.englishkingdom.R; // Used to reference XML resources
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.ilay.englishkingdom.Activities.Dialogs.AddLetterDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.AddSentenceDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.AddWordDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.EditLetterDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.EditSentenceDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.EditWordDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.FlashcardDialog;
+import com.ilay.englishkingdom.Activities.Dialogs.ImagePickerHelper;
+import com.ilay.englishkingdom.Adapters.WordAdapter;
+import com.ilay.englishkingdom.Models.CategoryType;
+import com.ilay.englishkingdom.Models.Word;
+import com.ilay.englishkingdom.R;
 
 import java.util.ArrayList; // Used to create the word list
 import java.util.List; // The List interface for our word list
 
 public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWordClickListener {
 
-    // ==================== UI ELEMENTS ====================
+    private RecyclerView recyclerWords;
+    private FloatingActionButton fabWord;
+    private FloatingActionButton fabExitEditMode;
+    private TextView tvBack;
+    private TextView tvEditMode;
+    private TextView tvEditBanner;
+    private TextView tvCategoryName;
 
-    private RecyclerView recyclerWords; // The scrollable list of word cards
-    private FloatingActionButton fabWord; // The + button shown in edit mode
-    private FloatingActionButton fabExitEditMode; // The X button to exit edit mode
-    private TextView tvBack; // Back arrow to go back to LearnActivity
-    private TextView tvEditMode; // Pencil button shown only to admins
-    private TextView tvEditBanner; // Red banner shown at top when in edit mode
-    private TextView tvCategoryName; // Shows the category name at the top
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
-    // ==================== FIREBASE ====================
+    private WordAdapter wordAdapter;
+    private List<Word> wordList;
 
-    private FirebaseFirestore db; // Our connection to Firestore
-    private FirebaseAuth mAuth; // Our connection to Firebase Authentication
 
-    // ==================== ADAPTER AND DATA ====================
+    private boolean isEditMode = false;
+    private String categoryId;
 
-    private WordAdapter wordAdapter; // Connects our word list to the RecyclerView
-    private List<Word> wordList; // The list of all words loaded from Firestore
-
-    // ==================== STATE ====================
-
-    private boolean isEditMode = false; // true = admin is in edit mode
-    private String categoryId; // The Firestore ID of the category we are showing
-
-    // The type of this category - determines which dialog opens and which fields show
-    // Passed from LearnActivity via Intent along with categoryId
+    //סוג הקטגוריה, מועבר בעזרת אינטנט על ידי מסך הלמידה
     private CategoryType categoryType;
 
-    // ==================== DIALOGS ====================
 
-    // We create all 3 pairs of dialogs but only use the ones matching the category type
-    // This keeps the code clean - WordsActivity doesn't need to know the details of each dialog
-    private ImagePickerHelper imagePicker; // Handles camera/gallery - only used for WORDS type
-    private AddWordDialog addWordDialog; // Add dialog for WORDS type
-    private EditWordDialog editWordDialog; // Edit dialog for WORDS type
-    private AddLetterDialog addLetterDialog; // Add dialog for LETTERS type
-    private EditLetterDialog editLetterDialog; // Edit dialog for LETTERS type
-    private AddSentenceDialog addSentenceDialog; // Add dialog for SENTENCES type
-    private EditSentenceDialog editSentenceDialog; // Edit dialog for SENTENCES type
-    private FlashcardDialog flashcardDialog; // Flashcard shown when user taps any item
+    //מצהירים על 3 סוגי הדיאלוגים למרות שנשתמש רק בסוג אחד
+    private ImagePickerHelper imagePicker; // רק לסוג "מילים"
+    private AddWordDialog addWordDialog;
+    private EditWordDialog editWordDialog;
+    private AddLetterDialog addLetterDialog;
+    private EditLetterDialog editLetterDialog;
+    private AddSentenceDialog addSentenceDialog;
+    private EditSentenceDialog editSentenceDialog;
+    private FlashcardDialog flashcardDialog; // דיאלוג שמוצג ברגע של לחיצה על מילה/משפט/אות
 
-    // ==================== SAVE/RESTORE STATE ====================
 
-    private static final String KEY_CAMERA_URI = "camera_uri"; // Key to save camera URI
+    private static final String KEY_CAMERA_URI = "camera_uri"; // מפתח לשמירת הנתיב של התמונה, איפה היא נשמרה
 
-    // ==================== ACTIVITY RESULT LAUNCHERS ====================
 
-    // These MUST live here in the Activity - passed into ImagePickerHelper
-    // Only used when category type is WORDS because only words have images
+    //יצירת launcher לגלרייה
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> { if (imagePicker != null) imagePicker.onGalleryResult(uri); });
 
+    // יצירת launcher למצלמה
     private final ActivityResultLauncher<Uri> cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
             success -> { if (imagePicker != null) imagePicker.onCameraResult(success); });
 
-    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_words);
 
-        // Get the data passed from LearnActivity via Intent
-        categoryId = getIntent().getStringExtra("categoryId"); // Which category to load
-        String categoryName = getIntent().getStringExtra("categoryName"); // For display only
-        String categoryTypeString = getIntent().getStringExtra("categoryType"); // "WORDS"/"LETTERS"/"SENTENCES"
+        // לקיחה ושמירת הנתונים שהועברו ממסך הלמידה
+        categoryId = getIntent().getStringExtra("categoryId"); // מזהה ייחודי לקטגוריה
+        String categoryName = getIntent().getStringExtra("categoryName"); // שם הקטגוריה באנגלית
+        String categoryTypeString = getIntent().getStringExtra("categoryType"); // סוג הקטגוריה
 
-        // Convert the String back to a CategoryType enum
-        // If missing or unrecognized, default to WORDS so the screen still works
+        // המרת הטיפוס לEnum, אם לא הצלחנו אז כדי שלא תקורס האפליקציה
+        // נציג את המילים/ משפטים/ אותיות  בתור מילים כברירת מחדל
         try {
             categoryType = CategoryType.valueOf(categoryTypeString);
         } catch (Exception e) {
-            categoryType = CategoryType.WORDS; // Default to WORDS if something goes wrong
+            categoryType = CategoryType.WORDS;
         }
 
-        if (categoryId == null) {
+        if (categoryId == null) {// אם אין סוג לקטגוריה
             Toast.makeText(this, "Error loading words", Toast.LENGTH_SHORT).show();
-            finish();
+            finish();//סגירת מסך המילים
             return;
         }
 
-        // Restore camera URI if Android killed and recreated the activity
+        // שמירת הנתיב של התמונה במקרה ואנדרואיד סוגר את האפליקציה בזמן פתיחת המצלמה
         Uri restoredUri = null;
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null) {// אם יש נתונים שנשמרו בסגירת האפליקציה ניקח את הנתיב של התמונה
             restoredUri = savedInstanceState.getParcelable(KEY_CAMERA_URI);
         }
 
@@ -137,257 +124,250 @@ public class WordsActivity extends AppCompatActivity implements WordAdapter.OnWo
         tvEditBanner = findViewById(R.id.tvEditBanner);
         tvCategoryName = findViewById(R.id.tvCategoryName);
 
-        if (categoryName != null) tvCategoryName.setText(categoryName);
+        if (categoryName != null) tvCategoryName.setText(categoryName);// הצגת שם הקטגוריה
 
-        wordList = new ArrayList<>();
-        recyclerWords.setLayoutManager(new LinearLayoutManager(this));
+        wordList = new ArrayList<>();// יצירת מערך מילים חדש
+        recyclerWords.setLayoutManager(new LinearLayoutManager(this));// מסגר את הריסייקלר וויו במסך המילים
 
-        // Pass the category type to the adapter so it knows which fields to show/hide
-        wordAdapter = new WordAdapter(this, wordList, categoryId, categoryType, this);
-        recyclerWords.setAdapter(wordAdapter);
+        wordAdapter = new WordAdapter(this, wordList, categoryId, categoryType, this);// מעבירים לאדפטר מספר נתונים ובמקרה של לחיצה אומרים לו שיודיע לנו על מה לחצו
+        recyclerWords.setAdapter(wordAdapter);// חיבור האדפטר לריסייקלר וויו
 
-        checkIfAdmin();
+        checkIfAdmin();// קריאה למתודות
         loadWords();
         loadLearnedWords();
 
-        // Only set up image picker for WORDS type - letters and sentences don't need it
+        // מגדירים את דיאלוג האימג' פיקר רק לסוג "מילים"
         if (categoryType == CategoryType.WORDS) {
             imagePicker = new ImagePickerHelper(this,
                     (uri, fromGallery) -> {
-                        // Forward image to whichever word dialog is currently open
+                        // בדיקה אם קיים דיאלוג כזה, אם כן בבחירת תמונה נשלח את התמונה עצמה לדיאלוג
                         if (addWordDialog != null) addWordDialog.onImagePicked(uri);
                         if (editWordDialog != null) editWordDialog.onImagePicked(uri);
                     },
-                    galleryLauncher,
+                    galleryLauncher,// העברת הלאנצ'רים לאימג' פיקר הלפר
                     cameraLauncher);
 
-            if (restoredUri != null) imagePicker.setPendingCameraUri(restoredUri);
+            if (restoredUri != null) imagePicker.setPendingCameraUri(restoredUri);// אם קיים נתיב תמונה שחילץ אותנו מאיבוד התמונה נשלח אותו
 
-            // Create word dialogs
-            addWordDialog = new AddWordDialog(this, imagePicker, categoryId, () -> {});
+            //יוצר את הדיאלוגים של "מילים" ומעביר להם את דיאלוג האימג' פיקר
+            addWordDialog = new AddWordDialog(this, imagePicker, categoryId, () -> {});//סוגריים מסולסלים ריקים, לא לעשות כלום בסיום
             editWordDialog = new EditWordDialog(this, imagePicker, categoryId, () -> {});
 
         } else if (categoryType == CategoryType.LETTERS) {
-            // Create letter dialogs - no image picker needed
+            //יצירת הדיאלוגים של "אותיות", אין צורך להעביר את אימג' פיקר
             addLetterDialog = new AddLetterDialog(this, categoryId, () -> {});
             editLetterDialog = new EditLetterDialog(this, categoryId, () -> {});
 
+            //יצירת הדיאלוגים של "משפטים", אין צורך להעביר את אימג' פיקר
         } else if (categoryType == CategoryType.SENTENCES) {
             // Create sentence dialogs - no image picker needed
             addSentenceDialog = new AddSentenceDialog(this, categoryId, () -> {});
             editSentenceDialog = new EditSentenceDialog(this, categoryId, () -> {});
         }
 
-        // Flashcard dialog works for all types - no changes needed
+        // דיאלוג למידת מילה, מוצג עבור לחיצה על כל סוגי המילים/משפטים/אותיות
         flashcardDialog = new FlashcardDialog(this, categoryId, wordList, () -> {});
 
         tvBack.setOnClickListener(v -> finish());
         tvEditMode.setOnClickListener(v -> enterEditMode());
-        fabWord.setOnClickListener(v -> showAddDialog()); // Show the right add dialog based on type
+        fabWord.setOnClickListener(v -> showAddDialog()); //
         fabExitEditMode.setOnClickListener(v -> exitEditMode());
     }
 
-    // ==================== SAVE STATE ====================
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (imagePicker != null && imagePicker.getPendingCameraUri() != null) {
+        if (imagePicker != null && imagePicker.getPendingCameraUri() != null) {// שמירה במאין "כספת" את הכתובת של התמונה שנלקחה מהמצלמה במקרה
+            // והאנדוראיד יסגור את האפליקציה כשהמצלמה דולקת
             outState.putParcelable(KEY_CAMERA_URI, imagePicker.getPendingCameraUri());
         }
     }
 
-    // ==================== PERMISSION RESULT ====================
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {// בדיקת ההרשאות
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Only forward to imagePicker if it exists (only exists for WORDS type)
-        if (imagePicker != null) imagePicker.onPermissionResult(requestCode, grantResults);
+        //בדיקה אם קיים בכלל אימג' פיקר שלא נקרא לו סתם
+        if (imagePicker != null) imagePicker.onPermissionResult(requestCode, grantResults);// שולח את התשובה לבקשת ההרשאה מהמשתמש לimagePicker
     }
 
-    // ==================== SHOW RIGHT ADD DIALOG ====================
 
     private void showAddDialog() {
-        // Opens the correct Add dialog based on the category type
+        // פותח את דיאלוג ההוספה המתאים לפי סוג הקטגוריה
         if (categoryType == CategoryType.WORDS) {
-            addWordDialog.show(); // Regular word dialog with image
+            addWordDialog.show();
         } else if (categoryType == CategoryType.LETTERS) {
-            addLetterDialog.show(); // Letter dialog - letter name + Hebrew explanation
+            addLetterDialog.show();
         } else if (categoryType == CategoryType.SENTENCES) {
-            addSentenceDialog.show(); // Sentence dialog - English + Hebrew only
+            addSentenceDialog.show();
         }
     }
 
-    // ==================== SHOW RIGHT EDIT DIALOG ====================
 
     private void showEditDialog(Word word) {
-        // Opens the correct Edit dialog based on the category type
+        // פותח את דיאלוג העריכה המתאים לפי סוג הקטגוריה
         if (categoryType == CategoryType.WORDS) {
-            editWordDialog.show(word); // Regular word edit dialog
+            editWordDialog.show(word);
         } else if (categoryType == CategoryType.LETTERS) {
-            editLetterDialog.show(word); // Letter edit dialog
+            editLetterDialog.show(word);
         } else if (categoryType == CategoryType.SENTENCES) {
-            editSentenceDialog.show(word); // Sentence edit dialog
+            editSentenceDialog.show(word);
         }
     }
 
-    // ==================== ADMIN CHECK ====================
 
     private void checkIfAdmin() {
-        if (mAuth.getCurrentUser() == null) return;
-        String userId = mAuth.getCurrentUser().getUid();
+        if (mAuth.getCurrentUser() == null) return;// משתמש לא מחובר לא יכול להיות מנהל
+        String userId = mAuth.getCurrentUser().getUid();// שמירת מזהה ייחודי של המשתמש
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(document -> {
-                    if (document.exists()) {
-                        String role = document.getString("role");
+                    if (document.exists()) {// בדיקה אם קיים המסמך של המשתמש
+                        String role = document.getString("role");// שמירת התפקיד של המשתמש
                         if (role != null && role.equals("ADMIN")) {
-                            tvEditMode.setVisibility(View.VISIBLE);
+                            tvEditMode.setVisibility(View.VISIBLE);//אם המשתמש מנהל, מציגים את העיפרון עריכה
                         }
                     }
                 });
     }
 
-    // ==================== LOAD WORDS ====================
-
     private void loadWords() {
-        // Real time listener - updates automatically when words are added/edited/deleted
+        // מאזין זמן אמת מתעדכן ברגע שיש שינוי במילים שבקטגוריה מסויימת
         db.collection("categories").document(categoryId)
                 .collection("words")
                 .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
+                    if (error != null) {// אם יש שגיאה
                         Toast.makeText(this, "Error loading words", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    wordList.clear();
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        Word word = doc.toObject(Word.class);
-                        word.setIdFS(doc.getId());
-                        wordList.add(word);
+                    wordList.clear();// ניקוי רשימת המילים לפני שעוברים על המילים
+                    for (QueryDocumentSnapshot doc : snapshots) {// עוברים על כל המילים בקטגוריה
+                        Word word = doc.toObject(Word.class);// שמירת הנתונים בטיפוס word
+                        word.setIdFS(doc.getId()); //שמירת המזהה הייחודי של המילה
+                        wordList.add(word);//הוספת המילה לרשימת המילים
                     }
-                    wordAdapter.notifyDataSetChanged();
+                    wordAdapter.notifyDataSetChanged();// אומרים לאדפטר לשים לב אם שונו נתונים,
+                    //במידה ושונו הוא מעדכן את תצוגת המסך
                 });
     }
 
-    // ==================== LOAD LEARNED WORDS ====================
 
     private void loadLearnedWords() {
-        if (mAuth.getCurrentUser() == null) return;
-        String userId = mAuth.getCurrentUser().getUid();
+        if (mAuth.getCurrentUser() == null) return;// משתמש לא מחובר לא יכול לסמן מילים שלמד
+        String userId = mAuth.getCurrentUser().getUid();// שמירת מזהה ייחודי של המשתמש
 
-        // Real time listener - fires every time the user marks an item as learned or not learned
+        // מאזין זמן אמת מתעדכן ברגע שיש שינוי במילים שבקטגוריה מסויימת
         db.collection("users").document(userId)
                 .collection("progress").document(categoryId)
                 .addSnapshotListener((document, error) -> {
                     if (error != null) return;
 
-                    List<String> learnedWords = new ArrayList<>();
-                    if (document != null && document.exists()
+                    List<String> learnedWords = new ArrayList<>();// יוצרים רשימה חדשה שבה יוכנסו המילים שנלמדו
+                    if (document != null && document.exists()// אם קיים מסמך של הקטגוריה של המילים
                             && document.get("learnedWords") != null) {
-                        List<Object> raw = (List<Object>) document.get("learnedWords");
-                        for (Object item : raw) {
-                            learnedWords.add((String) item);
+                        List<Object> raw = (List<Object>) document.get("learnedWords");// שומר את רשימת המילים שהמשתמש סימן שלמד
+                        for (Object item : raw) {// עוברים על כל הרשימה
+                            learnedWords.add((String) item);// ממירים את האובייקטים שנשמרו שם לסטרינג
                         }
                     }
-                    // Pass updated list to adapter so checkmarks refresh instantly
-                    wordAdapter.setLearnedWords(learnedWords);
+                    wordAdapter.setLearnedWords(learnedWords);// מעבירים לאדפטר את רשימת מילים שנלמדו (המעודכנת)
                 });
     }
 
-    // ==================== EDIT MODE ====================
 
-    private void enterEditMode() {
-        isEditMode = true;
+    private void enterEditMode() {// כניסה למצב עריכה
+        isEditMode = true;// המשתמש במצב עריכה
         tvEditBanner.setVisibility(View.VISIBLE);
         fabWord.setVisibility(View.VISIBLE);
         fabExitEditMode.setVisibility(View.VISIBLE);
-        tvEditMode.setVisibility(View.GONE);
+        tvEditMode.setVisibility(View.GONE);// העלמת העיפרון
     }
 
-    private void exitEditMode() {
-        isEditMode = false;
+    private void exitEditMode() {// יציאה ממצב עריכה
+        isEditMode = false;// המשתמש לא במצב עריכה
+        //העלמת כל הכפתורים והרכיבים שמוםיעים במצב עריכה והחזרת העיפרון
         tvEditBanner.setVisibility(View.GONE);
         fabWord.setVisibility(View.GONE);
         fabExitEditMode.setVisibility(View.GONE);
         tvEditMode.setVisibility(View.VISIBLE);
     }
 
-    // ==================== WORD CLICK LISTENERS ====================
 
     @Override
-    public void onWordClick(Word word) {
+    public void onWordClick(Word word) {//בלחיצה על מילה
         if (isEditMode) {
-            showEditDialog(word); // Edit mode → open correct edit dialog
+            showEditDialog(word); // אם המשתמש במצב עריכה, נציג דיאלוג עריכה
         } else {
-            flashcardDialog.show(word); // Normal mode → show flashcard
+            flashcardDialog.show(word); // אם לא במצב עריכה נציג את דיאלוג (יודע/לא יודע)
         }
     }
 
     @Override
-    public void onWordLongClick(Word word) {
+    public void onWordLongClick(Word word) {//בלחיצה ארוכה על המילה
         if (isEditMode) {
-            showDeleteConfirmationDialog(word);
+            showDeleteConfirmationDialog(word);//קריאה למתודה
         }
     }
 
-    // ==================== DELETE ====================
 
-    private void showDeleteConfirmationDialog(Word word) {
+    private void showDeleteConfirmationDialog(Word word) {//הצגת דיאלוג "אתה בטוח שאתה רוצה למחוק את המילה?"
         new AlertDialog.Builder(this)
                 .setTitle("Delete")
                 .setMessage("Are you sure you want to delete \"" + word.getWordEnglish() + "\"?")
-                .setPositiveButton("Delete", (dialog, which) -> deleteWord(word.getIdFS()))
+                .setPositiveButton("Delete", (dialog, which) -> deleteWord(word.getIdFS()))//קריאה למתודת מחיקת מילה
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void deleteWord(String wordId) {
-        // Step 1 - delete the word/letter/sentence document from Firestore
+    private void deleteWord(String wordId) {// מחיקת מילה
+        //מוחקים את המילה ממאגר הנתונים
         db.collection("categories").document(categoryId)
                 .collection("words").document(wordId).delete()
-                .addOnSuccessListener(v -> {
+                .addOnSuccessListener(v -> {// אם הצלחנו למחוק מציגים הודעה
                     Toast.makeText(this, "Deleted!", Toast.LENGTH_SHORT).show();
 
-                    // Step 2 - recount remaining items and update wordCount in the category
+                    // ספרית המילים שנשארו בקטגוריה
                     db.collection("categories").document(categoryId)
                             .collection("words").get()
                             .addOnSuccessListener(snapshot -> {
                                 db.collection("categories").document(categoryId)
-                                        .update("wordCount", snapshot.size());
+                                        .update("wordCount", snapshot.size());// מעדכנים את שדה "wordCount" למספר המילים שיש בתצלום
                             });
 
                     // Step 3 - remove this wordId from ALL users' learnedWords arrays
                     // so their progress doesn't count a deleted item
                     db.collection("users").get()
-                            .addOnSuccessListener(usersSnapshot -> {
-                                for (QueryDocumentSnapshot userDoc : usersSnapshot) {
-                                    String userId = userDoc.getId();
+                            .addOnSuccessListener(usersSnapshot -> {// אם הצלחנו להביא את הקולקשן
+                                for (QueryDocumentSnapshot userDoc : usersSnapshot) {// עוברים על כל המסמכים בקולקשן של יוזרס
+                                    String userId = userDoc.getId();// שמירת המזהה הייחודי של המשתמש
                                     db.collection("users").document(userId)
                                             .collection("progress").document(categoryId)
-                                            .get()
-                                            .addOnSuccessListener(progressDoc -> {
-                                                if (!progressDoc.exists()) return;
+                                            .get()// הבאת ההתקדמות בקטגוריה הספציפית
+                                            .addOnSuccessListener(progressDoc -> {// אם הצלחנו
+                                                if (!progressDoc.exists()) return;// נבדוק אם קיים מסמך כזה
 
-                                                List<String> learnedWords = new ArrayList<>();
-                                                if (progressDoc.get("learnedWords") != null) {
-                                                    List<Object> raw = (List<Object>) progressDoc.get("learnedWords");
-                                                    for (Object item : raw) learnedWords.add((String) item);
+                                                List<String> learnedWords = new ArrayList<>();// יצירת מערך חדש שבו ישמרו המילים שנלמדו
+                                                if (progressDoc.get("learnedWords") != null) {// אם יש שדה של מילים שנלמדו
+                                                    List<Object> raw = (List<Object>) progressDoc.get("learnedWords");// שמירה במערך של אובייקטים
+                                                    for (Object item : raw) learnedWords.add((String) item);//עוברים על כל המילים שנלמדו ומוסיפים לרשימה
                                                 }
 
-                                                // Only update users who had learned this specific item
+                                                // אם רשימת המילים שנלמדו מכילה את המילה שנמחקה
                                                 if (learnedWords.contains(wordId)) {
                                                     db.collection("users").document(userId)
                                                             .collection("progress").document(categoryId)
                                                             .update(
+                                                                    //נעדכן את רשימת המילים שנלמדו על ידי מחיקת המילה מהמילים שנלמדו
                                                                     "learnedWords", FieldValue.arrayRemove(wordId),
-                                                                    "wordsLearned", learnedWords.size() - 1
+                                                                    "wordsLearned", learnedWords.size() - 1// מעדכן את מס המילים שנלמדו בקטגוריה
+                                                                    // ומחסיר מילה אחת
                                                             );
                                                 }
                                             });
                                 }
                             });
                 })
-                .addOnFailureListener(e -> Toast.makeText(this,
+                .addOnFailureListener(e -> Toast.makeText(this,// אם לא הצלחנו למחוק מציגים הודעה
                         "Error deleting", Toast.LENGTH_SHORT).show());
     }
 }
