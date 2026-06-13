@@ -16,7 +16,6 @@ public class WordSearchGridView extends View {
     // full control over drawing colors and handling drag gestures
     // Only horizontal and vertical selections are supported - no diagonals
 
-    // ==================== LISTENER INTERFACE ====================
 
     // Interface = a contract - whoever uses this must provide this method
     // WordSearchActivity implements this so it gets notified when user finishes selecting
@@ -24,14 +23,12 @@ public class WordSearchGridView extends View {
         void onWordSelected(String word); // Called when user lifts finger after dragging
     }
 
-    // ==================== GRID DATA ====================
 
     private char[][] grid; // The 2D array holding all letters - grid[row][col]
     private boolean[][] found; // Tracks which cells belong to a found word - true = green
     private int gridSize = 12; // The grid is 12x12 cells
     private float cellSize; // The size of each cell in pixels - calculated when view size is known
 
-    // ==================== SELECTION STATE ====================
 
     private int startRow = -1; // Row where user started touching - -1 means no touch yet
     private int startCol = -1; // Column where user started touching
@@ -39,7 +36,6 @@ public class WordSearchGridView extends View {
     private int endCol = -1; // Column where user's finger currently is while dragging
     private boolean isTouching = false; // true = user is currently dragging their finger
 
-    // ==================== PAINT OBJECTS ====================
 
     // Paint objects store drawing settings like color and style
     // We create them once here instead of inside onDraw() to avoid
@@ -50,18 +46,15 @@ public class WordSearchGridView extends View {
     private Paint textPaint; // Draws the letters inside each cell - white
     private Paint borderPaint; // Draws the border around each cell
 
-    // ==================== LISTENER ====================
 
     private OnWordSelectedListener listener; // Reference to WordSearchActivity
 
-    // ==================== CONSTRUCTOR ====================
 
     public WordSearchGridView(Context context, AttributeSet attrs) {
         super(context, attrs); // Call the parent View constructor - required by Android
         initPaints(); // Set up all paint objects
     }
 
-    // ==================== PAINT SETUP ====================
 
     private void initPaints() {
         // We set up all paints here once so onDraw() doesn't create new objects every frame
@@ -96,7 +89,6 @@ public class WordSearchGridView extends View {
         borderPaint.setStrokeWidth(1f); // 1 pixel border thickness
     }
 
-    // ==================== PUBLIC METHODS ====================
 
     public void setGrid(char[][] grid, int gridSize) {
         // Called by WordSearchActivity after the grid is built with all words placed
@@ -137,78 +129,68 @@ public class WordSearchGridView extends View {
         invalidate(); // Tell Android to redraw so the green cells appear
     }
 
-    // ==================== SIZE CALCULATION ====================
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        // Called automatically when Android knows the actual pixel size of this view
-        // We use the smaller of width or height so cells are always square
-        cellSize = Math.min(w, h) / (float) gridSize; // e.g. 480px wide / 12 = 40px per cell
-        textPaint.setTextSize(cellSize * 0.5f); // Letter size = 50% of cell size so it fits nicely
+        //התאמת הרשת לכל טלפון
+        cellSize = Math.min(w, h) / (float) gridSize; //כמה פיקסלים לכל תא
+        textPaint.setTextSize(cellSize * 0.5f); // כל אות תתפוס חצי מהשטח של התא
     }
 
-    // ==================== DRAWING ====================
 
     @Override
     protected void onDraw(Canvas canvas) {
-        // Called every time this view needs to be redrawn
-        // Android calls this after every invalidate() call
-        // We loop through every cell and draw it with the right color and letter
-        if (grid == null) return; // Grid not set yet - nothing to draw
+        if (grid == null) return; // אם עדיין לא יצרנו רשת
 
         for (int row = 0; row < gridSize; row++) {
             for (int col = 0; col < gridSize; col++) {
 
-                // Calculate the pixel boundaries of this cell
-                float left = col * cellSize; // e.g. column 3 starts at 3 * 40 = 120px
-                float top = row * cellSize; // e.g. row 2 starts at 2 * 40 = 80px
-                float right = left + cellSize; // Cell ends at 120 + 40 = 160px
-                float bottom = top + cellSize; // Cell ends at 80 + 40 = 120px
+                // הפיכת הפיקסלים לריבוע הפיזי שמתאר את התא
+                float left = col * cellSize;
+                float top = row * cellSize;
+                float right = left + cellSize;
+                float bottom = top + cellSize;
 
-                RectF cellRect = new RectF(left, top, right, bottom); // Rectangle for this cell
+                RectF cellRect = new RectF(left, top, right, bottom); // יצירת תא
 
-                // Choose which background color to use for this cell
+                // בחירת הצבע לתא הזה
                 if (found[row][col]) {
-                    // Cell is part of a found word - draw green
+                    // אם זה נמצא כבר נסמן בירוק
                     canvas.drawRoundRect(cellRect, 4, 4, foundPaint);
                 } else if (isTouching && isCellSelected(row, col)) {
-                    // User is currently selecting this cell - draw gold
+                    // אם עכשיו לוחצים על התא הזה נצבע אותו בזהב
                     canvas.drawRoundRect(cellRect, 4, 4, selectedPaint);
                 } else {
-                    // Normal cell - draw dark blue
+                    // אם הוא תא רגיל נצבע אותו בכחול
                     canvas.drawRoundRect(cellRect, 4, 4, cellPaint);
                 }
 
-                // Draw the cell border on top of the background
+                // נצבע היקף של תא
                 canvas.drawRoundRect(cellRect, 4, 4, borderPaint);
 
-                // Draw the letter centered in the cell
-                float textX = left + cellSize / 2; // Horizontal center of cell
-                // Vertical center adjusted using font metrics so text is perfectly centered
-                // descent and ascent describe how tall letters are above and below the baseline
+                // ציור האות בדיוק במרכז התא
+                float textX = left + cellSize / 2;
                 float textY = top + cellSize / 2 - (textPaint.descent() + textPaint.ascent()) / 2;
-                // Draw the letter in uppercase so the grid looks consistent
+                // אות גדולה
                 canvas.drawText(String.valueOf(grid[row][col]).toUpperCase(), textX, textY, textPaint);
             }
         }
     }
 
-    // ==================== SELECTION CHECK ====================
 
     private boolean isCellSelected(int row, int col) {
-        // Returns true if this cell is on the line from startRow,startCol to endRow,endCol
-        // Only horizontal and vertical selections are supported - diagonals are ignored
-        if (startRow == -1 || endRow == -1) return false; // No touch active - nothing selected
+        //מחזיר אמת אם התא הוא חלק ממסלול הגרירה של המשתמש
+        if (startRow == -1 || endRow == -1) return false; // אם אין לחיצה על תא
 
-        // If both row AND column changed it means the user is dragging diagonally
-        // We don't support diagonal selection so return false immediately
+        //אם המשתמש גורר באלכסון
         if (startRow != endRow && startCol != endCol) return false;
 
-        // Calculate direction of the selection
-        int rowDir = Integer.compare(endRow, startRow); // -1=up, 0=horizontal, 1=down
-        int colDir = Integer.compare(endCol, startCol); // -1=left, 0=vertical, 1=right
+        // בשורות אם האצבע זזה למטה נקבל 1, אם למעלה נקבל 1-, ואם היא נשארה באותה שורה נקבל 0
+        //בעמודות  אם האצבע זזה ימינה נקבל 1, שמאלה נקבל 1-, ואם באותה עמודה נקבל 0
+        int rowDir = Integer.compare(endRow, startRow);
+        int colDir = Integer.compare(endCol, startCol);
 
-        // If start and end are the same cell just check if this cell matches
+        // תא נחשב מסומן אם הוא לא סימן אלכסוני
         if (rowDir == 0 && colDir == 0) {
             return row == startRow && col == startCol;
         }
@@ -216,127 +198,112 @@ public class WordSearchGridView extends View {
         int r = startRow;
         int c = startCol;
 
-        // Walk along the path step by step and check if this cell is on it
-        // Since we already checked it's horizontal or vertical this will always terminate
+        //עוברים לאורך מסלול ובודקים אם התא הוא חלק ממנו
         while (true) {
-            if (r == row && c == col) return true; // Cell is on the path
-            if (r == endRow && c == endCol) break; // Reached the end without finding cell
-            r += rowDir; // Move one step
-            c += colDir;
+            if (r == row && c == col) return true; // התא במסלול הגרירה
+            if (r == endRow && c == endCol) break; // תעצור ברגע שהגענו לתא שהמשתמש הרים או הניח את האצבע
+            r += rowDir; // תתקדם שורה
+            c += colDir;// תתקדם עמודה
 
-            // Safety check - stop if we somehow go out of bounds
+            //אם יצאנו מגבולות הרשת נעצור
             if (r < 0 || r >= gridSize || c < 0 || c >= gridSize) break;
         }
-        return false; // Cell is not on the selection path
+        return false; // אל תצבע בזהב, הוא לא חלק מהמסלול
     }
 
-    // ==================== TOUCH HANDLING ====================
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // Called every time user touches, moves, or lifts finger on this view
-        if (grid == null) return false; // Grid not ready - ignore touches
+        // קריאה בכל פען שהמשתמש נוגע ברשת
+        if (grid == null) return false;
 
-        // Convert pixel X and Y coordinates to grid column and row numbers
-        // e.g. if user touches at pixel 130 and cellSize is 40, they're in column 130/40 = 3
+        //המרת הפיקסלים לעמודות ושורות
         int col = (int) (event.getX() / cellSize);
         int row = (int) (event.getY() / cellSize);
 
-        // Clamp to valid grid range so dragging outside the grid doesn't crash
-        // Math.max(0, ...) prevents negative values
-        // Math.min(..., gridSize-1) prevents values >= gridSize
+        //מניעת גרירה מעבר לרשת מה שיגרום לקריסה
         col = Math.max(0, Math.min(col, gridSize - 1));
         row = Math.max(0, Math.min(row, gridSize - 1));
 
         switch (event.getAction()) {
 
-            case MotionEvent.ACTION_DOWN: // User just touched the screen - finger went down
-                startRow = row; // Remember where the selection started
+            case MotionEvent.ACTION_DOWN: // לחיצה על המסך
+                startRow = row; // שמירת השורה ההתחלתית
                 startCol = col;
-                endRow = row; // End starts same as start until they drag
+                endRow = row; // מתחיל זהה להתחלה עד שגוררים
                 endCol = col;
-                isTouching = true; // Mark touch as active
-                invalidate(); // Redraw to show the single highlighted cell
+                isTouching = true; // המשתמש גורר
+                invalidate(); // ציור המסך מחדש ועדכון כתוצאה מהלחיצה
                 break;
 
-            case MotionEvent.ACTION_MOVE: // User is dragging their finger
-                endRow = row; // Update end position as finger moves
+            case MotionEvent.ACTION_MOVE: // גרירה של האצבע על המסך
+                endRow = row; // עדכון בזמן אמת
                 endCol = col;
-                invalidate(); // Redraw to update the gold highlight path
+                invalidate(); //ציור המסך מחדש כתוצאה מהגרירה
                 break;
 
-            case MotionEvent.ACTION_UP: // User lifted their finger - selection is done
-                isTouching = false; // Touch is no longer active
+            case MotionEvent.ACTION_UP: // המשתמש הרים את האצבע מהמסך
+                isTouching = false; // כבר לא נוגע במסך
 
-                // Only process the selection if it is horizontal or vertical
-                // If both row AND column changed it is a diagonal drag - we ignore it
-                // This prevents the crash that happened with diagonal dragging
+                //אם גררנו מילה בכיוונים
                 if (startRow == endRow || startCol == endCol) {
-                    String selectedWord = buildSelectedWord(); // Build the word from selected letters
+                    String selectedWord = buildSelectedWord(); // צור מילה
                     if (listener != null && !selectedWord.isEmpty()) {
-                        listener.onWordSelected(selectedWord); // Notify WordSearchActivity
+                        listener.onWordSelected(selectedWord); // עדכון בהתאם ללחיצה
                     }
                 }
 
-                // Reset selection so nothing stays highlighted
+                // איפוס מיקומים
                 startRow = -1;
                 startCol = -1;
                 endRow = -1;
                 endCol = -1;
-                invalidate(); // Redraw to remove the gold highlight
+                invalidate(); // ציור מחדש למחיקת הצבע הזהב
                 break;
         }
 
-        return true; // true = we handled this touch event, don't pass it to other views
+        return true; // טיפנו בלחיצה הזאת
     }
 
-    // ==================== BUILD SELECTED WORD ====================
 
     private String buildSelectedWord() {
-        // Collects all letters from startRow,startCol to endRow,endCol and returns them as a string
-        // This is called when the user lifts their finger after dragging
-        if (startRow == -1 || endRow == -1) return ""; // No selection - return empty
+        //נקרא כשהמשתמש מרים את האצבע וזה יוצר מילה
+        if (startRow == -1 || endRow == -1) return ""; // לא בחרנו כלום, תחזיר ריק
 
-        // Only allow horizontal or vertical - return empty string for diagonals
-        // This is the key fix that prevents the infinite loop crash from diagonal dragging
-        // Before this fix, a diagonal drag where row distance != column distance
-        // would cause the walker to never reach endRow AND endCol at the same time
+        //מאפשר רק גרירה באותו כיוון ולא אלכסון, אלכסון לא ייצור מילה
         if (startRow != endRow && startCol != endCol) return "";
 
-        // Calculate direction of the selection
-        int rowDir = Integer.compare(endRow, startRow); // -1=up, 0=horizontal, 1=down
-        int colDir = Integer.compare(endCol, startCol); // -1=left, 0=vertical, 1=right
+        // בשורות אם האצבע זזה למטה נקבל 1, אם למעלה נקבל 1-, ואם היא נשארה באותה שורה נקבל 0
+        //בעמודות  אם האצבע זזה ימינה נקבל 1, שמאלה נקבל 1-, ואם באותה עמודה נקבל 0
+        int rowDir = Integer.compare(endRow, startRow);
+        int colDir = Integer.compare(endCol, startCol);
 
-        // If start and end are the same cell return just that one letter
+        // מחזירים רק את האות אם סומן רק תא אחד
         if (rowDir == 0 && colDir == 0) {
             return String.valueOf(grid[startRow][startCol]).toLowerCase();
         }
 
-        StringBuilder word = new StringBuilder(); // More efficient than String + for building strings
+        StringBuilder word = new StringBuilder(); // בניית המחרוזת, יעיל יותר משרשור
         int r = startRow;
         int c = startCol;
 
-        // Walk from start to end collecting each letter
-        // Since we checked it's horizontal or vertical this loop always terminates cleanly
         while (true) {
-            // Safety check - stop if we somehow go out of bounds
+            // בדיקה אם אנחנו בגבולות
             if (r < 0 || r >= gridSize || c < 0 || c >= gridSize) break;
 
-            word.append(grid[r][c]); // Add this cell's letter to the word
+            word.append(grid[r][c]); // הוספת האות למילה
 
-            if (r == endRow && c == endCol) break; // Reached the last letter - stop
+            if (r == endRow && c == endCol) break; // הגענו לאות האחרונה, מפסיקים
 
-            r += rowDir; // Move one step in row direction
-            c += colDir; // Move one step in column direction
+            r += rowDir; // מתקדמים שורה
+            c += colDir; // מתקדמים עמודה
         }
 
-        return word.toString().toLowerCase(); // Return as lowercase so comparison with word list works
+        return word.toString().toLowerCase(); // החזרת המילה
     }
 
-    // ==================== GETTERS ====================
 
-    // These are used by WordSearchActivity to get start and end positions
-    // after a word is found so it can call markWordAsFound()
+
     public int getStartRow() { return startRow; }
     public int getStartCol() { return startCol; }
     public int getEndRow() { return endRow; }

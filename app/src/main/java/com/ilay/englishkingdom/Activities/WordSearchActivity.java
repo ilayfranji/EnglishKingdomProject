@@ -1,78 +1,64 @@
 package com.ilay.englishkingdom.Activities;
 
-import android.content.Intent; // Used to open GameHistoryActivity
-import android.graphics.Paint; // Used to add strikethrough effect to found words in the list
-import android.os.Bundle; // Used when creating the activity
-import android.view.View; // Used to show and hide UI elements
-import android.widget.LinearLayout; // Used for the word list container and each row of words
-import android.widget.TextView; // Used for back button, timer, found counter, and word list items
-import android.widget.Toast; // Used to show messages to the user
+import android.content.Intent;
+import android.graphics.Paint;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // Used to show the win dialog at the end
-import androidx.appcompat.app.AppCompatActivity; // The base class for all screens
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth; // Used to get the current logged in user
-import com.google.firebase.firestore.FirebaseFirestore; // Used to load words and save stats
-import com.google.firebase.firestore.QueryDocumentSnapshot; // Represents a single Firestore document
-import com.ilay.englishkingdom.Models.CategoryType; // Used to filter only WORDS type categories
-import com.ilay.englishkingdom.R; // Used to reference XML resources
-import com.ilay.englishkingdom.Views.WordSearchGridView; // Our custom grid view
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.ilay.englishkingdom.Models.CategoryType;
+import com.ilay.englishkingdom.R;
+import com.ilay.englishkingdom.Views.WordSearchGridView;
 
-import java.text.SimpleDateFormat; // Used to format the current date and time for game history
-import java.util.ArrayList; // Used for word lists
-import java.util.Collections; // Used to shuffle words so grid is different every game
-import java.util.Date; // Used to get the current date and time
-import java.util.HashMap; // Used to store each word's position in the grid
-import java.util.List; // The List interface
-import java.util.Locale; // Used for time and date formatting
-import java.util.Random; // Used to place random filler letters in empty cells
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 
 public class WordSearchActivity extends AppCompatActivity
         implements WordSearchGridView.OnWordSelectedListener {
 
-    // ==================== UI ELEMENTS ====================
+    private TextView tvBack;
+    private TextView tvFoundCount;
+    private TextView tvLoading;
+    private TextView tvTimer;
+    private WordSearchGridView gridView;
+    private LinearLayout wordListContainer;
 
-    private TextView tvBack; // Back arrow to go back to PracticeActivity
-    private TextView tvFoundCount; // Shows "Found: 3/8" so user knows their progress
-    private TextView tvLoading; // Shows "Loading..." while words are being fetched from Firestore
-    private TextView tvTimer; // Shows the elapsed time e.g. "1:23:456"
-    private WordSearchGridView gridView; // Our custom view that draws the grid and handles touch
-    private LinearLayout wordListContainer; // The container below the grid that holds all word TextViews
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
-    // ==================== FIREBASE ====================
-
-    private FirebaseFirestore db; // Our connection to the Firestore database
-    private FirebaseAuth mAuth; // Used to get the current user for saving best time and history
-
-    // ==================== GAME DATA ====================
-
-    private static final int GRID_SIZE = 12; // The grid is always 12x12 cells
-    private static final int MAX_WORDS = 12; // Maximum number of words to show in the grid
-    private char[][] grid = new char[GRID_SIZE][GRID_SIZE]; // The 2D array of letters - grid[row][col]
-    private List<String> wordsToFind = new ArrayList<>(); // All words successfully placed in the grid
-    private List<String> foundWords = new ArrayList<>(); // Words the user has found so far
-    private List<TextView> wordTextViews = new ArrayList<>(); // One TextView per word in the list below grid
-    // Key = the word string, Value = int array [startRow, startCol, endRow, endCol]
-    // We save each word's position so we can mark its cells green when it's found
+    private static final int GRID_SIZE = 12;
+    private static final int MAX_WORDS = 12;
+    private char[][] grid = new char[GRID_SIZE][GRID_SIZE];
+    private List<String> wordsToFind = new ArrayList<>();
+    private List<String> foundWords = new ArrayList<>();
+    private List<TextView> wordTextViews = new ArrayList<>();
     private HashMap<String, int[]> wordPositions = new HashMap<>();
 
-    // ==================== GAME START TIME ====================
 
-    // We save the date and time when the game started so we can show it in the history
-    private String gameStartDate = ""; // e.g. "28/03/2026"
-    private String gameStartTime = ""; // e.g. "17:45"
+    private String gameStartDate = "";
+    private String gameStartTime = "";
 
-    // ==================== TIMER ====================
 
     private android.os.Handler timerHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    // Handler runs code on the main thread - we need this because only the main thread can update UI
 
-    private long startTime = 0; // The system time in milliseconds when the timer started
-    private long elapsedTime = 0; // How many milliseconds have passed since the timer started
-    private boolean timerRunning = false; // true = timer is currently ticking
+    private long startTime = 0;
+    private long elapsedTime = 0;
+    private boolean timerRunning = false;
 
-    // Runnable = a block of code that can be scheduled to run later
-    // This one updates the timer display every 10 milliseconds
     private Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
@@ -82,7 +68,6 @@ public class WordSearchActivity extends AppCompatActivity
         }
     };
 
-    // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,7 +98,6 @@ public class WordSearchActivity extends AppCompatActivity
         stopTimer(); // Always stop the timer when activity is destroyed to prevent memory leaks
     }
 
-    // ==================== TIMER METHODS ====================
 
     private void startTimer() {
         // Save the current date and time when the game starts
@@ -142,10 +126,8 @@ public class WordSearchActivity extends AppCompatActivity
         return String.format(Locale.getDefault(), "%d:%02d:%03d", minutes, seconds, ms);
     }
 
-    // ==================== LOAD WORDS ====================
-
     private void loadWords() {
-        // Loads all words from WORDS type categories only
+        // טעינת כל המילים מסוג מילה בלבד ממאגר הנתונים
         db.collection("categories")
                 .whereEqualTo("categoryType", CategoryType.WORDS.name())
                 .get()
@@ -153,7 +135,7 @@ public class WordSearchActivity extends AppCompatActivity
                     int[] categoriesLeft = {categories.size()};
 
                     if (categoriesLeft[0] == 0) {
-                        tvLoading.setText("No words found! Please add some words first.");
+                        tvLoading.setText("No words found! Please add some words first");
                         return;
                     }
 
@@ -165,7 +147,7 @@ public class WordSearchActivity extends AppCompatActivity
                                 .addOnSuccessListener(words -> {
                                     for (QueryDocumentSnapshot wordDoc : words) {
                                         String english = wordDoc.getString("wordEnglish");
-                                        // Only add single words that fit in the grid
+                                        // רק מילים שהאורך שלהן קטן מאורך הרשת
                                         if (english != null
                                                 && !english.isEmpty()
                                                 && !english.contains(" ")
@@ -177,150 +159,141 @@ public class WordSearchActivity extends AppCompatActivity
                                     categoriesLeft[0]--;
 
                                     if (categoriesLeft[0] == 0) {
-                                        buildGrid(allWordsList); // All categories loaded - build grid
+                                        buildGrid(allWordsList); // נטענו כל המילים אפשר עכשיו לבנות את הרשת
                                     }
                                 });
                     }
                 })
                 .addOnFailureListener(e ->
-                        tvLoading.setText("Error loading words. Please try again."));
+                        tvLoading.setText("Error loading words. Please try again"));
     }
 
-    // ==================== GRID BUILDING ====================
 
     private void buildGrid(List<String> allWords) {
         // אם אין מילים אז מציגים שגיאה
         if (allWords.isEmpty()) {
-            tvLoading.setText("No words found! Please add some words first.");
+            tvLoading.setText("No words found! Please add some words first");
             return;
         }
 
-        Collections.shuffle(allWords); // Shuffle so a different set appears each game
+        Collections.shuffle(allWords);
 
-        // Initialize every cell with empty space
+        // אתחול כל התאים עם תווים ריקים
         for (int r = 0; r < GRID_SIZE; r++) {
             for (int c = 0; c < GRID_SIZE; c++) {
                 grid[r][c] = ' ';
             }
         }
 
-        // FIX FOR 11 WORDS BUG:
-        // The old code took the first 12 words and tried to place them
-        // but some words couldn't fit so we ended up with fewer than 12
-        // The new code keeps trying words from the full shuffled list
-        // until we successfully place exactly 12 words or run out of words to try
-        // This guarantees we always show the maximum possible number of words
-        int wordsPlaced = 0; // How many words we have successfully placed so far
+        int wordsPlaced = 0; // ספירת המילים שהצלחנו לשים בתפזורת
         for (String word : allWords) {
-            if (wordsPlaced >= MAX_WORDS) break; // Stop once we have 12 words placed
-            if (placeWord(word)) {
-                wordsToFind.add(word); // Only add to the find list if it was actually placed
-                wordsPlaced++; // Count this as a successfully placed word
+            if (wordsPlaced >= MAX_WORDS) break; // ברגע שמיקמנו 12 מילים נעצור
+            if (placeWord(word)) {// אם הצלחנו למקם את המילה
+                wordsToFind.add(word); // שומרים אותה ברשימת המילים שיהיו בתפזורת
+                wordsPlaced++; // מעדכנים את מספר המילים שהצלחנו לשים בתפזורת
             }
         }
 
-        fillEmptyCells(); // Fill remaining empty cells with random letters
+        fillEmptyCells(); // קריאה למתודה
 
-        // Hide loading and show the grid
+
         tvLoading.setVisibility(View.GONE);
         gridView.setVisibility(View.VISIBLE);
-        gridView.setGrid(grid, GRID_SIZE);
+        gridView.setGrid(grid, GRID_SIZE);// בניית הרשת הויזואלית
 
-        buildWordList(); // Build the word list below the grid
+        buildWordList(); // בניית מחסן מילים
 
         tvFoundCount.setText("Found: 0/" + wordsToFind.size());
 
-        startTimer(); // Start the timer now that the game is ready
+        startTimer(); // הפעלת הטיימר
     }
 
     private boolean placeWord(String word) {
-        // Tries to place a word in the grid horizontally or vertically
-        // Returns true if successful, false if no valid position found
+        //מנסה לשים מילה ברשת, מחזירה אמת אם אפשר שקר אם אי אפשר
         int[][] directions = {
-                {0, 1},  // Right →
-                {1, 0},  // Down ↓
+                {0, 1},  // ימין
+                {1, 0},  // למטה
         };
 
         List<int[]> dirList = new ArrayList<>();
-        for (int[] d : directions) dirList.add(d);
-        Collections.shuffle(dirList); // Shuffle so direction is random
+        for (int[] d : directions) dirList.add(d);// העתקת רשימת הכיוונים
+        Collections.shuffle(dirList);
 
         Random random = new Random();
 
-        for (int[] dir : dirList) {
+        for (int[] dir : dirList) {// בחירת כיוון, אם לא ניתן למקם בכיוון הזה נמקם בכיוון השני
             for (int attempt = 0; attempt < 50; attempt++) {
                 int startRow = random.nextInt(GRID_SIZE);
                 int startCol = random.nextInt(GRID_SIZE);
 
-                if (canPlace(word, startRow, startCol, dir[0], dir[1])) {
-                    // Place the word letter by letter
+                if (canPlace(word, startRow, startCol, dir[0], dir[1])) {//קורא לפונק עזר ובודק אם ניתן לשים את המילה
+                    // מיקום המילה אות אחרי אות
                     int r = startRow;
                     int c = startCol;
                     for (char letter : word.toCharArray()) {
-                        grid[r][c] = letter;
-                        r += dir[0];
-                        c += dir[1];
+                        grid[r][c] = letter;//שם את האות הנוכחית במשבצת
+                        r += dir[0];// מתקדם לשורה הבאה אם הכיוון הוא למטה
+                        c += dir[1];//מתקדם לעמודה הבאה אם הכיוון הוא ימינה
                     }
 
-                    // Save start and end position so we can mark it green when found
+                    // שמירת מיקום ההתחלה והסיום
                     int endRow = startRow + dir[0] * (word.length() - 1);
                     int endCol = startCol + dir[1] * (word.length() - 1);
                     wordPositions.put(word, new int[]{startRow, startCol, endRow, endCol});
-                    return true;
+                    return true;//הצלחנו למקם את המילה
                 }
             }
         }
-        return false; // Couldn't place this word anywhere
+        return false; // לא הצלחנו למקם את המילה
     }
 
     private boolean canPlace(String word, int startRow, int startCol, int rowDir, int colDir) {
-        // Checks if a word fits at the given position without going out of bounds
-        // or conflicting with a different letter that's already placed
+        //בדיקה אם מילה יכולה להיכנס במיקום מסויים שנתנו לה על הרשת
+        //מבליח לצאת מגבולות הרשת או לעלות על מילה אחרת
         int r = startRow;
         int c = startCol;
 
         for (char letter : word.toCharArray()) {
-            if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return false; // Out of bounds
-            if (grid[r][c] != ' ' && grid[r][c] != letter) return false; // Conflicts with existing letter
-            r += rowDir;
-            c += colDir;
+            if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return false; // יצאנו מגבולות הרשת
+            if (grid[r][c] != ' ' && grid[r][c] != letter) return false; // עלינו על מילה אחרת
+            r += rowDir;//נתקדם שורה
+            c += colDir;//נתקדם עמודה
         }
-        return true;
+        return true;// אם לא החזרנו false עד כאן המילה מתאימה במיקומים ששלחנו
     }
 
     private void fillEmptyCells() {
-        // Fill all remaining empty cells with random letters to hide the words
+        // מילוי תאים ריקים עם אותיות רנדומליות
         Random random = new Random();
         String letters = "abcdefghijklmnopqrstuvwxyz";
 
         for (int r = 0; r < GRID_SIZE; r++) {
             for (int c = 0; c < GRID_SIZE; c++) {
-                if (grid[r][c] == ' ') {
-                    grid[r][c] = letters.charAt(random.nextInt(letters.length()));
+                if (grid[r][c] == ' ') {// אם יש תא שאין בו אות
+                    grid[r][c] = letters.charAt(random.nextInt(letters.length()));//להכניס אות רנדומלית
                 }
             }
         }
     }
 
-    // ==================== WORD LIST ====================
 
     private void buildWordList() {
         wordTextViews.clear();
         wordListContainer.removeAllViews();
 
-        // Header label
+        // יצירת המחסן
         TextView header = new TextView(this);
         header.setText("Find these words:");
-        header.setTextColor(0xFFFFD700); // Gold
+        header.setTextColor(0xFFFFD700); // צבע זהב
         header.setTextSize(14);
         header.setPadding(8, 8, 8, 8);
         wordListContainer.addView(header);
 
-        // Show 3 words per row to save vertical space
+        // מציגים 3 מילים בשורה
         LinearLayout currentRow = null;
 
         for (int i = 0; i < wordsToFind.size(); i++) {
-            if (i % 3 == 0) { // Start a new row every 3 words
+            if (i % 3 == 0) {
                 currentRow = new LinearLayout(this);
                 currentRow.setOrientation(LinearLayout.HORIZONTAL);
                 wordListContainer.addView(currentRow);
@@ -329,68 +302,64 @@ public class WordSearchActivity extends AppCompatActivity
             String word = wordsToFind.get(i);
 
             TextView tv = new TextView(this);
-            tv.setText(word.toUpperCase()); // Show uppercase to match the grid
-            tv.setTextColor(0xFFFFFFFF); // White
+            tv.setText(word.toUpperCase()); // באותיות גדולות
+            tv.setTextColor(0xFFFFFFFF); // צבע לבן
             tv.setTextSize(13);
             tv.setPadding(8, 4, 8, 4);
 
-            // Equal width for all 3 words in a row using weight
+            // מיקום שווה לכל מילה
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
             tv.setLayoutParams(params);
 
             currentRow.addView(tv);
-            wordTextViews.add(tv); // Save reference so we can strike through when found
+            wordTextViews.add(tv); //שמירת רכיבי הטקסט של מחסן המילים ככה נוכל לשנות אותם כשנמצא אותם
         }
     }
 
-    // ==================== WORD SELECTION ====================
 
     @Override
     public void onWordSelected(String selectedWord) {
-        // Called by WordSearchGridView when the user lifts their finger after dragging
+        // נקרא על ידי הגריד וויו כשהמשתמש מרים אצבע לאחר סימון
         if (wordsToFind.contains(selectedWord) && !foundWords.contains(selectedWord)) {
-            wordFound(selectedWord); // Match found!
+            wordFound(selectedWord); // מילה נמצאה
         } else {
-            // The selected letters don't match any hidden word
-            // Only show the toast if the user selected more than one letter
-            // so we don't show "Word not found" for every single tap
+            //אם המילה לא נמצאה, והיא לפחות עם 2 אותיות נציג הודעה
             if (selectedWord.length() > 1) {
-                Toast.makeText(this, "Word not found! Try again 🔍", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Word not found! Try again", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     private void wordFound(String word) {
-        foundWords.add(word); // Add to found list
+        foundWords.add(word); // הוספה לרשימת המילים שנמצאו
 
-        // Strike through the word in the list below the grid
+        // סימון המילה במחסן המילים עם קו עליה
         for (int i = 0; i < wordsToFind.size(); i++) {
             if (wordsToFind.get(i).equals(word)) {
                 TextView tv = wordTextViews.get(i);
-                tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG); // Strikethrough
-                tv.setTextColor(0xFF7986CB); // Change to grey-blue to show it's been found
+                tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG); // מחיקת המילה על ידי קו
+                tv.setTextColor(0xFF7986CB); // לשנות צבע
                 break;
             }
         }
 
-        // Tell the grid view to mark this word's cells green
+        // סימון המילה על הרשת בצבע ירוק
         int[] pos = wordPositions.get(word);
         if (pos != null) {
             gridView.markWordAsFound(pos[0], pos[1], pos[2], pos[3]);
         }
 
         tvFoundCount.setText("Found: " + foundWords.size() + "/" + wordsToFind.size());
-        Toast.makeText(this, "Found: " + word.toUpperCase() + " ✅", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Found: " + word.toUpperCase() + " !", Toast.LENGTH_SHORT).show();
 
-        // Check if all words have been found
+        // אם כל המילים נמצאו
         if (foundWords.size() == wordsToFind.size()) {
-            stopTimer(); // Game over - stop the timer
+            stopTimer(); // עצירת הטיימר וסיום המשחק
             showWinDialog();
         }
     }
 
-    // ==================== WIN DIALOG ====================
 
     private void showWinDialog() {
         saveBestTime(); // Save best time if this game was faster
@@ -406,7 +375,6 @@ public class WordSearchActivity extends AppCompatActivity
                 .show();
     }
 
-    // ==================== SAVE BEST TIME ====================
 
     private void saveBestTime() {
         if (mAuth.getCurrentUser() == null) return; // Guest - skip
@@ -433,7 +401,6 @@ public class WordSearchActivity extends AppCompatActivity
                 });
     }
 
-    // ==================== SAVE GAME HISTORY ====================
 
     private void saveGameHistory() {
         // Save this game to the history so the user can see it later
@@ -459,8 +426,6 @@ public class WordSearchActivity extends AppCompatActivity
                 .add(historyEntry); // No success/failure listener needed - history saving is silent
     }
 
-    // ==================== RESET GAME ====================
-
     private void resetGame() {
         // Reset everything and start a fresh game
         wordsToFind.clear();
@@ -475,8 +440,6 @@ public class WordSearchActivity extends AppCompatActivity
         wordListContainer.removeAllViews();
         loadWords(); // Reload words and build a fresh grid
     }
-
-    // ==================== BACK CONFIRMATION ====================
 
     private void showBackConfirmation() {
         // Pause the timer while the dialog is open
